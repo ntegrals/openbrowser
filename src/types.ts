@@ -28,3 +28,23 @@ export function err<E>(error: E): Result<never, E> {
   return { ok: false, error };
 }
 
+/** Viewport size configuration */
+export interface ViewportSize {
+  width: number;
+  height: number;
+}
+
+/** Information about a DOM element */
+export interface ElementInfo {
+  tag: string;
+  id?: string;
+  className?: string;
+  text?: string;
+  href?: string;
+  rect: Rect;
+  visible: boolean;
+  attributes: Record<string, string>;
+}
+
+/** The result of executing a command */
+export interface CommandResult {
