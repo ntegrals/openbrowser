@@ -48,3 +48,22 @@ export interface ElementInfo {
 
 /** The result of executing a command */
 export interface CommandResult {
+  success: boolean;
+  message?: string;
+  data?: unknown;
+  duration: number;
+}
+
+/** Screenshot data */
+export interface ScreenshotData {
+  buffer: Buffer;
+  width: number;
+  height: number;
+}
+
+/** Page metadata */
+export interface PageInfo {
+  url: string;
+  title: string;
+  viewport: ViewportSize;
+}
