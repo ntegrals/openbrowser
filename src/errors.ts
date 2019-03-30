@@ -38,3 +38,46 @@ export class NavigationFailedError extends ViewportError {
 
   constructor(message: string, url: string) {
     super(message);
+    this.name = 'NavigationFailedError';
+    this.url = url;
+  }
+}
+
+/**
+ * Thrown when a command fails to execute.
+ */
+export class CommandError extends OpenBrowserError {
+  public readonly command: string;
+
+  constructor(command: string, message: string) {
+    super(`Command "${command}" failed: ${message}`);
+    this.name = 'CommandError';
+    this.command = command;
+  }
+}
+
+/**
+ * Thrown when an element cannot be found on the page.
+ */
+export class ElementNotFoundError extends OpenBrowserError {
+  public readonly selector: string;
+
+  constructor(selector: string) {
+    super(`Element not found: ${selector}`);
+    this.name = 'ElementNotFoundError';
+    this.selector = selector;
+  }
+}
+
+/**
+ * Thrown when an operation times out.
+ */
+export class TimeoutError extends OpenBrowserError {
+  public readonly timeoutMs: number;
+
+  constructor(operation: string, timeoutMs: number) {
+    super(`Operation "${operation}" timed out after ${timeoutMs}ms`);
+    this.name = 'TimeoutError';
+    this.timeoutMs = timeoutMs;
+  }
+}
