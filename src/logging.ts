@@ -43,3 +43,40 @@ export class Logger {
   }
 
   info(msg: string, ...args: unknown[]): void {
+    this.log(LogLevel.INFO, msg, ...args);
+  }
+
+  warn(msg: string, ...args: unknown[]): void {
+    this.log(LogLevel.WARN, msg, ...args);
+  }
+
+  error(msg: string, ...args: unknown[]): void {
+    this.log(LogLevel.ERROR, msg, ...args);
+  }
+
+  private log(level: LogLevel, msg: string, ...args: unknown[]): void {
+    if (level < globalLevel) return;
+
+    const label = LEVEL_LABELS[level];
+    const prefix = `${timestamp()} ${label} [${this.name}]`;
+
+    if (level >= LogLevel.ERROR) {
+      console.error(prefix, msg, ...args);
+    } else if (level >= LogLevel.WARN) {
+      console.warn(prefix, msg, ...args);
+    } else {
+      console.log(prefix, msg, ...args);
+    }
+  }
+}
+
+const loggers = new Map<string, Logger>();
+
+export function createLogger(name: string): Logger {
+  let logger = loggers.get(name);
+  if (!logger) {
+    logger = new Logger(name);
+    loggers.set(name, logger);
+  }
+  return logger;
+}
