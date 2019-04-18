@@ -38,3 +38,56 @@ export function truncateText(text: string, maxLength: number): string {
 export function stripTags(html: string): string {
   return html.replace(/<[^>]*>/g, '');
 }
+
+/**
+ * Create a promise that rejects after a timeout.
+ */
+export function withTimeout<T>(
+  promise: Promise<T>,
+  ms: number,
+  message?: string,
+): Promise<T> {
+  const timer = new Promise<never>((_, reject) => {
+    setTimeout(
+      () => reject(new Error(message || `Timed out after ${ms}ms`)),
+      ms,
+    );
+  });
+  return Promise.race([promise, timer]);
+}
+
+/**
+ * Simple debounce function.
+ */
+export function debounce<T extends (...args: any[]) => void>(
+  fn: T,
+  delayMs: number,
+): T {
+  let timer: NodeJS.Timeout | undefined;
+  return ((...args: any[]) => {
+    if (timer) clearTimeout(timer);
+    timer = setTimeout(() => fn(...args), delayMs);
+  }) as T;
+}
+
+/**
+ * Check if a URL is valid.
+ */
+export function isValidUrl(url: string): boolean {
+  try {
+    new URL(url);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Normalize a URL by ensuring it has a protocol.
+ */
+export function normalizeUrl(url: string): string {
+  if (!url.startsWith('http://') && !url.startsWith('https://')) {
+    return `https://${url}`;
+  }
+  return url;
+}
