@@ -48,3 +48,49 @@ export class EventHub<EventMap extends Record<string, any> = Record<string, any>
   }
 
   /**
+   * Emit an event with a payload.
+   */
+  emit<K extends keyof EventMap & string>(
+    event: K,
+    payload: EventMap[K],
+  ): void {
+    const handlers = this.handlers.get(event);
+    if (!handlers) return;
+
+    for (const handler of handlers) {
+      try {
+        handler(payload);
+      } catch (err) {
+        console.error(`Error in event handler for "${event}":`, err);
+      }
+    }
+  }
+
+  /**
+   * Remove a specific handler, or all handlers for an event.
+   */
+  off<K extends keyof EventMap & string>(
+    event: K,
+    handler?: Handler<EventMap[K]>,
+  ): void {
+    if (handler) {
+      this.handlers.get(event)?.delete(handler);
+    } else {
+      this.handlers.delete(event);
+    }
+  }
+
+  /**
+   * Remove all listeners for all events.
+   */
+  removeAllListeners(): void {
+    this.handlers.clear();
+  }
+
+  /**
+   * Get the number of listeners for an event.
+   */
+  listenerCount(event: string): number {
+    return this.handlers.get(event)?.size ?? 0;
+  }
+}
