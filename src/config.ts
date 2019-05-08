@@ -43,3 +43,35 @@ export function createConfig(
   return {
     ...DEFAULT_CONFIG,
     ...options,
+    viewport: {
+      ...DEFAULT_CONFIG.viewport,
+      ...options.viewport,
+    },
+    extraArgs: [
+      ...DEFAULT_CONFIG.extraArgs,
+      ...(options.extraArgs ?? []),
+    ],
+  };
+}
+
+/**
+ * Validate a configuration object. Throws on invalid values.
+ */
+export function validateConfig(config: ViewportConfig): void {
+  if (config.viewport.width < 100 || config.viewport.width > 4096) {
+    throw new Error(
+      `Invalid viewport width: ${config.viewport.width}. Must be between 100 and 4096.`,
+    );
+  }
+  if (config.viewport.height < 100 || config.viewport.height > 4096) {
+    throw new Error(
+      `Invalid viewport height: ${config.viewport.height}. Must be between 100 and 4096.`,
+    );
+  }
+  if (config.navigationTimeout < 0) {
+    throw new Error('Navigation timeout must be non-negative.');
+  }
+  if (config.commandTimeout < 0) {
+    throw new Error('Command timeout must be non-negative.');
+  }
+}
