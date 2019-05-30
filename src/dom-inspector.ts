@@ -58,3 +58,73 @@ export class DomInspector {
         return rect.width > 0 && rect.height > 0;
       }
 
+      function getNodeText(el: Element): string {
+        let text = '';
+        for (const child of el.childNodes) {
+          if (child.nodeType === Node.TEXT_NODE) {
+            const t = (child.textContent || '').trim();
+            if (t) text += t + ' ';
+          }
+        }
+        return text.trim().slice(0, 80);
+      }
+
+      function walk(el: Element, indent: number): void {
+        if (indent > depth) return;
+        if (!isVisible(el)) return;
+
+        const tag = el.tagName.toLowerCase();
+        // Skip script, style, noscript, svg internals
+        if (['script', 'style', 'noscript', 'link', 'meta'].includes(tag)) return;
+
+        const parts: string[] = [];
+        parts.push('  '.repeat(indent) + tag);
+
+        // Key attributes
+        const id = el.getAttribute('id');
+        if (id) parts.push(`#${id}`);
+
+        const role = el.getAttribute('role');
+        if (role) parts.push(`[role="${role}"]`);
+
+        const href = el.getAttribute('href');
+        if (href && href.length < 60) parts.push(`href="${href}"`);
+
+        const type = el.getAttribute('type');
+        if (type) parts.push(`type="${type}"`);
+
+        const placeholder = el.getAttribute('placeholder');
+        if (placeholder) parts.push(`placeholder="${placeholder}"`);
+
+        // Direct text content
+        const text = getNodeText(el);
+        if (text) parts.push(`"${text.slice(0, 50)}"`);
+
+        lines.push(parts.join(' '));
+
+        // Recurse into children
+        for (const child of el.children) {
+          walk(child, indent + 1);
+        }
+      }
+
+      const body = document.body;
+      if (body) {
+        walk(body, 0);
+      }
+
+      return lines.join('\n');
+    }, maxDepth);
+
+    return tree;
+  }
+
+  /**
+   * Find all interactive elements on the page and return their info.
+   */
+  async getInteractiveElements(): Promise<ElementInfo[]> {
+    logger.debug('Finding interactive elements');
+
+    const elements = await this.page.evaluate((selectors: string[]) => {
+      const results: Array<{
+        tag: string;
