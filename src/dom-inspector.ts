@@ -128,3 +128,73 @@ export class DomInspector {
     const elements = await this.page.evaluate((selectors: string[]) => {
       const results: Array<{
         tag: string;
+        id?: string;
+        className?: string;
+        text?: string;
+        href?: string;
+        rect: { x: number; y: number; width: number; height: number };
+        visible: boolean;
+        attributes: Record<string, string>;
+      }> = [];
+
+      const selector = selectors.join(', ');
+      const els = document.querySelectorAll(selector);
+
+      for (const el of els) {
+        const rect = el.getBoundingClientRect();
+        const style = window.getComputedStyle(el);
+        const visible =
+          style.display !== 'none' &&
+          style.visibility !== 'hidden' &&
+          rect.width > 0 &&
+          rect.height > 0;
+
+        if (!visible) continue;
+
+        const attrs: Record<string, string> = {};
+        for (const attr of el.attributes) {
+          attrs[attr.name] = attr.value;
+        }
+
+        results.push({
+          tag: el.tagName.toLowerCase(),
+          id: el.id || undefined,
+          className: el.className || undefined,
+          text: (el.textContent || '').trim().slice(0, 100) || undefined,
+          href: el.getAttribute('href') || undefined,
+          rect: {
+            x: Math.round(rect.x),
+            y: Math.round(rect.y),
+            width: Math.round(rect.width),
+            height: Math.round(rect.height),
+          },
+          visible,
+          attributes: attrs,
+        });
+      }
+
+      return results;
+    }, INTERACTIVE_SELECTORS);
+
+    return elements;
+  }
+
+  /**
+   * Get information about a specific element by CSS selector.
+   */
+  async getElementInfo(selector: string): Promise<ElementInfo | null> {
+    const info = await this.page.$eval(selector, (el: Element) => {
+      const rect = el.getBoundingClientRect();
+      const style = window.getComputedStyle(el);
+      const visible =
+        style.display !== 'none' &&
+        style.visibility !== 'hidden' &&
+        rect.width > 0 &&
+        rect.height > 0;
+
+      const attrs: Record<string, string> = {};
+      for (const attr of el.attributes) {
+        attrs[attr.name] = attr.value;
+      }
+
+      return {
