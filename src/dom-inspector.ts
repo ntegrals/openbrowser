@@ -198,3 +198,83 @@ export class DomInspector {
       }
 
       return {
+        tag: el.tagName.toLowerCase(),
+        id: el.id || undefined,
+        className: el.className || undefined,
+        text: (el.textContent || '').trim().slice(0, 200) || undefined,
+        href: el.getAttribute('href') || undefined,
+        rect: {
+          x: Math.round(rect.x),
+          y: Math.round(rect.y),
+          width: Math.round(rect.width),
+          height: Math.round(rect.height),
+        },
+        visible,
+        attributes: attrs,
+      };
+    }).catch(() => null);
+
+    return info;
+  }
+
+  /**
+   * Wait for an element to appear on the page.
+   */
+  async waitForElement(
+    selector: string,
+    timeout: number = 5000,
+  ): Promise<boolean> {
+    try {
+      await this.page.waitForSelector(selector, { timeout });
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
+  /**
+   * Extract the full text content of the page, cleaned up.
+   */
+  async getPageText(): Promise<string> {
+    const text = await this.page.evaluate(() => {
+      return document.body?.innerText || '';
+    });
+    return sanitizeText(text);
+  }
+
+  /**
+   * Extract text from a specific element.
+   */
+  async getElementText(selector: string): Promise<string | null> {
+    try {
+      const text = await this.page.$eval(
+        selector,
+        (el: Element) => (el as HTMLElement).innerText || el.textContent || '',
+      );
+      return sanitizeText(text);
+    } catch {
+      return null;
+    }
+  }
+
+  /**
+   * Get the page's current scroll position and dimensions.
+   */
+  async getScrollInfo(): Promise<{
+    scrollX: number;
+    scrollY: number;
+    scrollWidth: number;
+    scrollHeight: number;
+    clientWidth: number;
+    clientHeight: number;
+  }> {
+    return this.page.evaluate(() => ({
+      scrollX: window.scrollX,
+      scrollY: window.scrollY,
+      scrollWidth: document.documentElement.scrollWidth,
+      scrollHeight: document.documentElement.scrollHeight,
+      clientWidth: document.documentElement.clientWidth,
+      clientHeight: document.documentElement.clientHeight,
+    }));
+  }
+}
