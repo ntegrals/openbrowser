@@ -53,3 +53,53 @@ export async function typeText(
   selector: string,
   text: string,
   options: { clearFirst?: boolean; delay?: number; timeout?: number } = {},
+): Promise<CommandResult> {
+  const start = Date.now();
+  const { clearFirst = true, delay = 0, timeout = 5000 } = options;
+
+  logger.debug(`type: "${text}" into ${selector}`);
+
+  try {
+    await page.waitForSelector(selector, { visible: true, timeout });
+
+    if (clearFirst) {
+      // Triple-click to select all, then type over it
+      await page.click(selector, { clickCount: 3 });
+      await sleep(50);
+    }
+
+    await page.type(selector, text, { delay });
+
+    return {
+      success: true,
+      message: `Typed "${text.slice(0, 30)}${text.length > 30 ? '...' : ''}" into ${selector}`,
+      duration: Date.now() - start,
+    };
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    if (message.includes('No element found') || message.includes('waiting for selector')) {
+      throw new ElementNotFoundError(selector);
+    }
+    throw new CommandError('type', message);
+  }
+}
+
+/**
+ * Navigate to a URL.
+ */
+export async function navigate(
+  page: Page,
+  url: string,
+  options: { waitUntil?: 'load' | 'domcontentloaded' | 'networkidle0' | 'networkidle2'; timeout?: number } = {},
+): Promise<CommandResult> {
+  const start = Date.now();
+  const { waitUntil = 'domcontentloaded', timeout = 30000 } = options;
+
+  logger.debug(`navigate: ${url}`);
+
+  try {
+    // Normalize the URL
+    let targetUrl = url;
+    if (!url.startsWith('http://') && !url.startsWith('https://') && !url.startsWith('about:')) {
+      targetUrl = `https://${url}`;
+    }
