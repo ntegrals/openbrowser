@@ -103,3 +103,53 @@ export async function navigate(
     if (!url.startsWith('http://') && !url.startsWith('https://') && !url.startsWith('about:')) {
       targetUrl = `https://${url}`;
     }
+
+    await page.goto(targetUrl, { waitUntil, timeout });
+
+    const finalUrl = page.url();
+    const title = await page.title();
+
+    return {
+      success: true,
+      message: `Navigated to ${finalUrl} ("${title}")`,
+      data: { url: finalUrl, title },
+      duration: Date.now() - start,
+    };
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    throw new CommandError('navigate', message);
+  }
+}
+
+/**
+ * Scroll the page in a given direction.
+ */
+export async function scroll(
+  page: Page,
+  direction: 'up' | 'down' | 'left' | 'right',
+  amount: number = 300,
+): Promise<CommandResult> {
+  const start = Date.now();
+
+  logger.debug(`scroll: ${direction} by ${amount}px`);
+
+  const scrollMap: Record<string, { x: number; y: number }> = {
+    up: { x: 0, y: -amount },
+    down: { x: 0, y: amount },
+    left: { x: -amount, y: 0 },
+    right: { x: amount, y: 0 },
+  };
+
+  const { x, y } = scrollMap[direction];
+
+  await page.evaluate(
+    (dx: number, dy: number) => {
+      window.scrollBy(dx, dy);
+    },
+    x,
+    y,
+  );
+
+  // Wait briefly for any lazy-loaded content
+  await sleep(200);
+
