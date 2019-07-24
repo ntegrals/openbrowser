@@ -153,3 +153,58 @@ export async function scroll(
   // Wait briefly for any lazy-loaded content
   await sleep(200);
 
+  const scrollPos = await page.evaluate(() => ({
+    x: window.scrollX,
+    y: window.scrollY,
+  }));
+
+  return {
+    success: true,
+    message: `Scrolled ${direction} by ${amount}px. Position: (${scrollPos.x}, ${scrollPos.y})`,
+    data: scrollPos,
+    duration: Date.now() - start,
+  };
+}
+
+/**
+ * Take a screenshot of the current page.
+ */
+export async function screenshot(
+  page: Page,
+  options: { fullPage?: boolean; quality?: number } = {},
+): Promise<ScreenshotData> {
+  const start = Date.now();
+  const { fullPage = false, quality } = options;
+
+  logger.debug(`screenshot: fullPage=${fullPage}`);
+
+  const buffer = await page.screenshot({
+    fullPage,
+    type: 'png',
+    ...(quality !== undefined ? { quality } : {}),
+  }) as Buffer;
+
+  const viewport = page.viewport();
+
+  return {
+    buffer,
+    width: viewport?.width ?? 1280,
+    height: viewport?.height ?? 800,
+  };
+}
+
+/**
+ * Go back to the previous page in history.
+ */
+export async function goBack(
+  page: Page,
+  options: { timeout?: number } = {},
+): Promise<CommandResult> {
+  const start = Date.now();
+  const { timeout = 30000 } = options;
+
+  logger.debug('goBack');
+
+  try {
+    await page.goBack({ waitUntil: 'domcontentloaded', timeout });
+    const url = page.url();
