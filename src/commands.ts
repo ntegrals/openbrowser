@@ -208,3 +208,43 @@ export async function goBack(
   try {
     await page.goBack({ waitUntil: 'domcontentloaded', timeout });
     const url = page.url();
+    return {
+      success: true,
+      message: `Navigated back to ${url}`,
+      data: { url },
+      duration: Date.now() - start,
+    };
+  } catch (err) {
+    throw new CommandError('goBack', err instanceof Error ? err.message : String(err));
+  }
+}
+
+/**
+ * Go forward to the next page in history.
+ */
+export async function goForward(
+  page: Page,
+  options: { timeout?: number } = {},
+): Promise<CommandResult> {
+  const start = Date.now();
+  const { timeout = 30000 } = options;
+
+  logger.debug('goForward');
+
+  try {
+    await page.goForward({ waitUntil: 'domcontentloaded', timeout });
+    const url = page.url();
+    return {
+      success: true,
+      message: `Navigated forward to ${url}`,
+      data: { url },
+      duration: Date.now() - start,
+    };
+  } catch (err) {
+    throw new CommandError('goForward', err instanceof Error ? err.message : String(err));
+  }
+}
+
+/**
+ * Press a keyboard key.
+ */
