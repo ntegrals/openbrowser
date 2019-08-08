@@ -248,3 +248,63 @@ export async function goForward(
 /**
  * Press a keyboard key.
  */
+export async function pressKey(
+  page: Page,
+  key: string,
+): Promise<CommandResult> {
+  const start = Date.now();
+
+  logger.debug(`pressKey: ${key}`);
+
+  try {
+    await page.keyboard.press(key);
+    return {
+      success: true,
+      message: `Pressed key: ${key}`,
+      duration: Date.now() - start,
+    };
+  } catch (err) {
+    throw new CommandError('pressKey', err instanceof Error ? err.message : String(err));
+  }
+}
+
+/**
+ * Hover over an element.
+ */
+export async function hover(
+  page: Page,
+  selector: string,
+  options: { timeout?: number } = {},
+): Promise<CommandResult> {
+  const start = Date.now();
+  const { timeout = 5000 } = options;
+
+  logger.debug(`hover: ${selector}`);
+
+  try {
+    await page.waitForSelector(selector, { visible: true, timeout });
+    await page.hover(selector);
+
+    return {
+      success: true,
+      message: `Hovered over ${selector}`,
+      duration: Date.now() - start,
+    };
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    if (message.includes('No element found') || message.includes('waiting for selector')) {
+      throw new ElementNotFoundError(selector);
+    }
+    throw new CommandError('hover', message);
+  }
+}
+
+/**
+ * Select an option from a <select> element.
+ */
+export async function selectOption(
+  page: Page,
+  selector: string,
+  value: string,
+  options: { timeout?: number } = {},
+): Promise<CommandResult> {
