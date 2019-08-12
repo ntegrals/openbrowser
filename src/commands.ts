@@ -308,3 +308,55 @@ export async function selectOption(
   value: string,
   options: { timeout?: number } = {},
 ): Promise<CommandResult> {
+  const start = Date.now();
+  const { timeout = 5000 } = options;
+
+  logger.debug(`select: "${value}" from ${selector}`);
+
+  try {
+    await page.waitForSelector(selector, { visible: true, timeout });
+    await page.select(selector, value);
+
+    return {
+      success: true,
+      message: `Selected "${value}" from ${selector}`,
+      duration: Date.now() - start,
+    };
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    throw new CommandError('select', message);
+  }
+}
+
+/**
+ * Wait for navigation to complete (e.g., after clicking a link).
+ */
+export async function waitForNavigation(
+  page: Page,
+  options: { timeout?: number } = {},
+): Promise<CommandResult> {
+  const start = Date.now();
+  const { timeout = 30000 } = options;
+
+  logger.debug('waitForNavigation');
+
+  try {
+    await page.waitForNavigation({
+      waitUntil: 'domcontentloaded',
+      timeout,
+    });
+
+    const url = page.url();
+    return {
+      success: true,
+      message: `Navigation complete: ${url}`,
+      data: { url },
+      duration: Date.now() - start,
+    };
+  } catch (err) {
+    throw new CommandError(
+      'waitForNavigation',
+      err instanceof Error ? err.message : String(err),
+    );
+  }
+}
