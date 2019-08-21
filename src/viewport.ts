@@ -68,3 +68,43 @@ export class Viewport {
 
   /**
    * The underlying Puppeteer Page instance.
+   * Throws if the browser hasn't been launched.
+   */
+  get page(): Page {
+    if (!this._page) {
+      throw new ViewportError('Browser not launched. Call launch() first.');
+    }
+    return this._page;
+  }
+
+  /**
+   * How long (in ms) since the browser was launched.
+   */
+  get uptime(): number {
+    if (!this._launchTime) return 0;
+    return Date.now() - this._launchTime;
+  }
+
+  /**
+   * Launch the browser.
+   */
+  async launch(): Promise<void> {
+    if (this._isConnected) {
+      logger.warn('Browser already launched');
+      return;
+    }
+
+    logger.info(`Launching browser (headless: ${this.config.headless})`);
+
+    try {
+      const args = this.buildLaunchArgs();
+
+      this.browser = await puppeteer.launch({
+        headless: this.config.headless,
+        args,
+        executablePath: this.config.executablePath,
+        userDataDir: this.config.userDataDir,
+        defaultViewport: {
+          width: this.config.viewport.width,
+          height: this.config.viewport.height,
+        },
