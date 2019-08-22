@@ -108,3 +108,63 @@ export class Viewport {
           width: this.config.viewport.width,
           height: this.config.viewport.height,
         },
+      });
+
+      this._page = await this.browser.newPage();
+      this._isConnected = true;
+      this._launchTime = Date.now();
+
+      // Re-initialize the inspector with the page
+      (this as any).inspector = new DomInspector(this._page);
+
+      // Handle browser disconnection
+      this.browser.on('disconnected', () => {
+        logger.warn('Browser disconnected');
+        this._isConnected = false;
+        this.events.emit('error', {
+          message: 'Browser disconnected unexpectedly',
+        });
+      });
+
+      // Handle page errors
+      this._page.on('error', (err) => {
+        logger.error('Page error:', err);
+        this.events.emit('error', { message: err.message, error: err });
+      });
+
+      this._page.on('pageerror', (err) => {
+        logger.debug(`Page JS error: ${err.message}`);
+      });
+
+      this.events.emit('launched', { headless: this.config.headless });
+
+      logger.info(`Browser launched (id: ${this.id})`);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      throw new LaunchFailedError(`Failed to launch browser: ${message}`);
+    }
+  }
+
+  /**
+   * Navigate to a URL.
+   */
+  async navigate(url: string): Promise<CommandResult> {
+    const result = await commands.navigate(this.page, url, {
+      timeout: this.config.navigationTimeout,
+    });
+
+    const title = await this.page.title();
+    this.events.emit('navigated', { url: this.page.url(), title });
+
+    return result;
+  }
+
+  /**
+   * Click on an element.
+   */
+  async click(selector: string): Promise<CommandResult> {
+    const result = await commands.click(this.page, selector, {
+      timeout: this.config.commandTimeout,
+    });
+    this.events.emit('command', { name: 'click', result });
+    return result;
