@@ -168,3 +168,43 @@ export class Viewport {
     });
     this.events.emit('command', { name: 'click', result });
     return result;
+  }
+
+  /**
+   * Type text into an input.
+   */
+  async type(selector: string, text: string): Promise<CommandResult> {
+    const result = await commands.typeText(this.page, selector, text, {
+      timeout: this.config.commandTimeout,
+    });
+    this.events.emit('command', { name: 'type', result });
+    return result;
+  }
+
+  /**
+   * Scroll the page.
+   */
+  async scroll(
+    direction: 'up' | 'down' | 'left' | 'right' = 'down',
+    amount?: number,
+  ): Promise<CommandResult> {
+    const result = await commands.scroll(this.page, direction, amount);
+    this.events.emit('command', { name: 'scroll', result });
+    return result;
+  }
+
+  /**
+   * Take a screenshot.
+   */
+  async screenshot(fullPage = false): Promise<ScreenshotData> {
+    return commands.screenshot(this.page, { fullPage });
+  }
+
+  /**
+   * Go back in browser history.
+   */
+  async goBack(): Promise<CommandResult> {
+    const result = await commands.goBack(this.page, {
+      timeout: this.config.navigationTimeout,
+    });
+    this.events.emit('command', { name: 'goBack', result });
