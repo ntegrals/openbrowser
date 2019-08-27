@@ -208,3 +208,53 @@ export class Viewport {
       timeout: this.config.navigationTimeout,
     });
     this.events.emit('command', { name: 'goBack', result });
+    return result;
+  }
+
+  /**
+   * Go forward in browser history.
+   */
+  async goForward(): Promise<CommandResult> {
+    const result = await commands.goForward(this.page, {
+      timeout: this.config.navigationTimeout,
+    });
+    this.events.emit('command', { name: 'goForward', result });
+    return result;
+  }
+
+  /**
+   * Press a keyboard key.
+   */
+  async pressKey(key: string): Promise<CommandResult> {
+    const result = await commands.pressKey(this.page, key);
+    this.events.emit('command', { name: 'pressKey', result });
+    return result;
+  }
+
+  /**
+   * Hover over an element.
+   */
+  async hover(selector: string): Promise<CommandResult> {
+    const result = await commands.hover(this.page, selector, {
+      timeout: this.config.commandTimeout,
+    });
+    this.events.emit('command', { name: 'hover', result });
+    return result;
+  }
+
+  /**
+   * Select a value from a <select> element.
+   */
+  async select(selector: string, value: string): Promise<CommandResult> {
+    const result = await commands.selectOption(this.page, selector, value, {
+      timeout: this.config.commandTimeout,
+    });
+    this.events.emit('command', { name: 'select', result });
+    return result;
+  }
+
+  /**
+   * Evaluate JavaScript in the page context.
+   */
+  async evaluate<T = any>(expression: string): Promise<T> {
+    return this.page.evaluate(expression) as Promise<T>;
