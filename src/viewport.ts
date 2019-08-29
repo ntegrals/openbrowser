@@ -308,3 +308,36 @@ export class Viewport {
       await this.browser.close();
     } catch (err) {
       logger.error('Error closing browser:', err);
+    }
+
+    this.browser = null;
+    this._page = null;
+    this._isConnected = false;
+
+    this.events.emit('closed', undefined as any);
+    this.events.removeAllListeners();
+
+    logger.info('Browser closed');
+  }
+
+  /**
+   * Build Chrome launch arguments from config.
+   */
+  private buildLaunchArgs(): string[] {
+    const args = [
+      `--window-size=${this.config.viewport.width},${this.config.viewport.height}`,
+      '--no-first-run',
+      '--no-default-browser-check',
+      ...this.config.extraArgs,
+    ];
+
+    if (this.config.disableSecurity) {
+      args.push(
+        '--disable-web-security',
+        '--disable-site-isolation-trials',
+      );
+    }
+
+    return args;
+  }
+}
