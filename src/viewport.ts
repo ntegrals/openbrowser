@@ -258,3 +258,53 @@ export class Viewport {
    */
   async evaluate<T = any>(expression: string): Promise<T> {
     return this.page.evaluate(expression) as Promise<T>;
+  }
+
+  /**
+   * Wait for a selector to appear on the page.
+   */
+  async waitFor(selector: string, timeout?: number): Promise<boolean> {
+    return this.inspector.waitForElement(
+      selector,
+      timeout ?? this.config.commandTimeout,
+    );
+  }
+
+  /**
+   * Get current page information.
+   */
+  async getPageInfo(): Promise<PageInfo> {
+    const page = this.page;
+    const viewport = page.viewport();
+    return {
+      url: page.url(),
+      title: await page.title(),
+      viewport: {
+        width: viewport?.width ?? this.config.viewport.width,
+        height: viewport?.height ?? this.config.viewport.height,
+      },
+    };
+  }
+
+  /**
+   * Set the viewport size.
+   */
+  async setViewportSize(size: ViewportSize): Promise<void> {
+    await this.page.setViewport({
+      width: size.width,
+      height: size.height,
+    });
+  }
+
+  /**
+   * Close the browser and clean up.
+   */
+  async close(): Promise<void> {
+    if (!this.browser) return;
+
+    logger.info(`Closing browser (id: ${this.id}, uptime: ${this.uptime}ms)`);
+
+    try {
+      await this.browser.close();
+    } catch (err) {
+      logger.error('Error closing browser:', err);
