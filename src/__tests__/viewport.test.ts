@@ -78,3 +78,95 @@ describe('Viewport', () => {
     });
   });
 
+  describe('launch', () => {
+    it('should launch the browser', async () => {
+      await viewport.launch();
+      expect(viewport.isConnected).toBe(true);
+    });
+
+    it('should not launch twice', async () => {
+      await viewport.launch();
+      await viewport.launch(); // Should not throw
+      expect(viewport.isConnected).toBe(true);
+    });
+
+    it('should emit launched event', async () => {
+      const handler = jest.fn();
+      viewport.events.on('launched', handler);
+      await viewport.launch();
+      expect(handler).toHaveBeenCalledWith({ headless: true });
+    });
+  });
+
+  describe('navigation', () => {
+    beforeEach(async () => {
+      await viewport.launch();
+    });
+
+    it('should navigate to a URL', async () => {
+      const result = await viewport.navigate('https://example.com');
+      expect(result.success).toBe(true);
+    });
+
+    it('should emit navigated event', async () => {
+      const handler = jest.fn();
+      viewport.events.on('navigated', handler);
+      await viewport.navigate('https://example.com');
+      expect(handler).toHaveBeenCalled();
+    });
+  });
+
+  describe('page access', () => {
+    it('should throw when accessing page before launch', () => {
+      expect(() => viewport.page).toThrow(ViewportError);
+    });
+
+    it('should return page after launch', async () => {
+      await viewport.launch();
+      expect(viewport.page).toBeDefined();
+    });
+  });
+
+  describe('close', () => {
+    it('should close the browser', async () => {
+      await viewport.launch();
+      await viewport.close();
+      expect(viewport.isConnected).toBe(false);
+    });
+
+    it('should emit closed event', async () => {
+      await viewport.launch();
+      const handler = jest.fn();
+      viewport.events.on('closed', handler);
+      await viewport.close();
+      expect(handler).toHaveBeenCalled();
+    });
+
+    it('should be safe to call close without launching', async () => {
+      await viewport.close(); // Should not throw
+    });
+  });
+
+  describe('getPageInfo', () => {
+    it('should return page metadata', async () => {
+      await viewport.launch();
+      const info = await viewport.getPageInfo();
+      expect(info).toHaveProperty('url');
+      expect(info).toHaveProperty('title');
+      expect(info).toHaveProperty('viewport');
+    });
+  });
+
+  describe('uptime', () => {
+    it('should return 0 before launch', () => {
+      expect(viewport.uptime).toBe(0);
+    });
+
+    it('should return positive value after launch', async () => {
+      await viewport.launch();
+      // Small delay to ensure uptime > 0
+      await new Promise(r => setTimeout(r, 10));
+      expect(viewport.uptime).toBeGreaterThan(0);
+    });
+  });
+});
