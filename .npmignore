@@ -1,0 +1,6 @@
+src/
+__tests__/
+*.test.ts
+*.test.js
+.git/
+node_modules/
