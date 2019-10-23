@@ -28,6 +28,39 @@ await viewport.close();
 - Built-in commands: click, type, navigate, scroll, screenshot
 - Configurable viewport and timeouts
 
+## API
+
+### Viewport
+
+The main class for controlling a browser instance.
+
+```typescript
+const viewport = new Viewport({
+  headless: true,
+  viewport: { width: 1920, height: 1080 },
+  navigationTimeout: 30000,
+});
+```
+
+### DomInspector
+
+Inspect and query page elements.
+
+```typescript
+const elements = await viewport.inspector.getInteractiveElements();
+const tree = await viewport.inspector.getPageTree();
+```
+
+### EventHub
+
+Listen for browser events.
+
+```typescript
+viewport.events.on('navigated', ({ url }) => {
+  console.log('Navigated to:', url);
+});
+```
+
 ## License
 
 MIT
