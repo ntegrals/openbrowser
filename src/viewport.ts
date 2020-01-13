@@ -1,4 +1,4 @@
-import puppeteer, { Browser, Page, LaunchOptions } from 'puppeteer';
+import { chromium, Browser, BrowserContext, Page } from 'playwright';
 import { ViewportConfig, createConfig, validateConfig } from './config';
 import { EventHub } from './event-hub';
 import { DomInspector } from './dom-inspector';

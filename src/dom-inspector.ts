@@ -1,4 +1,4 @@
-import { Page } from 'puppeteer';
+import { Page } from 'playwright';
 import { ElementInfo, Rect } from './types';
 import { createLogger } from './logging';
 import { sanitizeText, truncateText } from './utils';

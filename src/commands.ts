@@ -1,4 +1,4 @@
-import { Page } from 'puppeteer';
+import { Page } from 'playwright';
 import { CommandResult, ScreenshotData, Position } from './types';
 import { CommandError, ElementNotFoundError } from './errors';
 import { createLogger } from './logging';
