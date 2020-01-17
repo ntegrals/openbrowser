@@ -99,7 +99,7 @@ export class Viewport {
     try {
       const args = this.buildLaunchArgs();
 
-      this.browser = await puppeteer.launch({
+      this.browser = await chromium.launch({
         headless: this.config.headless,
         args,
         executablePath: this.config.executablePath,
