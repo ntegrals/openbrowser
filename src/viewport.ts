@@ -45,6 +45,7 @@ export class Viewport {
   readonly inspector: DomInspector;
 
   private browser: Browser | null = null;
+  private context: BrowserContext | null = null;
   private _page: Page | null = null;
   private _isConnected = false;
   private _launchTime: number | null = null;
