@@ -111,7 +111,13 @@ export class Viewport {
         },
       });
 
-      this._page = await this.browser.newPage();
+      this.context = await this.browser.newContext({
+        viewport: {
+          width: this.config.viewport.width,
+          height: this.config.viewport.height,
+        },
+      });
+      this._page = await this.context.newPage();
       this._isConnected = true;
       this._launchTime = Date.now();
 
