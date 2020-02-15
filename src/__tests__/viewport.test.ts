@@ -2,7 +2,7 @@ import { Viewport } from '../viewport';
 import { ViewportError, LaunchFailedError } from '../errors';
 
 // Mock puppeteer
-jest.mock('puppeteer', () => {
+jest.mock('playwright', () => {
   const mockPage = {
     goto: jest.fn().mockResolvedValue(null),
     url: jest.fn().mockReturnValue('https://example.com'),
