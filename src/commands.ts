@@ -68,7 +68,11 @@ export async function typeText(
       await sleep(50);
     }
 
+    if (delay > 0) {
     await page.type(selector, text, { delay });
+  } else {
+    await page.fill(selector, text);
+  }
 
     return {
       success: true,
