@@ -297,7 +297,7 @@ export class Viewport {
    * Set the viewport size.
    */
   async setViewportSize(size: ViewportSize): Promise<void> {
-    await this.page.setViewport({
+    await this.page.setViewportSize({
       width: size.width,
       height: size.height,
     });
