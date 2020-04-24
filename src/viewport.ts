@@ -9,6 +9,7 @@ import {
   NavigationFailedError,
 } from './errors';
 import { createLogger } from './logging';
+import { BaseGuard, GuardContext, BlankPageGuard, CrashGuard, PopupGuard } from './guards';
 import { sleep, generateId } from './utils';
 import { CommandResult, PageInfo, ScreenshotData, ViewportSize } from './types';
 
