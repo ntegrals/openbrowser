@@ -38,6 +38,8 @@ export {
 } from './config';
 export type { ViewportConfig } from './config';
 
+export { extractPageContent, extractTitle, extractMetaDescription } from './content-extractor';
+
 export { createLogger, setLogLevel, LogLevel } from './logging';
 
 export {
