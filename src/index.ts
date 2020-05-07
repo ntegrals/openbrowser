@@ -40,6 +40,9 @@ export type { ViewportConfig } from './config';
 
 export { extractPageContent, extractTitle, extractMetaDescription } from './content-extractor';
 
+export { BaseGuard, BlankPageGuard, CrashGuard, PopupGuard, UrlPolicyGuard } from './guards';
+export type { GuardContext } from './guards';
+
 export { createLogger, setLogLevel, LogLevel } from './logging';
 
 export {
