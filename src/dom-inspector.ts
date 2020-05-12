@@ -78,7 +78,8 @@ export class DomInspector {
         if (['script', 'style', 'noscript', 'link', 'meta'].includes(tag)) return;
 
         const parts: string[] = [];
-        parts.push('  '.repeat(indent) + tag);
+        const prefix = '  '.repeat(indent);
+        parts.push(prefix + tag);
 
         // Key attributes
         const id = el.getAttribute('id');
