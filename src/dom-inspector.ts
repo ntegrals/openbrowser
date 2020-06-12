@@ -226,7 +226,7 @@ export class DomInspector {
     timeout: number = 5000,
   ): Promise<boolean> {
     try {
-      await this.page.waitForSelector(selector, { timeout });
+      await this.page.waitForSelector(selector, { state: 'visible', timeout });
       return true;
     } catch {
       return false;
