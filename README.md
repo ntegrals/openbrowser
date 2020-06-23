@@ -1,6 +1,6 @@
 # open-browser
 
-Programmable browser automation toolkit for Node.js.
+Programmable browser automation toolkit for Node.js, built on [Playwright](https://playwright.dev/).
 
 ## Install
 
@@ -22,11 +22,13 @@ await viewport.close();
 
 ## Features
 
-- Puppeteer-based browser automation
-- Typed event system
-- DOM inspection and element detection
-- Built-in commands: click, type, navigate, scroll, screenshot
-- Configurable viewport and timeouts
+- **Playwright-based** — supports Chromium, Firefox, and WebKit
+- Built-in commands: click, type, navigate, scroll, screenshot, evaluate
+- DOM inspection and interactive element detection
+- Content extraction (text, links, metadata)
+- Guard system for handling popups, crashes, blank pages, and URL policies
+- Typed event emitter
+- Full TypeScript support
 
 ## API
 
@@ -50,6 +52,15 @@ Inspect and query page elements.
 const elements = await viewport.inspector.getInteractiveElements();
 const tree = await viewport.inspector.getPageTree();
 ```
+
+### Guards
+
+Automatic handlers for browser events:
+
+- `BlankPageGuard` — detects blank/empty pages
+- `CrashGuard` — monitors for page crashes
+- `PopupGuard` — auto-dismisses dialogs
+- `UrlPolicyGuard` — enforces URL allowlist/blocklist
 
 ### EventHub
 
