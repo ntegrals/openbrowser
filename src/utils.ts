@@ -85,6 +85,28 @@ export function isValidUrl(url: string): boolean {
 /**
  * Normalize a URL by ensuring it has a protocol.
  */
+/**
+ * Retry a function with exponential backoff.
+ */
+export async function retry<T>(
+  fn: () => Promise<T>,
+  maxRetries: number = 3,
+  delayMs: number = 1000,
+): Promise<T> {
+  let lastError: Error | undefined;
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    try {
+      return await fn();
+    } catch (err) {
+      lastError = err instanceof Error ? err : new Error(String(err));
+      if (attempt < maxRetries) {
+        await sleep(delayMs * Math.pow(2, attempt));
+      }
+    }
+  }
+  throw lastError;
+}
+
 export function normalizeUrl(url: string): string {
   if (!url.startsWith('http://') && !url.startsWith('https://')) {
     return `https://${url}`;
