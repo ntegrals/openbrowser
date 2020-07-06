@@ -313,6 +313,9 @@ export class Viewport {
     logger.info(`Closing browser (id: ${this.id}, uptime: ${this.uptime}ms)`);
 
     try {
+      if (this.context) {
+        await this.context.close();
+      }
       await this.browser.close();
     } catch (err) {
       logger.error('Error closing browser:', err);
