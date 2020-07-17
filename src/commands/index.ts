@@ -3,3 +3,4 @@ export { typeText } from './type';
 export { navigate } from './navigate';
 export { scroll } from './scroll';
 export { screenshot } from './screenshot';
+export { evaluate } from './evaluate';
