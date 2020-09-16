@@ -4,3 +4,4 @@ export { BlankPageGuard } from './blank-page';
 export { CrashGuard } from './crash';
 export { PopupGuard } from './popups';
 export { UrlPolicyGuard } from './url-policy';
+export { PageReadyGuard } from './page-ready';
