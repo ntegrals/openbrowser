@@ -1,11 +1,14 @@
 /** Unique identifier for an element on the page */
 export type ElementRef = number;
 
+import { z } from 'zod';
+
 /** A point on the page */
-export interface Position {
-  x: number;
-  y: number;
-}
+export const PositionSchema = z.object({
+  x: z.number(),
+  y: z.number(),
+});
+export type Position = z.infer<typeof PositionSchema>;
 
 /** A rectangle on the page */
 export interface Rect {
