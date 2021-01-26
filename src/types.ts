@@ -11,12 +11,13 @@ export const PositionSchema = z.object({
 export type Position = z.infer<typeof PositionSchema>;
 
 /** A rectangle on the page */
-export interface Rect {
-  x: number;
-  y: number;
-  width: number;
-  height: number;
-}
+export const RectSchema = z.object({
+  x: z.number(),
+  y: z.number(),
+  width: z.number(),
+  height: z.number(),
+});
+export type Rect = z.infer<typeof RectSchema>;
 
 /** Result type for operations that can fail */
 export type Result<T, E = Error> =
