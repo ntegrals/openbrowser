@@ -1,5 +1,18 @@
-/** Unique identifier for an element on the page */
-export type ElementRef = number;
+// ── Branded types for compile-time safety ──
+
+declare const __brand: unique symbol;
+type Brand<T, B extends string> = T & { readonly [__brand]: B };
+
+export type TargetId = Brand<string, 'TargetId'>;
+export type ElementRef = Brand<number, 'ElementRef'>;
+
+export function targetId(id: string): TargetId {
+  return id as TargetId;
+}
+
+export function elementIndex(index: number): ElementRef {
+  return index as ElementRef;
+}
 
 import { z } from 'zod';
 
