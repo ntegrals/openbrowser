@@ -29,6 +29,10 @@ export const ScreenshotCommandSchema = z.object({
   fullPage: z.boolean().optional(),
 });
 
+export const BackCommandSchema = z.object({
+  command: z.literal('back'),
+});
+
 export const PressKeyCommandSchema = z.object({
   command: z.literal('press_keys'),
   key: z.string(),
