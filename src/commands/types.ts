@@ -38,6 +38,11 @@ export const PressKeyCommandSchema = z.object({
   key: z.string(),
 });
 
+export const ExtractCommandSchema = z.object({
+  command: z.literal('extract'),
+  selector: z.string().optional(),
+});
+
 export const CommandSchema = z.discriminatedUnion('command', [
   ClickCommandSchema,
   TypeCommandSchema,
