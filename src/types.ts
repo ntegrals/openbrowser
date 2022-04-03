@@ -71,6 +71,13 @@ export interface CommandResult {
   duration: number;
 }
 
+/** Utility types */
+export type DeepPartial<T> = {
+  [P in keyof T]?: T[P] extends object ? DeepPartial<T[P]> : T[P];
+};
+
+export type Awaitable<T> = T | Promise<T>;
+
 /** Screenshot data */
 export interface ScreenshotData {
   buffer: Buffer;
