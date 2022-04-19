@@ -6,7 +6,7 @@
   "types": "dist/index.d.ts",
   "scripts": {
     "build": "tsc",
-    "test": "jest --forceExit",
+    "test": "bun test",
     "lint": "eslint src/ --ext .ts"
   },
   "keywords": ["browser", "automation", "puppeteer", "scraping", "testing"],
