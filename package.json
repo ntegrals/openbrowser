@@ -7,7 +7,8 @@
   "scripts": {
     "build": "tsc",
     "test": "bun test",
-    "lint": "eslint src/ --ext .ts"
+    "lint": "biome check .",
+    "format": "biome format --write ."
   },
   "keywords": ["browser", "automation", "puppeteer", "scraping", "testing"],
   "author": "Julian Schoen <j.schoen@mail.com>",
