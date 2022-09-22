@@ -15,7 +15,8 @@
   "license": "MIT",
   "dependencies": {
     "playwright": "^1.20.0",
-    "zod": "^3.11.0"
+    "zod": "^3.11.0",
+    "turndown": "^7.1.0"
   },
   "devDependencies": {
     "@biomejs/biome": "^1.4.0",
