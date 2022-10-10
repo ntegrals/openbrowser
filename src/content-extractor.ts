@@ -1,4 +1,5 @@
 import { Page } from 'playwright';
+import TurndownService from 'turndown';
 import { createLogger } from './logging';
 import { sanitizeText, truncateText } from './utils';
 
