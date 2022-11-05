@@ -4,6 +4,7 @@ declare const __brand: unique symbol;
 type Brand<T, B extends string> = T & { readonly [__brand]: B };
 
 export type TargetId = Brand<string, 'TargetId'>;
+export type SessionId = Brand<string, 'SessionId'>;
 export type ElementRef = Brand<number, 'ElementRef'>;
 
 export function targetId(id: string): TargetId {
