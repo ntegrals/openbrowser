@@ -5,7 +5,7 @@ Programmable browser automation toolkit for Node.js, built on [Playwright](https
 ## Install
 
 ```bash
-npm install open-browser
+bun add open-browser
 ```
 
 ## Quick Start
