@@ -43,6 +43,15 @@ export { extractPageContent, extractTitle, extractMetaDescription } from './cont
 export { BaseGuard, BlankPageGuard, CrashGuard, PopupGuard, UrlPolicyGuard } from './guards';
 export type { GuardContext } from './guards';
 
+// Agent
+export { Agent, ConversationManager, StallDetector, InstructionBuilder } from './agent';
+export type { AgentStep, AgentResult, AgentOptions } from './agent';
+
+// Model
+export type { LanguageModel } from './model';
+export { OpenAIRawAdapter } from './model';
+export type { ModelMessage, ModelResponse } from './model';
+
 export { createLogger, setLogLevel, LogLevel } from './logging';
 
 export {
