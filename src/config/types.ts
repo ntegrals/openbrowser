@@ -14,8 +14,18 @@ export const ViewportConfigSchema = z.object({
 
 export type ViewportConfig = z.infer<typeof ViewportConfigSchema>;
 
+export const AgentConfigSchema = z.object({
+  stepLimit: z.number().default(100),
+  failureThreshold: z.number().default(5),
+  enableScreenshots: z.boolean().default(true),
+  contextWindowSize: z.number().default(128000),
+});
+
+export type AgentConfig = z.infer<typeof AgentConfigSchema>;
+
 export const GlobalConfigSchema = z.object({
   browser: ViewportConfigSchema.default({}),
+  agent: AgentConfigSchema.default({}),
 });
 
 export type GlobalConfig = z.infer<typeof GlobalConfigSchema>;
