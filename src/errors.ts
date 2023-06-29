@@ -72,6 +72,37 @@ export class ElementNotFoundError extends OpenBrowserError {
 /**
  * Thrown when an operation times out.
  */
+export class AgentError extends OpenBrowserError {
+  constructor(message: string) {
+    super(message);
+    this.name = 'AgentError';
+  }
+}
+
+export class AgentStalledError extends AgentError {
+  constructor(message = 'Agent is stuck in a loop') {
+    super(message);
+    this.name = 'AgentStalledError';
+  }
+}
+
+export class ModelError extends OpenBrowserError {
+  constructor(message: string) {
+    super(message);
+    this.name = 'ModelError';
+  }
+}
+
+export class ModelThrottledError extends ModelError {
+  public readonly retryAfterMs?: number;
+
+  constructor(message: string, retryAfterMs?: number) {
+    super(message);
+    this.name = 'ModelThrottledError';
+    this.retryAfterMs = retryAfterMs;
+  }
+}
+
 export class TimeoutError extends OpenBrowserError {
   public readonly timeoutMs: number;
 
