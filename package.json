@@ -14,7 +14,7 @@
   "author": "Julian Schoen <j.schoen@mail.com>",
   "license": "MIT",
   "dependencies": {
-    "playwright": "^1.30.0",
+    "playwright": "^1.38.0",
     "zod": "^3.11.0",
     "turndown": "^7.1.0"
   },
