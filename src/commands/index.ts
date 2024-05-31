@@ -1,6 +1,6 @@
-export { click } from './click';
-export { typeText } from './type';
-export { navigate } from './navigate';
-export { scroll } from './scroll';
-export { screenshot } from './screenshot';
-export { evaluate } from './evaluate';
+export { CommandCatalog } from './catalog/catalog';
+export { CommandExecutor } from './executor';
+export { ContentExtractor } from './extraction/extractor';
+export type { CatalogEntry } from './catalog/catalog';
+export type { CommandContext } from './catalog/types';
+export type { Command } from './types';
