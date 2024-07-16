@@ -24,6 +24,7 @@
   "devDependencies": {
     "@biomejs/biome": "^1.4.0",
     "@types/bun": "^1.0.0",
-    "typescript": "^5.3.0"
+    "@types/turndown": "^5.0.5",
+    "typescript": "^5.6.0"
   }
 }
