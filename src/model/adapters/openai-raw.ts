@@ -5,8 +5,8 @@ import { createLogger } from '../../logging';
 const logger = createLogger('model:openai');
 
 /**
+ * @deprecated Use VercelModelAdapter instead.
  * Raw OpenAI API adapter using fetch.
- * This is a temporary implementation before migrating to Vercel AI SDK.
  */
 export class OpenAIRawAdapter implements LanguageModel {
   readonly name: string;
