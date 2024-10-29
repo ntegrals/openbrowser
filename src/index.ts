@@ -49,7 +49,7 @@ export type { AgentStep, AgentResult, AgentOptions } from './agent';
 
 // Model
 export type { LanguageModel } from './model';
-export { OpenAIRawAdapter } from './model';
+export { VercelModelAdapter } from './model';
 export type { ModelMessage, ModelResponse } from './model';
 
 export { createLogger, setLogLevel, LogLevel } from './logging';
