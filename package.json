@@ -20,10 +20,10 @@
     "dotenv": "^16.4.0",
     "zod": "^3.11.0",
     "turndown": "^7.1.0",
-    "ai": "^3.0.0",
-    "@ai-sdk/openai": "^0.0.10",
-    "@ai-sdk/anthropic": "^0.0.10",
-    "@ai-sdk/google": "^0.0.10"
+    "ai": "^4.0.0",
+    "@ai-sdk/openai": "^1.0.0",
+    "@ai-sdk/anthropic": "^1.0.0",
+    "@ai-sdk/google": "^1.0.0"
   },
   "devDependencies": {
     "@biomejs/biome": "^1.4.0",
