@@ -1,29 +1,27 @@
 # Open Browser
 
-Browser automation toolkit with AI agent capabilities, built on [Playwright](https://playwright.dev/).
+AI-powered autonomous web browsing framework for TypeScript.
 
-## Install
+Give an AI agent a browser. It clicks, types, navigates, and extracts data — autonomously completing tasks on any website. Built on Playwright with support for OpenAI, Anthropic, and Google models via the Vercel AI SDK.
+
+## Quick Start
 
 ```bash
 npm install open-browser
 ```
 
-## Quick Start
-
 ```typescript
-import { Viewport, Agent, OpenAIRawAdapter } from 'open-browser';
+import { Agent, Viewport, VercelModelAdapter } from 'open-browser';
+import { openai } from '@ai-sdk/openai';
 
-// Create a viewport
-const viewport = new Viewport({ headless: true });
+const viewport = new Viewport({ headless: false });
 await viewport.launch();
 
-// Set up an AI model
-const model = new OpenAIRawAdapter({ model: 'gpt-4' });
-
-// Run an agent
+const model = new VercelModelAdapter(openai('gpt-4o'));
 const agent = new Agent(model, { maxSteps: 50 });
+
 const result = await agent.run({
-  task: 'Go to example.com and extract the main heading',
+  task: 'Find the price of the MacBook Pro on apple.com',
 });
 
 console.log(result.output);
@@ -32,47 +30,56 @@ await viewport.close();
 
 ## Features
 
-- **AI agent loop** — give the agent a task and it figures out the clicks, typing, and navigation
-- **OpenAI integration** — uses GPT-4 via the OpenAI API to power agent decisions
-- **Playwright-based** — supports Chromium, Firefox, and WebKit
-- Built-in commands: click, type, navigate, scroll, screenshot, evaluate, extract
-- DOM inspection and interactive element detection
-- Guard system for handling popups, crashes, and URL policies
-- Stall detection to prevent infinite loops
-- Conversation management with automatic pruning
-- Full TypeScript support
+- **Autonomous AI agents** — describe a task, the agent navigates the web to complete it
+- **Multi-model support** — OpenAI, Anthropic, Google via Vercel AI SDK
+- **Production-ready** — stall detection, cost tracking, session management, error recovery
+- **Guard system** — handles popups, crashes, downloads, URL policies, blank pages
+- **Bridge architecture** — IPC server/client for inter-process browser control
+- **Visual tracer** — debug mode with visual overlays showing agent actions
+- **Replay recording** — record and replay browser sessions
+- **Content extraction** — extract structured data or markdown from any page
 
-## Agent
+## Architecture
 
-The `Agent` class runs an autonomous loop:
-
-1. Observes the current page state
-2. Sends it to an LLM with the task description
-3. The LLM decides what action to take
-4. The action is executed in the browser
-5. Repeat until the task is complete or the step limit is reached
-
-```typescript
-const model = new OpenAIRawAdapter({ model: 'gpt-4' });
-const agent = new Agent(model, {
-  maxSteps: 100,
-  systemPrompt: 'You are a helpful browser assistant.',
-});
-
-const result = await agent.run({
-  task: 'Find the top story on Hacker News',
-});
-
-console.log(result.output);
-console.log(`Completed in ${result.totalSteps} steps`);
 ```
+                    ┌─────────────┐
+  "Book a flight"   │             │
+  ───────────────►  │    Agent    │  ◄── LLM (OpenAI / Anthropic / Google)
+                    │             │
+                    └──────┬──────┘
+                           │
+                    ┌──────▼──────┐
+                    │   Commands  │  click, type, scroll, extract, navigate...
+                    └──────┬──────┘
+                           │
+                    ┌──────▼──────┐
+                    │  Viewport   │  Playwright browser instance
+                    └──────┬──────┘
+                           │
+                    ┌──────▼──────┐
+                    │  DOM / Page │  Snapshot, interactive elements, content
+                    └─────────────┘
+```
+
+## Model Support
+
+| Provider | Models | Package |
+|---|---|---|
+| **OpenAI** | gpt-4o, gpt-4o-mini | `@ai-sdk/openai` |
+| **Anthropic** | claude-3.5-sonnet, claude-3-opus | `@ai-sdk/anthropic` |
+| **Google** | gemini-1.5-pro, gemini-1.5-flash | `@ai-sdk/google` |
 
 ## Configuration
 
 ```bash
-# .env
+# LLM Provider Keys (at least one required)
 OPENAI_API_KEY=sk-...
+ANTHROPIC_API_KEY=sk-ant-...
+GOOGLE_GENERATIVE_AI_API_KEY=...
+
+# Browser
 BROWSER_HEADLESS=true
+BROWSER_DISABLE_SECURITY=false
 ```
 
 ## License
