@@ -238,3 +238,43 @@ export class TreeRenderer {
 		if (this.options.deduplicateSiblings) {
 			this.serializeChildrenWithDedup(node.children, lines, depth + 1, selectorMap, ctx, maxElements);
 		} else {
+			for (const child of node.children) {
+				this.serializeNode(child, lines, depth + 1, selectorMap, ctx, maxElements);
+			}
+		}
+
+		// Closing tag only if there were children
+		if (node.children.some((c) => c.isVisible || c.nodeType === 'text')) {
+			lines.push(`${indent}</${node.tagName}>`);
+		}
+	}
+
+	/**
+	 * Serialize children but deduplicate runs of similar siblings.
+	 * If more than N consecutive siblings have the same tagName and no interactive children,
+	 * show the first few and add "... and N-3 more" summary.
+	 */
+	private serializeChildrenWithDedup(
+		children: PageTreeNode[],
+		lines: string[],
+		depth: number,
+		selectorMap: SelectorIndex,
+		ctx: { count: number; maxReached: boolean },
+		maxElements: number,
+	): void {
+		const threshold = this.options.siblingDeduplicateThreshold;
+		let i = 0;
+
+		while (i < children.length) {
+			if (ctx.maxReached) return;
+
+			const child = children[i];
+
+			// Find run of same-tag non-interactive siblings
+			let runEnd = i + 1;
+			if (
+				child.nodeType === 'element' &&
+				!child.isInteractive &&
+				!this.hasInteractiveDescendant(child)
+			) {
+				while (
