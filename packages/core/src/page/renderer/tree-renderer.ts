@@ -158,3 +158,43 @@ export class TreeRenderer {
 			if (node.highlightIndex !== undefined && selectorMap[node.highlightIndex]) {
 				lines.push(`${indent}[${node.highlightIndex}]<svg>${desc}</svg>`);
 			} else {
+				lines.push(`${indent}<svg>${desc}</svg>`);
+			}
+			ctx.count++;
+			return;
+		}
+
+		// Skip inner SVG elements
+		if (SVG_TAGS.has(node.tagName) && node.tagName !== 'svg') {
+			return;
+		}
+
+		ctx.count++;
+		if (ctx.count > maxElements) {
+			ctx.maxReached = true;
+			return;
+		}
+
+		// Containment check: if parent fully contains only this child, prefer showing child
+		// (handled implicitly by tree traversal — we just skip redundant wrappers)
+		if (this.isRedundantWrapper(node)) {
+			for (const child of node.children) {
+				this.serializeNode(child, lines, depth, selectorMap, ctx, maxElements);
+			}
+			return;
+		}
+
+		// Build tag representation
+		const parts: string[] = [];
+
+		// Highlight index for interactive elements
+		if (node.highlightIndex !== undefined && selectorMap[node.highlightIndex]) {
+			parts.push(`[${node.highlightIndex}]`);
+		}
+
+		// Tag name
+		parts.push(`<${node.tagName}`);
+
+		// Attributes
+		const attrParts: string[] = [];
+		for (const attr of this.options.capturedAttributes) {
