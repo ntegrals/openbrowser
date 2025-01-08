@@ -78,3 +78,43 @@ export class TreeRenderer {
 					ariaLabel: node.ariaLabel,
 					text: node.text?.trim()?.slice(0, 100),
 				};
+			}
+		}
+
+		// Serialize to text with element cap
+		const lines: string[] = [];
+		let elementCount = 0;
+		const maxElements = this.options.maxElementsInDom;
+
+		const countingContext = { count: 0, maxReached: false };
+		this.serializeNode(root, lines, 0, selectorMap, countingContext, maxElements);
+		elementCount = Object.keys(selectorMap).length;
+
+		if (countingContext.maxReached) {
+			lines.push(`\n[... DOM truncated at ${maxElements} elements]`);
+		}
+
+		// Append hidden element hint section for off-screen interactive elements
+		const hiddenHints = this.formatHiddenElementHints(offScreenHidden, scrollPosition, viewportSize);
+		if (hiddenHints.length > 0) {
+			lines.push('');
+			lines.push('--- Off-screen interactive elements ---');
+			for (const hint of hiddenHints.slice(0, 15)) {
+				lines.push(hint);
+			}
+			if (hiddenHints.length > 15) {
+				lines.push(`... and ${hiddenHints.length - 15} more off-screen elements`);
+			}
+		}
+
+		const pixelsAbove = scrollPosition.y;
+		const pixelsBelow = Math.max(0, documentSize.height - scrollPosition.y - viewportSize.height);
+
+		return {
+			tree: lines.join('\n'),
+			selectorMap,
+			elementCount,
+			interactiveElementCount: visibleElements.length,
+			scrollPosition,
+			viewportSize,
+			documentSize,
