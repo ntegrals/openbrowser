@@ -43,3 +43,48 @@ export const CHROME_STRIPPED_FEATURES = [
 	'OptimizationHints',
 	'MediaRouter',
 	'DialMediaRouteProvider',
+	'CalculatorTool',
+	'CrashedTabFinder',
+	'AutofillServerCommunication',
+	'BackgroundTracing',
+	'NtpTiles',
+	'OneGoogleBar',
+	'ReadLater',
+	'NTPArticleSuggestions',
+	'CrossDeviceSync',
+	'PrivacySandboxSettings4',
+	'SidePanelPinning',
+	'HistoryEmbeddings',
+	'PrivacySandboxPromptV2',
+	'GlobalMediaControls',
+	'ComposeService',
+	'AutofillFeature',
+	'NTPSigninPromo',
+	'Prerender2',
+	'TabGroupsSave',
+];
+
+export const ANTI_DETECTION_FLAGS = [
+	'--disable-blink-features=AutomationControlled',
+	'--disable-features=AutomationControlled',
+];
+
+export const CONTAINER_FLAGS = [
+	'--no-sandbox',
+	'--disable-gpu',
+	'--disable-software-rasterizer',
+	'--disable-setuid-sandbox',
+	'--single-process',
+];
+
+export const RELAXED_SECURITY_FLAGS = [
+	'--disable-web-security',
+	'--disable-site-isolation-trials',
+	'--disable-features=IsolateOrigins,site-per-process',
+];
+
+export const REPRODUCIBLE_RENDER_FLAGS = [
+	'--deterministic-mode',
+	'--disable-skia-runtime-opts',
+	'--disable-font-subpixel-positioning',
+	'--force-color-profile=srgb',
