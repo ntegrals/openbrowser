@@ -223,3 +223,24 @@ export function isNewTabPage(url: string): boolean {
  * Remove unpaired surrogates from a string to prevent JSON serialization issues.
  */
 export function sanitizeSurrogates(text: string): string {
+	return text.replace(
+		/[\uD800-\uDBFF](?![\uDC00-\uDFFF])|(?<![\uD800-\uDBFF])[\uDC00-\uDFFF]/g,
+		'\uFFFD',
+	);
+}
+
+const URL_REGEX = /https?:\/\/[^\s<>"{}|\\^`\[\]]+/g;
+
+/**
+ * Extract all URLs from a text string.
+ */
+export function extractUrls(text: string): string[] {
+	return [...text.matchAll(URL_REGEX)].map((m) => m[0]);
+}
+
+/**
+ * Escape special regex characters in a string.
+ */
+export function escapeRegExp(string: string): string {
+	return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
