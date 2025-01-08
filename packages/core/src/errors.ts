@@ -98,3 +98,53 @@ export class ModelThrottledError extends ModelError {
 }
 
 export class CommandFailedError extends OpenBrowserError {
+	public readonly toolName: string;
+
+	constructor(toolName: string, message: string, options?: ErrorOptions) {
+		super(`Tool "${toolName}" failed: ${message}`, options);
+		this.name = 'CommandFailedError';
+		this.toolName = toolName;
+	}
+}
+
+export class ContextualViewportError extends ViewportError {
+	public readonly pageUrl: string;
+	public readonly pageTitle: string;
+	public readonly stepNumber: number;
+
+	constructor(
+		message: string,
+		context: { pageUrl: string; pageTitle: string; stepNumber: number },
+		options?: ErrorOptions,
+	) {
+		super(
+			`[Step ${context.stepNumber}] ${message} (url: ${context.pageUrl})`,
+			options,
+		);
+		this.name = 'ContextualViewportError';
+		this.pageUrl = context.pageUrl;
+		this.pageTitle = context.pageTitle;
+		this.stepNumber = context.stepNumber;
+	}
+}
+
+export class ProviderError extends ModelError {
+	public readonly provider: string;
+	public readonly statusCode?: number;
+
+	constructor(
+		provider: string,
+		message: string,
+		statusCode?: number,
+		options?: ErrorOptions,
+	) {
+		super(`[${provider}] ${message}`, options);
+		this.name = 'ProviderError';
+		this.provider = provider;
+		this.statusCode = statusCode;
+	}
+
+	get isRetryable(): boolean {
+		if (this.statusCode === undefined) return false;
+		return this.statusCode === 429 || this.statusCode >= 500;
+	}
