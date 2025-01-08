@@ -38,3 +38,43 @@ export class EventHub<
 	}
 
 	emit<K extends keyof EventMap & string>(event: K, payload: EventMap[K]): void {
+		this.recordHistory(event, payload);
+		const handlers = this.handlers.get(event);
+		if (handlers) {
+			for (const handler of handlers) {
+				try {
+					handler(payload);
+				} catch (error) {
+					console.error(`Error in event handler for "${event}":`, error);
+				}
+			}
+		}
+	}
+
+	onRequest<K extends keyof RequestMap & string>(
+		event: K,
+		handler: RequestHandler<RequestMap[K]['request'], RequestMap[K]['response']>,
+	): () => void {
+		this.requestHandlers.set(event, handler as RequestHandler);
+		return () => {
+			this.requestHandlers.delete(event);
+		};
+	}
+
+	async request<K extends keyof RequestMap & string>(
+		event: K,
+		payload: RequestMap[K]['request'],
+		timeoutMs = 30000,
+	): Promise<RequestMap[K]['response']> {
+		const handler = this.requestHandlers.get(event);
+		if (!handler) {
+			throw new Error(`No handler registered for request "${event}"`);
+		}
+
+		const result = await Promise.race([
+			handler(payload),
+			new Promise<never>((_, reject) =>
+				setTimeout(() => reject(new Error(`Request "${event}" timed out after ${timeoutMs}ms`)), timeoutMs),
+			),
+		]);
+
