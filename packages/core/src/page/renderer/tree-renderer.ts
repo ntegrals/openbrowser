@@ -278,3 +278,43 @@ export class TreeRenderer {
 				!this.hasInteractiveDescendant(child)
 			) {
 				while (
+					runEnd < children.length &&
+					children[runEnd].nodeType === 'element' &&
+					children[runEnd].tagName === child.tagName &&
+					!children[runEnd].isInteractive &&
+					!this.hasInteractiveDescendant(children[runEnd])
+				) {
+					runEnd++;
+				}
+			}
+
+			const runLength = runEnd - i;
+			if (runLength > threshold) {
+				// Show first 3, then summarize
+				const showCount = 3;
+				for (let j = i; j < i + showCount && j < runEnd; j++) {
+					this.serializeNode(children[j], lines, depth, selectorMap, ctx, maxElements);
+				}
+				const indent = '\t'.repeat(depth);
+				lines.push(`${indent}... and ${runLength - showCount} more <${child.tagName}> elements`);
+				i = runEnd;
+			} else {
+				this.serializeNode(child, lines, depth, selectorMap, ctx, maxElements);
+				i++;
+			}
+		}
+	}
+
+	/**
+	 * Check if a node is a redundant wrapper: single visible child, no interactive
+	 * properties, no highlight index, generic tag.
+	 */
+	private isRedundantWrapper(node: PageTreeNode): boolean {
+		if (node.highlightIndex !== undefined) return false;
+		if (node.isInteractive) return false;
+
+		const visibleChildren = node.children.filter(
+			(c) => c.isVisible || c.isInteractive || c.nodeType === 'text',
+		);
+
+		if (visibleChildren.length !== 1) return false;
