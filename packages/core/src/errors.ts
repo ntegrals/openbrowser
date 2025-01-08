@@ -148,3 +148,16 @@ export class ProviderError extends ModelError {
 		if (this.statusCode === undefined) return false;
 		return this.statusCode === 429 || this.statusCode >= 500;
 	}
+}
+
+export class SchemaViolationError extends OpenBrowserError {
+	public readonly field: string;
+	public readonly issues: string[];
+
+	constructor(field: string, issues: string[], options?: ErrorOptions) {
+		super(`Validation failed for "${field}": ${issues.join('; ')}`, options);
+		this.name = 'SchemaViolationError';
+		this.field = field;
+		this.issues = issues;
+	}
+}
