@@ -198,3 +198,43 @@ export class TreeRenderer {
 		// Attributes
 		const attrParts: string[] = [];
 		for (const attr of this.options.capturedAttributes) {
+			const value = node.attributes[attr];
+			if (value !== undefined && value !== '') {
+				attrParts.push(`${attr}="${value}"`);
+			}
+		}
+
+		// Prefer AX node name over DOM text when available
+		if (node.role) {
+			attrParts.push(`role="${node.role}"`);
+		}
+		if (node.ariaLabel && !node.attributes['aria-label']) {
+			attrParts.push(`aria-label="${node.ariaLabel}"`);
+		}
+
+		if (attrParts.length > 0) {
+			parts.push(` ${attrParts.join(' ')}`);
+		}
+
+		// Input value
+		if (node.inputValue !== undefined) {
+			parts.push(` value="${node.inputValue}"`);
+		}
+
+		parts.push('>');
+
+		// Inline text for leaf elements
+		const inlineText = this.getInlineText(node);
+		if (inlineText) {
+			parts.push(inlineText);
+			parts.push(`</${node.tagName}>`);
+			lines.push(`${indent}${parts.join('')}`);
+			return;
+		}
+
+		lines.push(`${indent}${parts.join('')}`);
+
+		// Deduplicate similar siblings
+		if (this.options.deduplicateSiblings) {
+			this.serializeChildrenWithDedup(node.children, lines, depth + 1, selectorMap, ctx, maxElements);
+		} else {
