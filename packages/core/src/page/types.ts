@@ -178,3 +178,21 @@ export interface CDPSnapshotResult {
 			layoutIndex: number[];
 			bounds: number[][];
 		};
+		strings: string[];
+	}>;
+}
+
+export interface AXNode {
+	nodeId: string;
+	role: { value: string };
+	name?: { value: string };
+	description?: { value: string };
+	value?: { value: string };
+	properties?: Array<{
+		name: string;
+		value: { value: unknown };
+	}>;
+	children?: AXNode[];
+	backendDOMNodeId?: number;
+	ignored?: boolean;
+}
