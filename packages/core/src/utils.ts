@@ -178,3 +178,48 @@ export function dedent(str: string): string {
 	return lines.map((line) => line.slice(minIndent)).join('\n');
 }
 
+// ── URL utilities ──
+
+/**
+ * Match a URL against a domain pattern like "*.example.com" or "example.com/path/*".
+ * More comprehensive than matchesUrlPattern — handles port stripping, www normalization.
+ */
+export function matchUrlWithDomainPattern(url: string, pattern: string): boolean {
+	try {
+		const urlObj = new URL(url);
+		const urlHost = urlObj.hostname.replace(/^www\./, '');
+
+		// Pattern can be a plain domain, wildcard domain, or full URL pattern
+		if (pattern.startsWith('*.')) {
+			const base = pattern.slice(2);
+			return urlHost === base || urlHost.endsWith(`.${base}`);
+		}
+
+		// Try parsing as URL
+		const patternHost = pattern.includes('://')
+			? new URL(pattern).hostname.replace(/^www\./, '')
+			: pattern.replace(/^www\./, '').split('/')[0];
+
+		return urlHost === patternHost;
+	} catch {
+		return url.includes(pattern);
+	}
+}
+
+const NEW_TAB_URLS = new Set([
+	'about:blank',
+	'about:newtab',
+	'chrome://newtab/',
+	'chrome://new-tab-page/',
+	'edge://newtab/',
+	'about:home',
+]);
+
+export function isNewTabPage(url: string): boolean {
+	return NEW_TAB_URLS.has(url) || url === '' || url === 'about:blank';
+}
+
+/**
+ * Remove unpaired surrogates from a string to prevent JSON serialization issues.
+ */
+export function sanitizeSurrogates(text: string): string {
