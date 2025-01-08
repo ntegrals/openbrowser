@@ -88,3 +88,48 @@ export const REPRODUCIBLE_RENDER_FLAGS = [
 	'--disable-skia-runtime-opts',
 	'--disable-font-subpixel-positioning',
 	'--force-color-profile=srgb',
+	'--disable-lcd-text',
+];
+
+/**
+ * Builder pattern for browser profile configuration.
+ * Replaces the Python ViewportConfig with a fluent API.
+ */
+export class LaunchProfile {
+	private options: Partial<LaunchOptions> = {};
+	private _stealthMode = false;
+	private _dockerMode = false;
+	private _deterministicRendering = false;
+	private _maxIframes = 3;
+	private _downloadsPath?: string;
+	private _extensions: string[] = [];
+
+	static create(): LaunchProfile {
+		return new LaunchProfile();
+	}
+
+	headless(value = true): this {
+		this.options.headless = value;
+		return this;
+	}
+
+	relaxedSecurity(value = true): this {
+		this.options.relaxedSecurity = value;
+		return this;
+	}
+
+	windowSize(width: number, height: number): this {
+		this.options.windowWidth = width;
+		this.options.windowHeight = height;
+		return this;
+	}
+
+	proxy(server: string, username?: string, password?: string): this {
+		this.options.proxy = { server, username, password };
+		return this;
+	}
+
+	userDataDir(dir: string): this {
+		this.options.userDataDir = dir;
+		return this;
+	}
