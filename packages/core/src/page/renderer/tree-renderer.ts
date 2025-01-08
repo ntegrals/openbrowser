@@ -318,3 +318,43 @@ export class TreeRenderer {
 		);
 
 		if (visibleChildren.length !== 1) return false;
+
+		const genericTags = new Set(['div', 'span', 'section', 'article', 'main']);
+		if (!genericTags.has(node.tagName)) return false;
+
+		// Check containment: does the parent rect fully contain the child rect?
+		if (node.rect && visibleChildren[0].rect) {
+			const parentArea = node.rect.width * node.rect.height;
+			const childArea = visibleChildren[0].rect.width * visibleChildren[0].rect.height;
+			if (parentArea > 0 && childArea / parentArea > this.options.containmentThreshold) {
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	private getInlineText(node: PageTreeNode): string | null {
+		if (node.children.length === 0) {
+			return node.text?.trim() || null;
+		}
+		if (
+			node.children.length === 1 &&
+			node.children[0].nodeType === 'text' &&
+			node.children[0].text
+		) {
+			return node.children[0].text.trim();
+		}
+		return null;
+	}
+
+	private hasVisibleDescendant(node: PageTreeNode): boolean {
+		for (const child of node.children) {
+			if (child.isVisible || child.isInteractive) return true;
+			if (this.hasVisibleDescendant(child)) return true;
+		}
+		return false;
+	}
+
+	private hasInteractiveDescendant(node: PageTreeNode): boolean {
+		for (const child of node.children) {
