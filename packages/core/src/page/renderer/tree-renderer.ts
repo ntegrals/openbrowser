@@ -358,3 +358,43 @@ export class TreeRenderer {
 
 	private hasInteractiveDescendant(node: PageTreeNode): boolean {
 		for (const child of node.children) {
+			if (child.isInteractive || child.highlightIndex !== undefined) return true;
+			if (this.hasInteractiveDescendant(child)) return true;
+		}
+		return false;
+	}
+
+	private collectInteractiveElements(
+		node: PageTreeNode,
+		result: PageTreeNode[],
+	): void {
+		if (node.highlightIndex !== undefined && node.isVisible) {
+			result.push(node);
+		}
+		for (const child of node.children) {
+			this.collectInteractiveElements(child, result);
+		}
+	}
+
+	private buildCssSelector(node: PageTreeNode): string {
+		const parts: string[] = [];
+		let current: PageTreeNode | undefined = node;
+
+		while (current && current.tagName !== 'html') {
+			let selector = current.tagName;
+
+			if (current.attributes['id']) {
+				selector = `#${current.attributes['id']}`;
+				parts.unshift(selector);
+				break;
+			}
+
+			if (current.parentNode) {
+				const siblings = current.parentNode.children.filter(
+					(c) => c.tagName === current!.tagName,
+				);
+				if (siblings.length > 1) {
+					const idx = siblings.indexOf(current) + 1;
+					selector += `:nth-of-type(${idx})`;
+				}
+			}
