@@ -118,3 +118,63 @@ export interface RenderedPageState {
 	elementCount: number;
 	interactiveElementCount: number;
 	scrollPosition: { x: number; y: number };
+	viewportSize: { width: number; height: number };
+	documentSize: { width: number; height: number };
+	pixelsAbove: number;
+	pixelsBelow: number;
+}
+
+export interface CDPDOMNode {
+	nodeType: number;
+	nodeName: string;
+	nodeValue: string;
+	backendNodeId: number;
+	childNodeIndexes?: number[];
+	attributes?: string[];
+	parentIndex?: number;
+	contentDocumentIndex?: number;
+	shadowRootType?: string;
+	isClickable?: boolean;
+	inputValue?: { value: string; type?: string };
+	currentSourceURL?: string;
+	textValue?: string;
+	layoutNodeIndex?: number;
+}
+
+export interface CDPLayoutNode {
+	nodeIndex: number;
+	bounds: number[];
+	text?: string;
+	stackingContexts?: { index: number }[];
+	paintOrder?: number;
+	isStackingContext?: boolean;
+}
+
+export interface CDPSnapshotResult {
+	documents: Array<{
+		nodes: {
+			nodeType: number[];
+			nodeName: number[];
+			nodeValue: number[];
+			backendNodeId: number[];
+			childNodeIndexes?: number[][];
+			attributes: Array<number[]>;
+			parentIndex: number[];
+			contentDocumentIndex?: { index: number[] };
+			shadowRootType?: { index: number[]; value: number[] };
+			isClickable?: { index: number[] };
+			inputValue?: { index: number[]; value: number[] };
+			currentSourceURL?: { index: number[]; value: number[] };
+		};
+		layout: {
+			nodeIndex: number[];
+			bounds: number[][];
+			text: number[];
+			stackingContexts?: { index: number[] };
+			paintOrder?: number[];
+			styles: number[][];
+		};
+		textBoxes: {
+			layoutIndex: number[];
+			bounds: number[][];
+		};
