@@ -58,3 +58,63 @@ export interface PageTreeNode {
 	attributes: Record<string, string>;
 	children: PageTreeNode[];
 
+	// Layout info
+	isVisible: boolean;
+	rect?: DOMRect;
+
+	// A11y info
+	role?: string;
+	ariaLabel?: string;
+	ariaExpanded?: boolean;
+
+	// Interaction info
+	isInteractive: boolean;
+	isClickable: boolean;
+	isEditable: boolean;
+	isScrollable: boolean;
+
+	// Index for LLM reference
+	highlightIndex?: ElementRef;
+
+	// Parent reference (not serialized)
+	parentNode?: PageTreeNode;
+
+	// CDP node info
+	backendNodeId?: number;
+	nodeId?: number;
+
+	// Selector info
+	cssSelector?: string;
+	xpath?: string;
+
+	// Shadow DOM
+	isShadowRoot?: boolean;
+	shadowChildren?: PageTreeNode[];
+
+	// Input state
+	inputValue?: string;
+	isChecked?: boolean;
+	selectedOption?: string;
+
+	// Paint order for z-index filtering
+	paintOrder?: number;
+}
+
+export interface SelectorIndex {
+	[index: number]: {
+		cssSelector: string;
+		xpath?: string;
+		backendNodeId?: number;
+		tagName: string;
+		role?: string;
+		ariaLabel?: string;
+		text?: string;
+	};
+}
+
+export interface RenderedPageState {
+	tree: string;
+	selectorMap: SelectorIndex;
+	elementCount: number;
+	interactiveElementCount: number;
+	scrollPosition: { x: number; y: number };
