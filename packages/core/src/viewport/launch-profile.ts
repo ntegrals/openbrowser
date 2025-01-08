@@ -133,3 +133,48 @@ export class LaunchProfile {
 		this.options.userDataDir = dir;
 		return this;
 	}
+
+	browserBinary(path: string): this {
+		this.options.browserBinaryPath = path;
+		return this;
+	}
+
+	persistAfterClose(value = true): this {
+		this.options.persistAfterClose = value;
+		return this;
+	}
+
+	channel(name: string): this {
+		this.options.channelName = name;
+		return this;
+	}
+
+	extraArgs(...args: string[]): this {
+		this.options.extraArgs = [...(this.options.extraArgs ?? []), ...args];
+		return this;
+	}
+
+	stealthMode(value = true): this {
+		this._stealthMode = value;
+		return this;
+	}
+
+	dockerMode(value = true): this {
+		this._dockerMode = value;
+		return this;
+	}
+
+	deterministicRendering(value = true): this {
+		this._deterministicRendering = value;
+		return this;
+	}
+
+	downloadsPath(path: string): this {
+		this._downloadsPath = path;
+		return this;
+	}
+
+	maxIframes(max: number): this {
+		this._maxIframes = max;
+		return this;
+	}
