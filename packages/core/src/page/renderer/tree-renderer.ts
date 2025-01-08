@@ -118,3 +118,43 @@ export class TreeRenderer {
 			scrollPosition,
 			viewportSize,
 			documentSize,
+			pixelsAbove,
+			pixelsBelow,
+		};
+	}
+
+	private serializeNode(
+		node: PageTreeNode,
+		lines: string[],
+		depth: number,
+		selectorMap: SelectorIndex,
+		ctx: { count: number; maxReached: boolean },
+		maxElements: number,
+	): void {
+		if (depth > this.options.maxDepth) return;
+		if (ctx.maxReached) return;
+		if (!node.isVisible && node.nodeType === 'element' && node.children.length === 0) return;
+
+		const indent = '\t'.repeat(depth);
+
+		if (node.nodeType === 'text') {
+			const text = node.text?.trim();
+			if (text) {
+				lines.push(`${indent}${text}`);
+			}
+			return;
+		}
+
+		// Skip invisible non-interactive containers with no visible children
+		if (!node.isVisible && !node.isInteractive && !this.hasVisibleDescendant(node)) {
+			return;
+		}
+
+		// Collapse SVGs to placeholder, with containment deduplication for nested SVGs.
+		// When an SVG contains only other SVG elements (nested wrappers), we collapse
+		// them into a single placeholder using the deepest label we can find.
+		if (this.options.collapseSvg && node.tagName === 'svg') {
+			const desc = this.resolveSvgDescription(node);
+			if (node.highlightIndex !== undefined && selectorMap[node.highlightIndex]) {
+				lines.push(`${indent}[${node.highlightIndex}]<svg>${desc}</svg>`);
+			} else {
