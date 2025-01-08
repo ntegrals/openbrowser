@@ -88,3 +88,48 @@ export async function withDeadline<T>(
 }
 
 export class Timer {
+	private startTime: number;
+
+	constructor() {
+		this.startTime = Date.now();
+	}
+
+	elapsed(): number {
+		return Date.now() - this.startTime;
+	}
+
+	elapsedSeconds(): number {
+		return this.elapsed() / 1000;
+	}
+
+	reset(): void {
+		this.startTime = Date.now();
+	}
+}
+
+// ── Retry ──
+
+export interface RetryOptions {
+	maxRetries: number;
+	initialDelayMs: number;
+	maxDelayMs: number;
+	backoffFactor: number;
+}
+
+const DEFAULT_RETRY: RetryOptions = {
+	maxRetries: 3,
+	initialDelayMs: 1000,
+	maxDelayMs: 30000,
+	backoffFactor: 2,
+};
+
+export async function withRetry<T>(
+	fn: () => Promise<T>,
+	options: Partial<RetryOptions> = {},
+): Promise<T> {
+	const opts = { ...DEFAULT_RETRY, ...options };
+	let lastError: Error | undefined;
+	let delay = opts.initialDelayMs;
+
+	for (let attempt = 0; attempt <= opts.maxRetries; attempt++) {
+		try {
