@@ -178,3 +178,48 @@ export class LaunchProfile {
 		this._maxIframes = max;
 		return this;
 	}
+
+	addExtension(extensionPath: string): this {
+		this._extensions.push(extensionPath);
+		return this;
+	}
+
+	/**
+	 * Auto-detect and apply Docker settings if running inside a container.
+	 */
+	autoDetect(): this {
+		if (Config.isDocker()) {
+			this._dockerMode = true;
+			// Force headless in Docker if no display
+			if (!Config.hasDisplay()) {
+				this.options.headless = true;
+			}
+		}
+		return this;
+	}
+
+	build(): LaunchOptions {
+		const args = [...CHROME_AUTOMATION_FLAGS];
+
+		// Disabled components
+		args.push(`--disable-component-extensions-with-background-pages`);
+		args.push(`--disable-features=${CHROME_STRIPPED_FEATURES.join(',')}`);
+
+		// Mode-specific args
+		if (this._stealthMode) {
+			args.push(...ANTI_DETECTION_FLAGS);
+		}
+
+		if (this._dockerMode) {
+			args.push(...CONTAINER_FLAGS);
+		}
+
+		if (this._deterministicRendering) {
+			args.push(...REPRODUCIBLE_RENDER_FLAGS);
+		}
+
+		if (this.options.relaxedSecurity) {
+			args.push(...RELAXED_SECURITY_FLAGS);
+		}
+
+		// Window size
