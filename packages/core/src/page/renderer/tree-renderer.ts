@@ -38,3 +38,43 @@ export class TreeRenderer {
 	}
 
 	serializeTree(
+		root: PageTreeNode,
+		scrollPosition: { x: number; y: number },
+		viewportSize: { width: number; height: number },
+		documentSize: { width: number; height: number },
+	): RenderedPageState {
+		const selectorMap: SelectorIndex = {};
+		const interactiveElements: PageTreeNode[] = [];
+
+		// Collect interactive elements
+		this.collectInteractiveElements(root, interactiveElements);
+
+		// Filter by paint order if enabled
+		let visibleElements = this.options.filterPaintOrder
+			? filterByPaintOrder(interactiveElements)
+			: interactiveElements;
+
+		// Enhanced bounding-box off-screen filtering:
+		// Remove elements that are clearly off-screen (negative coords beyond
+		// a reasonable threshold, or positioned entirely past the document bounds).
+		const offScreenHidden: PageTreeNode[] = [];
+		visibleElements = this.filterOffScreenElements(
+			visibleElements,
+			scrollPosition,
+			viewportSize,
+			documentSize,
+			offScreenHidden,
+		);
+
+		// Build selector map
+		for (const node of visibleElements) {
+			if (node.highlightIndex !== undefined) {
+				selectorMap[node.highlightIndex] = {
+					cssSelector: node.cssSelector ?? this.buildCssSelector(node),
+					xpath: node.xpath,
+					backendNodeId: node.backendNodeId,
+					tagName: node.tagName,
+					role: node.role,
+					ariaLabel: node.ariaLabel,
+					text: node.text?.trim()?.slice(0, 100),
+				};
