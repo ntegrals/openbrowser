@@ -98,3 +98,43 @@ export class Logger {
 		this.log(LogLevel.DEBUG, message, ...args);
 	}
 
+	info(message: string, ...args: unknown[]): void {
+		this.log(LogLevel.INFO, message, ...args);
+	}
+
+	warn(message: string, ...args: unknown[]): void {
+		this.log(LogLevel.WARN, message, ...args);
+	}
+
+	error(message: string, ...args: unknown[]): void {
+		this.log(LogLevel.ERROR, message, ...args);
+	}
+
+	private log(level: LogLevel, message: string, ...args: unknown[]): void {
+		if (!this.isEnabled(level)) return;
+
+		const formatted = formatMessage(level, this.name, message);
+
+		switch (level) {
+			case LogLevel.ERROR:
+				console.error(formatted, ...args);
+				break;
+			case LogLevel.WARN:
+				console.warn(formatted, ...args);
+				break;
+			default:
+				console.log(formatted, ...args);
+		}
+	}
+}
+
+const loggerCache = new Map<string, Logger>();
+
+export function createLogger(name: string): Logger {
+	let logger = loggerCache.get(name);
+	if (!logger) {
+		logger = new Logger(name);
+		loggerCache.set(name, logger);
+	}
+	return logger;
+}
