@@ -48,3 +48,53 @@ function formatTimestamp(): string {
 }
 
 function formatMessage(
+	level: LogLevel,
+	name: string,
+	message: string,
+): string {
+	const parts: string[] = [];
+
+	if (logTimestamps) {
+		const ts = formatTimestamp();
+		parts.push(useColors ? `${DIM}${ts}${RESET}` : ts);
+	}
+
+	const levelName = LEVEL_NAMES[level] ?? 'UNKNOWN';
+	const color = LEVEL_COLORS[level] ?? '';
+
+	if (useColors) {
+		parts.push(`${color}${levelName.padEnd(5)}${RESET}`);
+		parts.push(`${BOLD}[${name}]${RESET}`);
+	} else {
+		parts.push(levelName.padEnd(5));
+		parts.push(`[${name}]`);
+	}
+
+	parts.push(message);
+	return parts.join(' ');
+}
+
+export class Logger {
+	readonly name: string;
+	private level: LogLevel | null = null;
+
+	constructor(name: string) {
+		this.name = name;
+	}
+
+	setLevel(level: LogLevel): void {
+		this.level = level;
+	}
+
+	getEffectiveLevel(): LogLevel {
+		return this.level ?? globalLevel;
+	}
+
+	isEnabled(level: LogLevel): boolean {
+		return level >= this.getEffectiveLevel();
+	}
+
+	debug(message: string, ...args: unknown[]): void {
+		this.log(LogLevel.DEBUG, message, ...args);
+	}
+
