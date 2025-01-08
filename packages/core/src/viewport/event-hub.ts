@@ -78,3 +78,37 @@ export class EventHub<
 			),
 		]);
 
+		return result as RequestMap[K]['response'];
+	}
+
+	off<K extends keyof EventMap & string>(event: K, handler?: Handler<EventMap[K]>): void {
+		if (handler) {
+			this.handlers.get(event)?.delete(handler as Handler);
+		} else {
+			this.handlers.delete(event);
+		}
+	}
+
+	removeAllListeners(): void {
+		this.handlers.clear();
+		this.requestHandlers.clear();
+	}
+
+	getHistory(event?: string): Array<{ event: string; payload: unknown; timestamp: number }> {
+		if (event) {
+			return this.history.filter((h) => h.event === event);
+		}
+		return [...this.history];
+	}
+
+	clearHistory(): void {
+		this.history = [];
+	}
+
+	private recordHistory(event: string, payload: unknown): void {
+		this.history.push({ event, payload, timestamp: Date.now() });
+		if (this.history.length > this.maxHistory) {
+			this.history = this.history.slice(-this.maxHistory);
+		}
+	}
+}
