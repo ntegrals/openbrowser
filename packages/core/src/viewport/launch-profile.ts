@@ -223,3 +223,36 @@ export class LaunchProfile {
 		}
 
 		// Window size
+		const width = this.options.windowWidth ?? 1280;
+		const height = this.options.windowHeight ?? 1100;
+		args.push(`--window-size=${width},${height}`);
+
+		// Extensions
+		if (this._extensions.length > 0) {
+			args.push(`--load-extension=${this._extensions.join(',')}`);
+		}
+
+		// Downloads
+		if (this._downloadsPath) {
+			args.push(`--download-default-directory=${this._downloadsPath}`);
+		}
+
+		// User extra args (last, so they can override)
+		if (this.options.extraArgs) {
+			args.push(...this.options.extraArgs);
+		}
+
+		return {
+			headless: this.options.headless ?? true,
+			relaxedSecurity: this.options.relaxedSecurity ?? false,
+			extraArgs: args,
+			windowWidth: width,
+			windowHeight: height,
+			proxy: this.options.proxy,
+			userDataDir: this.options.userDataDir,
+			browserBinaryPath: this.options.browserBinaryPath,
+			persistAfterClose: this.options.persistAfterClose ?? false,
+			channelName: this.options.channelName,
+		};
+	}
+}
