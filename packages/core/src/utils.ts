@@ -43,3 +43,48 @@ export function isUrlPermitted(
 	allowedUrls?: string[],
 	blockedUrls?: string[],
 ): boolean {
+	if (blockedUrls?.some((pattern) => matchesUrlPattern(url, pattern))) {
+		return false;
+	}
+	if (allowedUrls && allowedUrls.length > 0) {
+		return allowedUrls.some((pattern) => matchesUrlPattern(url, pattern));
+	}
+	return true;
+}
+
+// ── Text utilities ──
+
+export function sanitizeText(text: string): string {
+	return text
+		.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '')
+		.replace(/\s+/g, ' ')
+		.trim();
+}
+
+export function truncateText(text: string, maxLength: number, suffix = '...'): string {
+	if (text.length <= maxLength) return text;
+	return text.slice(0, maxLength - suffix.length) + suffix;
+}
+
+export function removeTags(html: string): string {
+	return html.replace(/<[^>]*>/g, '');
+}
+
+// ── Timing ──
+
+export function sleep(ms: number): Promise<void> {
+	return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+export async function withDeadline<T>(
+	promise: Promise<T>,
+	ms: number,
+	message = 'Operation timed out',
+): Promise<T> {
+	const timer = new Promise<never>((_, reject) =>
+		setTimeout(() => reject(new Error(message)), ms),
+	);
+	return Promise.race([promise, timer]);
+}
+
+export class Timer {
