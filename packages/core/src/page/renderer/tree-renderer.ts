@@ -518,3 +518,43 @@ export class TreeRenderer {
 	 * Get a short human-readable description of a node for hint text.
 	 */
 	private getNodeDescription(node: PageTreeNode): string {
+		if (node.ariaLabel) return node.ariaLabel.slice(0, 60);
+		if (node.text) return node.text.trim().slice(0, 60);
+		if (node.attributes['title']) return node.attributes['title'].slice(0, 60);
+		if (node.attributes['placeholder']) return node.attributes['placeholder'].slice(0, 60);
+		return node.tagName;
+	}
+
+	/**
+	 * Resolve the best description for an SVG, traversing nested SVG wrappers
+	 * to find the deepest aria-label or title. This collapses redundant
+	 * nested SVG containers into a single description.
+	 */
+	private resolveSvgDescription(node: PageTreeNode): string {
+		// Check the current node for labels
+		const label = node.ariaLabel || node.attributes['aria-label'] || '';
+		const title = node.attributes['title'] || '';
+
+		// Look for nested SVGs that might carry a better description
+		let deepLabel = '';
+		const visitSvgChildren = (n: PageTreeNode): void => {
+			for (const child of n.children) {
+				if (child.tagName === 'title' && child.text) {
+					deepLabel = child.text.trim();
+					return;
+				}
+				if (child.tagName === 'svg') {
+					// Nested SVG -- check it for labels
+					const nested =
+						child.ariaLabel ||
+						child.attributes['aria-label'] ||
+						child.attributes['title'] ||
+						'';
+					if (nested) {
+						deepLabel = nested;
+						return;
+					}
+					// Keep traversing deeper
+					visitSvgChildren(child);
+					if (deepLabel) return;
+				}
