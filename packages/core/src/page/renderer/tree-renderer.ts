@@ -558,3 +558,15 @@ export class TreeRenderer {
 					visitSvgChildren(child);
 					if (deepLabel) return;
 				}
+				if (SVG_TAGS.has(child.tagName)) {
+					visitSvgChildren(child);
+					if (deepLabel) return;
+				}
+			}
+		};
+
+		visitSvgChildren(node);
+
+		return label || title || deepLabel || 'icon';
+	}
+}
