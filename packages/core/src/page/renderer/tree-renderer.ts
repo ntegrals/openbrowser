@@ -398,3 +398,43 @@ export class TreeRenderer {
 					selector += `:nth-of-type(${idx})`;
 				}
 			}
+
+			parts.unshift(selector);
+			current = current.parentNode;
+		}
+
+		return parts.join(' > ');
+	}
+
+	/**
+	 * Enhanced off-screen element filtering.
+	 * Removes interactive elements whose bounding boxes fall entirely outside
+	 * reasonable document bounds, or that have degenerate rects (negative width/height,
+	 * extremely large offsets indicating hidden off-canvas positioning).
+	 * Elements that are simply scrolled out of the current viewport are NOT removed --
+	 * they are collected into the offScreenHidden array for hint formatting.
+	 */
+	private filterOffScreenElements(
+		elements: PageTreeNode[],
+		scrollPosition: { x: number; y: number },
+		viewportSize: { width: number; height: number },
+		documentSize: { width: number; height: number },
+		offScreenHidden: PageTreeNode[],
+	): PageTreeNode[] {
+		// Anything positioned more than this many pixels outside the document
+		// is almost certainly a hidden/off-canvas element (e.g. left: -9999px).
+		const offCanvasThreshold = 5000;
+
+		const vpTop = scrollPosition.y;
+		const vpBottom = scrollPosition.y + viewportSize.height;
+		const vpLeft = scrollPosition.x;
+		const vpRight = scrollPosition.x + viewportSize.width;
+
+		const result: PageTreeNode[] = [];
+
+		for (const node of elements) {
+			if (!node.rect) {
+				result.push(node);
+				continue;
+			}
+
