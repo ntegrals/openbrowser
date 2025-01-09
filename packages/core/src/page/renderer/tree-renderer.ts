@@ -478,3 +478,43 @@ export class TreeRenderer {
 	}
 
 	/**
+	 * Format hidden element hints for the serialized output.
+	 * Groups off-screen elements by direction and provides scroll distance estimates.
+	 */
+	private formatHiddenElementHints(
+		offScreenElements: PageTreeNode[],
+		scrollPosition: { x: number; y: number },
+		viewportSize: { width: number; height: number },
+	): string[] {
+		if (offScreenElements.length === 0) return [];
+
+		const vpBottom = scrollPosition.y + viewportSize.height;
+		const vpTop = scrollPosition.y;
+		const hints: string[] = [];
+
+		for (const node of offScreenElements) {
+			if (!node.rect) continue;
+			const desc = this.getNodeDescription(node);
+			const elementY = node.rect.y;
+
+			if (elementY > vpBottom) {
+				const pxBelow = elementY - vpBottom;
+				const pagesBelow = (pxBelow / viewportSize.height).toFixed(1);
+				hints.push(`  ${node.tagName} "${desc}" ~${pagesBelow} pages below`);
+			} else if (elementY + node.rect.height < vpTop) {
+				const pxAbove = vpTop - (elementY + node.rect.height);
+				const pagesAbove = (pxAbove / viewportSize.height).toFixed(1);
+				hints.push(`  ${node.tagName} "${desc}" ~${pagesAbove} pages above`);
+			} else {
+				// Off to the side
+				hints.push(`  ${node.tagName} "${desc}" off-screen horizontally`);
+			}
+		}
+
+		return hints;
+	}
+
+	/**
+	 * Get a short human-readable description of a node for hint text.
+	 */
+	private getNodeDescription(node: PageTreeNode): string {
