@@ -438,3 +438,43 @@ export class TreeRenderer {
 				continue;
 			}
 
+			const { x, y, width, height } = node.rect;
+
+			// Degenerate rects: negative dimensions or zero-area
+			if (width <= 0 || height <= 0) {
+				continue;
+			}
+
+			// Off-canvas positioning (common CSS hidden pattern: left: -9999px)
+			if (
+				x + width < -offCanvasThreshold ||
+				y + height < -offCanvasThreshold ||
+				x > documentSize.width + offCanvasThreshold ||
+				y > documentSize.height + offCanvasThreshold
+			) {
+				continue;
+			}
+
+			// Check if the element is inside the current viewport
+			const nodeBottom = y + height;
+			const nodeRight = x + width;
+			const inViewport =
+				nodeBottom >= vpTop &&
+				y <= vpBottom &&
+				nodeRight >= vpLeft &&
+				x <= vpRight;
+
+			if (inViewport) {
+				result.push(node);
+			} else {
+				// Off-screen but within reasonable document bounds --
+				// keep it in the selector map but track it for hint section
+				result.push(node);
+				offScreenHidden.push(node);
+			}
+		}
+
+		return result;
+	}
+
+	/**
