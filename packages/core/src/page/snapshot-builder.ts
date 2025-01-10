@@ -238,3 +238,10 @@ export class SnapshotBuilder {
 			attributes: {},
 			children: [],
 			isVisible: false,
+			isInteractive: false,
+			isClickable: false,
+			isEditable: false,
+			isScrollable: false,
+		};
+	}
+}
