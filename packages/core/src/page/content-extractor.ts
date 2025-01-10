@@ -88,3 +88,48 @@ function htmlTableToMarkdown(table: HTMLTableElement): string {
 const KNOWN_LANGUAGES = new Set([
 	'javascript', 'typescript', 'python', 'ruby', 'java', 'go', 'rust', 'c',
 	'cpp', 'csharp', 'swift', 'kotlin', 'scala', 'php', 'perl', 'lua',
+	'bash', 'shell', 'sh', 'zsh', 'powershell', 'sql', 'html', 'css',
+	'scss', 'less', 'json', 'yaml', 'yml', 'xml', 'toml', 'ini',
+	'markdown', 'md', 'jsx', 'tsx', 'graphql', 'r', 'matlab', 'dart',
+	'elixir', 'erlang', 'haskell', 'ocaml', 'clojure', 'vim', 'dockerfile',
+	'makefile', 'cmake', 'protobuf', 'terraform', 'hcl',
+]);
+
+/**
+ * Detect the programming language from a code element's class attribute.
+ * Tries multiple patterns commonly used by syntax highlighters:
+ * - language-xxx (Prism, highlight.js)
+ * - lang-xxx (some highlighters)
+ * - highlight-xxx / hljs xxx
+ * - brush: xxx (SyntaxHighlighter)
+ * - data-lang attribute
+ * - bare class name matching a known language
+ */
+function detectCodeLanguage(codeEl: HTMLElement | null): string {
+	if (!codeEl) return '';
+
+	// Check data-lang attribute first (used by some markdown renderers)
+	const dataLang = codeEl.getAttribute?.('data-lang') ?? '';
+	if (dataLang) return dataLang.toLowerCase();
+
+	const className = codeEl.getAttribute?.('class') ?? '';
+	if (!className) return '';
+
+	// Pattern: language-xxx or lang-xxx
+	const langPrefixMatch = className.match(/(?:language|lang)-(\w+)/);
+	if (langPrefixMatch) return langPrefixMatch[1].toLowerCase();
+
+	// Pattern: highlight-xxx
+	const highlightMatch = className.match(/highlight-(\w+)/);
+	if (highlightMatch) return highlightMatch[1].toLowerCase();
+
+	// Pattern: brush: xxx (SyntaxHighlighter legacy)
+	const brushMatch = className.match(/brush:\s*(\w+)/);
+	if (brushMatch) return brushMatch[1].toLowerCase();
+
+	// Fallback: check if any class token is a known language name
+	const tokens = className.split(/\s+/);
+	for (const token of tokens) {
+		const lower = token.toLowerCase();
+		if (KNOWN_LANGUAGES.has(lower)) return lower;
+	}
