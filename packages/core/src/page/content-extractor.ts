@@ -268,3 +268,48 @@ export async function extractMarkdown(
 	// Append links section if requested
 	if (options?.extractLinks) {
 		const links = await extractLinks(page);
+		if (links.length > 0) {
+			markdown += '\n\n## Links\n';
+			for (const link of links) {
+				const marker = link.isExternal ? ' (external)' : '';
+				markdown += `- [${link.text}](${link.url})${marker}\n`;
+			}
+		}
+	}
+
+	return markdown;
+}
+
+export function htmlToMarkdown(html: string): string {
+	const turndown = getTurndown();
+	const markdown = turndown.turndown(html);
+
+	// Clean up excessive whitespace
+	return markdown
+		.replace(/\n{3,}/g, '\n\n')
+		.replace(/^\s+|\s+$/gm, (match) => match.replace(/ +/g, ''))
+		.trim();
+}
+
+/**
+ * Extract all links from a page as a structured list.
+ */
+export async function extractLinks(
+	page: Page,
+): Promise<Array<{ text: string; url: string; isExternal: boolean }>> {
+	return page.evaluate(() => {
+		const links: Array<{ text: string; url: string; isExternal: boolean }> = [];
+		const currentHost = window.location.hostname;
+
+		for (const anchor of document.querySelectorAll('a[href]')) {
+			const href = anchor.getAttribute('href');
+			if (!href || href.startsWith('#') || href.startsWith('javascript:')) continue;
+
+			let url: string;
+			try {
+				url = new URL(href, window.location.href).href;
+			} catch {
+				continue;
+			}
+
+			const text = (anchor.textContent ?? '').trim().slice(0, 200);
