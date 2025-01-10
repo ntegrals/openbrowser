@@ -453,3 +453,38 @@ export class PageAnalyzer {
 					await page.mouse.click(centerX, centerY);
 					this.recordInteraction(index, selectorInfo.tagName, 'click');
 					return;
+				}
+			} catch {
+				logger.debug(`CDP box model click failed for index ${index}, trying JS fallback`);
+			}
+		}
+
+		// Strategy 2: JS getBoundingClientRect
+		try {
+			const rect = await page.evaluate((sel: string) => {
+				const el = document.querySelector(sel);
+				if (!el) return null;
+				const r = el.getBoundingClientRect();
+				return { x: r.x + r.width / 2, y: r.y + r.height / 2 };
+			}, selectorInfo.cssSelector);
+
+			if (rect) {
+				await page.mouse.click(rect.x, rect.y);
+				this.recordInteraction(index, selectorInfo.tagName, 'click');
+				return;
+			}
+		} catch {
+			logger.debug(`JS rect click failed for index ${index}, trying CSS selector`);
+		}
+
+		// Strategy 3: CSS selector
+		await page.click(selectorInfo.cssSelector, { timeout: 5000 });
+		this.recordInteraction(index, selectorInfo.tagName, 'click');
+	}
+
+	/**
+	 * Click at specific coordinates on the page.
+	 */
+	async clickAtCoordinates(
+		page: Page,
+		x: number,
