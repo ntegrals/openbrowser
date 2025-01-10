@@ -313,3 +313,48 @@ export async function extractLinks(
 			}
 
 			const text = (anchor.textContent ?? '').trim().slice(0, 200);
+			if (!text) continue;
+
+			let isExternal = false;
+			try {
+				isExternal = new URL(url).hostname !== currentHost;
+			} catch {
+				// ignore
+			}
+
+			links.push({ text, url, isExternal });
+		}
+
+		return links;
+	});
+}
+
+export async function extractTextContent(page: Page): Promise<string> {
+	return page.evaluate(() => {
+		const main = document.querySelector('main, article, [role="main"], .content, #content');
+		const element = (main ?? document.body) as HTMLElement | null;
+		return element?.innerText ?? '';
+	});
+}
+
+export function chunkText(text: string, maxChunkSize: number): string[] {
+	if (text.length <= maxChunkSize) return [text];
+
+	const chunks: string[] = [];
+	const paragraphs = text.split(/\n\n+/);
+	let currentChunk = '';
+
+	for (const para of paragraphs) {
+		if (currentChunk.length + para.length + 2 > maxChunkSize) {
+			if (currentChunk) {
+				chunks.push(currentChunk.trim());
+				currentChunk = '';
+			}
+
+			// If a single paragraph is too long, split by sentences
+			if (para.length > maxChunkSize) {
+				const sentences = para.split(/(?<=[.!?])\s+/);
+				for (const sentence of sentences) {
+					if (currentChunk.length + sentence.length + 1 > maxChunkSize) {
+						if (currentChunk) chunks.push(currentChunk.trim());
+						currentChunk = sentence;
