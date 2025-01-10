@@ -418,3 +418,38 @@ export class PageAnalyzer {
 
 			return { selector: result.node.nodeName.toLowerCase() };
 		} catch {
+			return null;
+		}
+	}
+
+	/**
+	 * Click an element using a fallback chain:
+	 * 1. CDP box model (most reliable for overlapping elements)
+	 * 2. JS getBoundingClientRect
+	 * 3. CSS selector click
+	 */
+	async clickElementByIndex(
+		page: Page,
+		cdpSession: CDPSession,
+		index: number,
+	): Promise<void> {
+		const selectorInfo = this.cachedSelectorMap?.[index];
+		if (!selectorInfo) {
+			throw new PageExtractionError(`Element with index ${index} not found in selector map`);
+		}
+
+		// Strategy 1: CDP box model click
+		if (selectorInfo.backendNodeId) {
+			try {
+				const { model } = await cdpSession.send('DOM.getBoxModel', {
+					backendNodeId: selectorInfo.backendNodeId,
+				}) as { model: { content: number[] } };
+
+				if (model?.content) {
+					const [x1, y1, x2, y2, x3, y3, x4, y4] = model.content;
+					const centerX = (x1 + x2 + x3 + x4) / 4;
+					const centerY = (y1 + y2 + y3 + y4) / 4;
+
+					await page.mouse.click(centerX, centerY);
+					this.recordInteraction(index, selectorInfo.tagName, 'click');
+					return;
