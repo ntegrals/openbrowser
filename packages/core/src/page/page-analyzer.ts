@@ -243,3 +243,38 @@ export class PageAnalyzer {
 				const snapshotResult = await cdpSession.send('Target.sendMessageToTarget', {
 					sessionId: iframeSessionId,
 					message: JSON.stringify({
+						id: 1,
+						method: 'DOMSnapshot.captureSnapshot',
+						params: {
+							computedStyles: ['display', 'visibility', 'opacity'],
+							includeDOMRects: true,
+						},
+					}),
+				}) as unknown;
+
+				// The snapshot result comes back as a string via Target protocol
+				// Build a minimal tree node representing the iframe content
+				const iframeNode: PageTreeNode = {
+					tagName: 'iframe',
+					nodeType: 'element',
+					attributes: { src: iframeUrl },
+					children: [],
+					isVisible: true,
+					isInteractive: false,
+					isClickable: false,
+					isEditable: false,
+					isScrollable: false,
+					text: `[cross-origin iframe: ${iframeUrl}]`,
+				};
+
+				// If snapshot returned usable data, try to annotate the node
+				if (snapshotResult && typeof snapshotResult === 'object') {
+					iframeNode.text = `[cross-origin iframe content: ${iframeUrl}]`;
+				}
+
+				return iframeNode;
+			} finally {
+				// Detach from the iframe target to clean up
+				await cdpSession.send('Target.detachFromTarget', {
+					sessionId: iframeSessionId,
+				}).catch(() => {});
