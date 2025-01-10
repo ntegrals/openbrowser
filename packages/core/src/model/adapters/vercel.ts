@@ -138,3 +138,38 @@ export class VercelModelAdapter implements LanguageModel {
 
 function mapFinishReason(
 	reason: string,
+): 'stop' | 'length' | 'content-filter' | 'tool-calls' | 'error' | 'other' {
+	switch (reason) {
+		case 'stop':
+			return 'stop';
+		case 'length':
+			return 'length';
+		case 'content-filter':
+			return 'content-filter';
+		case 'tool-calls':
+			return 'tool-calls';
+		case 'error':
+			return 'error';
+		default:
+			return 'other';
+	}
+}
+
+const PROVIDER_PATTERNS: Array<[RegExp, ModelProvider]> = [
+	[/anthropic|claude/i, 'anthropic'],
+	[/openai|gpt|o1|o3/i, 'openai'],
+	[/google|gemini/i, 'google'],
+	[/mistral/i, 'mistral'],
+	[/deepseek/i, 'deepseek'],
+	[/groq/i, 'groq'],
+	[/fireworks/i, 'fireworks'],
+	[/together/i, 'together'],
+];
+
+function inferProvider(modelId: string, providerHint?: string): ModelProvider {
+	const combined = `${providerHint ?? ''} ${modelId}`;
+	for (const [pattern, provider] of PROVIDER_PATTERNS) {
+		if (pattern.test(combined)) return provider;
+	}
+	return 'custom';
+}
