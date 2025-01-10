@@ -78,3 +78,43 @@ export function optimizeSchemaForModel<T extends ZodTypeAny>(
 			// Keep the first maxVariants-1 variants and add a catch-all object
 			const kept = variants.slice(0, maxVariants - 1);
 			const catchAll = z.object({}).passthrough().describe('Other action (see documentation)');
+			const unionMembers = [...kept, catchAll] as unknown as [ZodTypeAny, ZodTypeAny, ...ZodTypeAny[]];
+			return z.union(unionMembers) as any;
+		}
+	}
+
+	if (schema instanceof z.ZodUnion) {
+		const variants = schema.options as ZodTypeAny[];
+		const maxVariants = options.maxUnionVariants ?? DEFAULTS.maxUnionVariants;
+
+		if (variants.length > maxVariants) {
+			const kept = variants.slice(0, maxVariants - 1);
+			const catchAll = z.object({}).passthrough().describe('Other variant');
+			const unionMembers = [...kept, catchAll] as unknown as [ZodTypeAny, ZodTypeAny, ...ZodTypeAny[]];
+			return z.union(unionMembers) as any;
+		}
+	}
+
+	return schema;
+}
+
+// ── Union collapsing ──
+
+/**
+ * When a oneOf / anyOf has more variants than maxVariants, collapse the
+ * excess into a single permissive object schema.
+ */
+function collapseUnions(
+	schema: Record<string, unknown>,
+	maxVariants: number,
+): Record<string, unknown> {
+	schema = walkSchema(schema, (node) => {
+		const unionKey = node.oneOf ? 'oneOf' : node.anyOf ? 'anyOf' : undefined;
+		if (!unionKey) return node;
+
+		const variants = node[unionKey] as Record<string, unknown>[];
+		if (!Array.isArray(variants) || variants.length <= maxVariants) return node;
+
+		// Keep the first N-1 variants, replace the rest with a permissive catch-all
+		const kept = variants.slice(0, maxVariants - 1);
+		const catchAll: Record<string, unknown> = {
