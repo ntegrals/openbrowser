@@ -208,3 +208,38 @@ export class PageAnalyzer {
 		}
 
 		return { mainTree, iframeTrees };
+	}
+
+	/**
+	 * Attach a CDP session to a cross-origin iframe target and extract its DOM tree.
+	 * Uses Target.getTargets to find the matching iframe target, then attaches a session
+	 * and runs DOMSnapshot.captureSnapshot on it.
+	 */
+	private async extractCrossOriginIframe(
+		cdpSession: CDPSession,
+		iframeUrl: string,
+	): Promise<PageTreeNode | null> {
+		try {
+			const { targetInfos } = await cdpSession.send('Target.getTargets', {}) as unknown as {
+				targetInfos: Array<{ targetId: string; type: string; url: string; attached: boolean }>;
+			};
+
+			const iframeTarget = targetInfos.find(
+				(t) => t.type === 'iframe' && t.url === iframeUrl,
+			);
+			if (!iframeTarget) {
+				logger.debug(`No CDP target found for cross-origin iframe: ${iframeUrl}`);
+				return null;
+			}
+
+			// Attach to the iframe target
+			const { sessionId: iframeSessionId } = await cdpSession.send('Target.attachToTarget', {
+				targetId: iframeTarget.targetId,
+				flatten: true,
+			}) as unknown as { sessionId: string };
+
+			try {
+				// Capture a DOM snapshot from the iframe session
+				const snapshotResult = await cdpSession.send('Target.sendMessageToTarget', {
+					sessionId: iframeSessionId,
+					message: JSON.stringify({
