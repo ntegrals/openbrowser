@@ -313,3 +313,38 @@ export class PageAnalyzer {
 						`${node.tagName} '${desc}' is ~${pagesBelow} pages below`,
 					);
 				} else if (elementY < viewportTop) {
+					const pagesAbove = ((viewportTop - elementY) / viewportSize.height).toFixed(1);
+					const desc = node.ariaLabel || node.text?.trim()?.slice(0, 50) || node.tagName;
+					hints.push(
+						`${node.tagName} '${desc}' is ~${pagesAbove} pages above`,
+					);
+				}
+			}
+			for (const child of node.children) {
+				visit(child);
+			}
+		};
+
+		visit(root);
+		return hints;
+	}
+
+	/**
+	 * Apply viewport threshold filtering to the tree.
+	 * Interactive elements whose rects fall entirely outside the expanded viewport
+	 * have their highlightIndex removed so they are not serialized as interactive.
+	 * The expansion margin is controlled by viewportExpansion (in pixels).
+	 */
+	private applyViewportThresholdFilter(
+		root: PageTreeNode,
+		viewportSize: { width: number; height: number },
+		scrollPosition: { x: number; y: number },
+	): void {
+		const expansion = this.viewportExpansion;
+		const vpTop = scrollPosition.y - expansion;
+		const vpBottom = scrollPosition.y + viewportSize.height + expansion;
+		const vpLeft = scrollPosition.x - expansion;
+		const vpRight = scrollPosition.x + viewportSize.width + expansion;
+
+		const visit = (node: PageTreeNode) => {
+			if (node.highlightIndex !== undefined && node.rect) {
