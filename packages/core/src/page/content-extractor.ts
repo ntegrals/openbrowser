@@ -223,3 +223,48 @@ export async function extractMarkdown(
 		// Fallback to body
 		return document.body?.innerHTML ?? '';
 	});
+
+	let markdown = htmlToMarkdown(html);
+	const fullLength = markdown.length;
+
+	// Update reading state if provided
+	const readingState = options?.readingState;
+	if (readingState) {
+		const url = page.url();
+		readingState.update(url, fullLength);
+	}
+
+	// Determine the starting offset: explicit option takes priority,
+	// then reading state's tracked position, then 0.
+	const startOffset = options?.startFromChar ??
+		(readingState ? readingState.currentOffset : 0);
+
+	if (startOffset > 0) {
+		markdown = markdown.slice(startOffset);
+	}
+
+	// Apply max length
+	let truncated = false;
+	if (options?.maxLength && markdown.length > options.maxLength) {
+		markdown = markdown.slice(0, options.maxLength);
+		// Try to break at a paragraph boundary
+		const lastParagraph = markdown.lastIndexOf('\n\n');
+		if (lastParagraph > markdown.length * 0.8) {
+			markdown = markdown.slice(0, lastParagraph);
+		}
+		truncated = true;
+	}
+
+	// Advance reading state by the number of characters consumed
+	if (readingState) {
+		readingState.advance(markdown.length);
+	}
+
+	if (truncated) {
+		const remaining = fullLength - startOffset - markdown.length;
+		markdown += `\n\n[... content truncated, ~${remaining} chars remaining]`;
+	}
+
+	// Append links section if requested
+	if (options?.extractLinks) {
+		const links = await extractLinks(page);
