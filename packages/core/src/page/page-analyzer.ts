@@ -173,3 +173,38 @@ export class PageAnalyzer {
 					// Try same-origin access first via Playwright frame evaluation
 					const html = await frame.evaluate(() => document.body?.innerHTML ?? '').catch(() => '');
 					if (html) {
+						iframeTrees.push({
+							targetInfo,
+							tree: {
+								tagName: 'iframe',
+								nodeType: 'element',
+								attributes: { src: url },
+								children: [],
+								isVisible: true,
+								isInteractive: false,
+								isClickable: false,
+								isEditable: false,
+								isScrollable: false,
+								text: `[iframe: ${url}]`,
+							},
+						});
+						continue;
+					}
+
+					// Cross-origin: use CDP Target discovery to attach a session
+					const iframeTree = await this.extractCrossOriginIframe(cdpSession, url);
+					if (iframeTree) {
+						iframeTrees.push({
+							targetInfo,
+							tree: iframeTree,
+						});
+					}
+				} catch (error) {
+					logger.debug(`Failed to extract iframe ${frame.url()}: ${error}`);
+				}
+			}
+		} catch (error) {
+			logger.debug(`Failed to extract iframe trees: ${error}`);
+		}
+
+		return { mainTree, iframeTrees };
