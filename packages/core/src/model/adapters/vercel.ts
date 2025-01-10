@@ -68,3 +68,38 @@ export class VercelModelAdapter implements LanguageModel {
 		} catch (error: any) {
 			if (error?.statusCode === 429 || error?.message?.includes('rate limit')) {
 				const retryAfter = error?.headers?.['retry-after'];
+				throw new ModelThrottledError(
+					error.message ?? 'Rate limited',
+					retryAfter ? Number.parseInt(retryAfter) * 1000 : undefined,
+				);
+			}
+			throw new ModelError(
+				`LLM invocation failed: ${error?.message ?? String(error)}`,
+				{ cause: error },
+			);
+		}
+	}
+
+	private convertMessages(messages: Message[]): CoreMessage[] {
+		return messages.map((msg): CoreMessage => {
+			switch (msg.role) {
+				case 'system':
+					return { role: 'system', content: msg.content };
+
+				case 'user': {
+					if (typeof msg.content === 'string') {
+						return { role: 'user', content: msg.content };
+					}
+					return {
+						role: 'user',
+						content: msg.content.map((part) => this.convertContentPart(part)),
+					} as CoreUserMessage;
+				}
+
+				case 'assistant': {
+					const content = typeof msg.content === 'string'
+						? msg.content
+						: msg.content.map((part) => {
+								if (part.type === 'text') return { type: 'text' as const, text: part.text };
+								return { type: 'text' as const, text: '[image]' };
+							});
