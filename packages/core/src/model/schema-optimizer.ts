@@ -38,3 +38,43 @@ const DEFAULTS: Required<Omit<SchemaOptimizationOptions, 'provider'>> = {
  * Applies union collapsing, enum simplification, provider-specific tweaks,
  * and nested object flattening.
  */
+export function optimizeJsonSchemaForModel(
+	schema: Record<string, unknown>,
+	options: SchemaOptimizationOptions = {},
+): Record<string, unknown> {
+	const opts = { ...DEFAULTS, ...options };
+	let result = structuredClone(schema);
+
+	result = collapseUnions(result, opts.maxUnionVariants);
+	result = collapseEnums(result, opts.maxEnumValues);
+	result = flattenNesting(result, opts.maxNestingDepth);
+
+	if (opts.provider) {
+		result = applyProviderTweaks(result, opts.provider);
+	}
+
+	return result;
+}
+
+/**
+ * Optimizes Zod schemas for LLM consumption by simplifying complex unions
+ * and removing unnecessary constraints that confuse models.
+ *
+ * This works at the Zod level for simple transformations, but for deeper
+ * optimization, convert to JSON Schema first with zodToJsonSchema() and
+ * then call optimizeJsonSchemaForModel().
+ */
+export function optimizeSchemaForModel<T extends ZodTypeAny>(
+	schema: T,
+	options: SchemaOptimizationOptions = {},
+): T {
+	// For discriminated unions with too many variants, wrap in a transformation
+	// that strips the union down. We operate at the Zod type level where possible.
+	if (schema instanceof z.ZodDiscriminatedUnion) {
+		const variants = [...schema.options.values()] as ZodTypeAny[];
+		const maxVariants = options.maxUnionVariants ?? DEFAULTS.maxUnionVariants;
+
+		if (variants.length > maxVariants) {
+			// Keep the first maxVariants-1 variants and add a catch-all object
+			const kept = variants.slice(0, maxVariants - 1);
+			const catchAll = z.object({}).passthrough().describe('Other action (see documentation)');
