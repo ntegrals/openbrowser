@@ -103,3 +103,38 @@ export class PageAnalyzer {
 
 			// Collect hidden element hints for scroll guidance
 			this.hiddenElementHints = this.collectHiddenElementHints(
+				root,
+				viewportSize,
+				scrollPosition,
+			);
+
+			// Serialize for LLM
+			const state = this.serializer.serializeTree(
+				root,
+				scrollPosition,
+				viewportSize,
+				documentSize,
+			);
+
+			this.cachedSelectorMap = state.selectorMap;
+
+			// Append hidden element hints
+			if (this.hiddenElementHints.length > 0) {
+				state.tree += '\n\n--- Hidden interactive elements (scroll to access) ---\n';
+				state.tree += this.hiddenElementHints.slice(0, 10).join('\n');
+				if (this.hiddenElementHints.length > 10) {
+					state.tree += `\n... and ${this.hiddenElementHints.length - 10} more`;
+				}
+			}
+
+			logger.debug(
+				`Extracted DOM: ${state.elementCount} elements, ${state.interactiveElementCount} interactive`,
+			);
+
+			return state;
+		} catch (error) {
+			throw new PageExtractionError(
+				`Failed to extract DOM state: ${error instanceof Error ? error.message : String(error)}`,
+				{ cause: error instanceof Error ? error : undefined },
+			);
+		}
