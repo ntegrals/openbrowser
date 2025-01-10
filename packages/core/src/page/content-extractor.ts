@@ -133,3 +133,48 @@ function detectCodeLanguage(codeEl: HTMLElement | null): string {
 		const lower = token.toLowerCase();
 		if (KNOWN_LANGUAGES.has(lower)) return lower;
 	}
+
+	return '';
+}
+
+/**
+ * Tracks reading position across multiple extractMarkdown calls,
+ * allowing incremental content consumption without re-reading.
+ */
+export class ReadingState {
+	private charOffset = 0;
+	private totalLength = 0;
+	private pageUrl = '';
+
+	/**
+	 * Get the current character offset for the next read.
+	 */
+	get currentOffset(): number {
+		return this.charOffset;
+	}
+
+	/**
+	 * Get the total length of the last-known content.
+	 */
+	get contentLength(): number {
+		return this.totalLength;
+	}
+
+	/**
+	 * Whether there is more content to read.
+	 */
+	get hasMore(): boolean {
+		return this.charOffset < this.totalLength;
+	}
+
+	/**
+	 * Fraction of content consumed so far (0..1).
+	 */
+	get progress(): number {
+		if (this.totalLength === 0) return 0;
+		return Math.min(1, this.charOffset / this.totalLength);
+	}
+
+	/**
+	 * Advance the reading position by the given number of characters.
+	 */
