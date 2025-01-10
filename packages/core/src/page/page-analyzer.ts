@@ -348,3 +348,38 @@ export class PageAnalyzer {
 
 		const visit = (node: PageTreeNode) => {
 			if (node.highlightIndex !== undefined && node.rect) {
+				const nodeBottom = node.rect.y + node.rect.height;
+				const nodeRight = node.rect.x + node.rect.width;
+
+				// Element is entirely outside the expanded viewport
+				const outsideVertically = nodeBottom < vpTop || node.rect.y > vpBottom;
+				const outsideHorizontally = nodeRight < vpLeft || node.rect.x > vpRight;
+
+				if (outsideVertically || outsideHorizontally) {
+					// Remove the highlight index so it will not appear in the serialized map,
+					// but keep the node in the tree for structure.
+					node.highlightIndex = undefined;
+				}
+			}
+			for (const child of node.children) {
+				visit(child);
+			}
+		};
+
+		visit(root);
+	}
+
+	/**
+	 * Walk the tree and integrate shadow DOM children.
+	 * Nodes that have shadowChildren get those children merged into the
+	 * regular children array so downstream serialization handles them uniformly.
+	 */
+	private integrateShadowDOMChildren(root: PageTreeNode): void {
+		const visit = (node: PageTreeNode) => {
+			if (node.shadowChildren && node.shadowChildren.length > 0) {
+				// Prepend shadow children before regular children so they
+				// appear first, matching browser rendering order.
+				for (const shadowChild of node.shadowChildren) {
+					shadowChild.parentNode = node;
+					shadowChild.isShadowRoot = true;
+				}
