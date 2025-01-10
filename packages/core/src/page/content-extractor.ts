@@ -358,3 +358,21 @@ export function chunkText(text: string, maxChunkSize: number): string[] {
 					if (currentChunk.length + sentence.length + 1 > maxChunkSize) {
 						if (currentChunk) chunks.push(currentChunk.trim());
 						currentChunk = sentence;
+					} else {
+						currentChunk += (currentChunk ? ' ' : '') + sentence;
+					}
+				}
+			} else {
+				currentChunk = para;
+			}
+		} else {
+			currentChunk += (currentChunk ? '\n\n' : '') + para;
+		}
+	}
+
+	if (currentChunk) {
+		chunks.push(currentChunk.trim());
+	}
+
+	return chunks;
+}
