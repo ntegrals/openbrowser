@@ -78,3 +78,43 @@ export class SnapshotBuilder {
 				text: layout.text[i] !== -1 ? strings[layout.text[i]] : undefined,
 				paintOrder: layout.paintOrder?.[i],
 			});
+		}
+
+		// Build clickable set
+		const clickableSet = new Set<number>();
+		if (nodes.isClickable) {
+			for (const idx of nodes.isClickable.index) {
+				clickableSet.add(idx);
+			}
+		}
+
+		// Build input value map
+		const inputValueMap = new Map<number, string>();
+		if (nodes.inputValue) {
+			for (let i = 0; i < nodes.inputValue.index.length; i++) {
+				const nodeIdx = nodes.inputValue.index[i];
+				const valueIdx = nodes.inputValue.value[i];
+				inputValueMap.set(nodeIdx, strings[valueIdx]);
+			}
+		}
+
+		// Build the tree recursively
+		const root = this.buildNodeTree(
+			0,
+			nodes,
+			strings,
+			layoutMap,
+			axNodeMap,
+			clickableSet,
+			inputValueMap,
+			viewportSize,
+			capturedAttributes,
+		);
+
+		return { root, indexCounter: this.indexCounter };
+	}
+
+	private buildNodeTree(
+		nodeIndex: number,
+		nodes: CDPSnapshotResult['documents'][0]['nodes'],
+		strings: string[],
