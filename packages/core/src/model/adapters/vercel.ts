@@ -33,3 +33,38 @@ export class VercelModelAdapter implements LanguageModel {
 	get modelId(): string {
 		return this.model.modelId;
 	}
+
+	get provider(): ModelProvider {
+		return this._provider;
+	}
+
+	async invoke<T>(options: InferenceOptions<T>): Promise<InferenceResult<T>> {
+		const messages = this.convertMessages(options.messages);
+
+		try {
+			const result = await generateObject({
+				model: this.model,
+				schema: options.responseSchema as ZodType<T>,
+				schemaName: options.schemaName ?? 'AgentDecision',
+				schemaDescription: options.schemaDescription,
+				messages,
+				temperature: options.temperature ?? this.defaultTemperature,
+				maxTokens: options.maxTokens ?? this.defaultMaxTokens,
+				maxRetries: this.maxRetries,
+			});
+
+			const usage: InferenceUsage = {
+				inputTokens: result.usage?.promptTokens ?? 0,
+				outputTokens: result.usage?.completionTokens ?? 0,
+				totalTokens:
+					(result.usage?.promptTokens ?? 0) + (result.usage?.completionTokens ?? 0),
+			};
+
+			return {
+				parsed: result.object,
+				usage,
+				finishReason: mapFinishReason(result.finishReason),
+			};
+		} catch (error: any) {
+			if (error?.statusCode === 429 || error?.message?.includes('rate limit')) {
+				const retryAfter = error?.headers?.['retry-after'];
