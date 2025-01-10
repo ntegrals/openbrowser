@@ -68,3 +68,38 @@ export class PageAnalyzer {
 		cdpSession: CDPSession,
 	): Promise<RenderedPageState> {
 		try {
+			// Capture CDP snapshot
+			const { domSnapshot, axTree } = await this.snapshotProcessor.captureSnapshot(cdpSession);
+
+			// Get viewport and document info
+			const [viewportSize, scrollPosition, documentSize] = await Promise.all([
+				page.viewportSize() ?? { width: 1280, height: 1100 },
+				page.evaluate(() => ({ x: window.scrollX, y: window.scrollY })),
+				page.evaluate(() => ({
+					width: document.documentElement.scrollWidth,
+					height: document.documentElement.scrollHeight,
+				})),
+			]);
+
+			// Build enhanced DOM tree
+			const { root } = this.snapshotProcessor.buildTree(
+				domSnapshot,
+				axTree,
+				viewportSize,
+				this.capturedAttributes,
+			);
+
+			// Traverse shadow DOM roots and merge their children into the main tree
+			this.integrateShadowDOMChildren(root);
+
+			// Filter interactive elements by viewport visibility threshold.
+			// Elements far outside the expanded viewport are stripped of their
+			// highlight index so they do not clutter the serialized output.
+			if (this.viewportExpansion >= 0) {
+				this.applyViewportThresholdFilter(root, viewportSize, scrollPosition);
+			}
+
+			this.cachedTree = root;
+
+			// Collect hidden element hints for scroll guidance
+			this.hiddenElementHints = this.collectHiddenElementHints(
