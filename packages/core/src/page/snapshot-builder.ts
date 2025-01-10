@@ -118,3 +118,43 @@ export class SnapshotBuilder {
 		nodeIndex: number,
 		nodes: CDPSnapshotResult['documents'][0]['nodes'],
 		strings: string[],
+		layoutMap: Map<number, { bounds: number[]; text?: string; paintOrder?: number }>,
+		axNodeMap: Map<number, AXNode>,
+		clickableSet: Set<number>,
+		inputValueMap: Map<number, string>,
+		viewportSize: { width: number; height: number },
+		capturedAttributes: string[],
+	): PageTreeNode {
+		const nodeType = nodes.nodeType[nodeIndex];
+		const tagName = strings[nodes.nodeName[nodeIndex]]?.toLowerCase() ?? '';
+		const backendNodeId = nodes.backendNodeId[nodeIndex];
+
+		// Check layout
+		const layoutInfo = layoutMap.get(nodeIndex);
+		let rect: DOMRect | undefined;
+		let isVisible = false;
+
+		if (layoutInfo) {
+			const [x, y, w, h] = layoutInfo.bounds;
+			rect = { x, y, width: w, height: h };
+			isVisible = w > 0 && h > 0 && !INVISIBLE_TAGS.has(tagName);
+		}
+
+		// Parse attributes
+		const rawAttrs = nodes.attributes[nodeIndex] ?? [];
+		const attributes: Record<string, string> = {};
+		for (let i = 0; i < rawAttrs.length; i += 2) {
+			const name = strings[rawAttrs[i]];
+			const value = strings[rawAttrs[i + 1]];
+			if (name && (capturedAttributes.length === 0 || capturedAttributes.includes(name))) {
+				attributes[name] = value ?? '';
+			}
+		}
+
+		// Get AX info
+		const axNode = axNodeMap.get(backendNodeId);
+		const role = axNode?.role?.value;
+		const ariaLabel = axNode?.name?.value;
+
+		// Determine interactivity
+		const isInteractive =
