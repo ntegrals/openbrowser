@@ -103,3 +103,38 @@ export class VercelModelAdapter implements LanguageModel {
 								if (part.type === 'text') return { type: 'text' as const, text: part.text };
 								return { type: 'text' as const, text: '[image]' };
 							});
+					return { role: 'assistant', content };
+				}
+
+				case 'tool':
+					return {
+						role: 'user',
+						content: `[Tool Result (${msg.toolCallId})]: ${msg.content}`,
+					};
+			}
+		});
+	}
+
+	private convertContentPart(
+		part: ContentPart,
+	): { type: 'text'; text: string } | { type: 'image'; image: string | URL } {
+		switch (part.type) {
+			case 'text':
+				return { type: 'text', text: part.text };
+			case 'image':
+				if (part.source.type === 'base64') {
+					return {
+						type: 'image',
+						image: part.source.data,
+					};
+				}
+				return {
+					type: 'image',
+					image: new URL(part.source.url),
+				};
+		}
+	}
+}
+
+function mapFinishReason(
+	reason: string,
