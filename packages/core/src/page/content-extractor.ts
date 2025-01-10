@@ -178,3 +178,48 @@ export class ReadingState {
 	/**
 	 * Advance the reading position by the given number of characters.
 	 */
+	advance(chars: number): void {
+		this.charOffset = Math.min(this.charOffset + chars, this.totalLength);
+	}
+
+	/**
+	 * Update state with fresh content metadata. If the URL changes,
+	 * the offset resets to the beginning.
+	 */
+	update(url: string, totalLength: number): void {
+		if (url !== this.pageUrl) {
+			this.charOffset = 0;
+			this.pageUrl = url;
+		}
+		this.totalLength = totalLength;
+	}
+
+	/**
+	 * Reset the reading state to the beginning.
+	 */
+	reset(): void {
+		this.charOffset = 0;
+		this.totalLength = 0;
+		this.pageUrl = '';
+	}
+}
+
+export interface MarkdownExtractionOptions {
+	startFromChar?: number;
+	maxLength?: number;
+	extractLinks?: boolean;
+	readingState?: ReadingState;
+}
+
+export async function extractMarkdown(
+	page: Page,
+	options?: MarkdownExtractionOptions,
+): Promise<string> {
+	const html = await page.evaluate(() => {
+		// Try to get main content first
+		const main = document.querySelector('main, article, [role="main"], .content, #content');
+		if (main) return main.innerHTML;
+
+		// Fallback to body
+		return document.body?.innerHTML ?? '';
+	});
