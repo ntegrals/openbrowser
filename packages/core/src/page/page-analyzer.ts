@@ -278,3 +278,38 @@ export class PageAnalyzer {
 				await cdpSession.send('Target.detachFromTarget', {
 					sessionId: iframeSessionId,
 				}).catch(() => {});
+			}
+		} catch (error) {
+			logger.debug(`CDP cross-origin iframe extraction failed for ${iframeUrl}: ${error}`);
+			return null;
+		}
+	}
+
+	/**
+	 * Collect hints about interactive elements that are off-screen,
+	 * including approximate scroll distance.
+	 */
+	private collectHiddenElementHints(
+		root: PageTreeNode,
+		viewportSize: { width: number; height: number },
+		scrollPosition: { x: number; y: number },
+	): string[] {
+		const hints: string[] = [];
+		const viewportTop = scrollPosition.y;
+		const viewportBottom = viewportTop + viewportSize.height;
+
+		const visit = (node: PageTreeNode) => {
+			if (
+				node.isInteractive &&
+				node.rect &&
+				!node.isVisible &&
+				node.highlightIndex !== undefined
+			) {
+				const elementY = node.rect.y;
+				if (elementY > viewportBottom) {
+					const pagesBelow = ((elementY - viewportBottom) / viewportSize.height).toFixed(1);
+					const desc = node.ariaLabel || node.text?.trim()?.slice(0, 50) || node.tagName;
+					hints.push(
+						`${node.tagName} '${desc}' is ~${pagesBelow} pages below`,
+					);
+				} else if (elementY < viewportTop) {
