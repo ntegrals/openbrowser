@@ -488,3 +488,38 @@ export class PageAnalyzer {
 	async clickAtCoordinates(
 		page: Page,
 		x: number,
+		y: number,
+	): Promise<void> {
+		await page.mouse.click(x, y);
+	}
+
+	async inputTextByIndex(
+		page: Page,
+		_cdpSession: CDPSession,
+		index: number,
+		text: string,
+		clearFirst = true,
+	): Promise<void> {
+		const selectorInfo = this.cachedSelectorMap?.[index];
+		if (!selectorInfo) {
+			throw new PageExtractionError(`Element with index ${index} not found in selector map`);
+		}
+
+		const selector = selectorInfo.cssSelector;
+
+		if (clearFirst) {
+			await page.fill(selector, text);
+		} else {
+			await page.click(selector);
+			await page.keyboard.type(text);
+		}
+
+		this.recordInteraction(index, selectorInfo.tagName, 'input');
+	}
+
+	private recordInteraction(
+		index: number,
+		tagName: string,
+		action: string,
+	): void {
+		this.interactedElements.push({
