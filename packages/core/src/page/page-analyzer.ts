@@ -138,3 +138,38 @@ export class PageAnalyzer {
 				{ cause: error instanceof Error ? error : undefined },
 			);
 		}
+	}
+
+	/**
+	 * Discover cross-origin iframes and extract their DOM trees via CDP Target discovery.
+	 * For same-origin iframes, uses Playwright frame evaluation.
+	 * For cross-origin iframes, attaches CDP sessions to their targets and extracts DOM snapshots.
+	 */
+	async extractWithIframes(
+		page: Page,
+		cdpSession: CDPSession,
+	): Promise<TargetAllTrees> {
+		const mainTree = await this._extractState(page, cdpSession).then(() => this.cachedTree!);
+
+		const iframeTrees: TargetAllTrees['iframeTrees'] = [];
+
+		try {
+			const frames = page.frames().slice(0, this.maxIframes + 1); // +1 for main
+			const processedUrls = new Set<string>();
+
+			for (const frame of frames.slice(1, this.maxIframes + 1)) {
+				try {
+					const url = frame.url();
+					if (!url || url === 'about:blank' || processedUrls.has(url)) continue;
+					processedUrls.add(url);
+
+					const targetInfo: TargetInfo = {
+						targetId: url,
+						type: 'iframe',
+						url,
+						attached: true,
+					};
+
+					// Try same-origin access first via Playwright frame evaluation
+					const html = await frame.evaluate(() => document.body?.innerHTML ?? '').catch(() => '');
+					if (html) {
