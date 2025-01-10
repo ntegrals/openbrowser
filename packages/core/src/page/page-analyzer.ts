@@ -383,3 +383,38 @@ export class PageAnalyzer {
 					shadowChild.parentNode = node;
 					shadowChild.isShadowRoot = true;
 				}
+				node.children = [...node.shadowChildren, ...node.children];
+				node.shadowChildren = undefined;
+			}
+			for (const child of node.children) {
+				visit(child);
+			}
+		};
+
+		visit(root);
+	}
+
+	async getElementSelector(index: number): Promise<string | undefined> {
+		return this.cachedSelectorMap?.[index]?.cssSelector;
+	}
+
+	async getElementByBackendNodeId(
+		cdpSession: CDPSession,
+		backendNodeId: number,
+	): Promise<{ selector: string } | null> {
+		try {
+			const result = await cdpSession.send('DOM.describeNode', {
+				backendNodeId,
+			}) as { node: { nodeName: string; attributes?: string[] } };
+
+			if (!result?.node) return null;
+
+			const attrs = result.node.attributes ?? [];
+			for (let i = 0; i < attrs.length; i += 2) {
+				if (attrs[i] === 'id' && attrs[i + 1]) {
+					return { selector: `#${attrs[i + 1]}` };
+				}
+			}
+
+			return { selector: result.node.nodeName.toLowerCase() };
+		} catch {
