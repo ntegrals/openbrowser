@@ -523,3 +523,32 @@ export class PageAnalyzer {
 		action: string,
 	): void {
 		this.interactedElements.push({
+			index: index as ElementRef,
+			tagName,
+			action,
+			timestamp: Date.now(),
+		});
+	}
+
+	getInteractedElements(): InteractedElement[] {
+		return [...this.interactedElements];
+	}
+
+	clearInteractedElements(): void {
+		this.interactedElements = [];
+	}
+
+	getCachedTree(): PageTreeNode | null {
+		return this.cachedTree;
+	}
+
+	getCachedSelectorMap(): SelectorIndex | null {
+		return this.cachedSelectorMap;
+	}
+
+	clearCache(): void {
+		this.cachedTree = null;
+		this.cachedSelectorMap = null;
+		this.hiddenElementHints = [];
+	}
+}
