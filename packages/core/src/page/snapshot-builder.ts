@@ -158,3 +158,43 @@ export class SnapshotBuilder {
 
 		// Determine interactivity
 		const isInteractive =
+			INTERACTIVE_TAGS.has(tagName) ||
+			(role ? INTERACTIVE_ROLES.has(role) : false) ||
+			clickableSet.has(nodeIndex) ||
+			attributes['tabindex'] !== undefined ||
+			attributes['contenteditable'] === 'true';
+
+		const isEditable =
+			tagName === 'input' ||
+			tagName === 'textarea' ||
+			attributes['contenteditable'] === 'true' ||
+			role === 'textbox' ||
+			role === 'searchbox';
+
+		const isScrollable =
+			tagName === 'body' || tagName === 'html' || attributes['role'] === 'scrollbar';
+
+		// Build node
+		const node: PageTreeNode = {
+			tagName,
+			nodeType: nodeType === 3 ? 'text' : 'element',
+			text: nodeType === 3 ? strings[nodes.nodeValue[nodeIndex]] : layoutInfo?.text,
+			attributes,
+			children: [],
+			isVisible,
+			rect,
+			role: role && role !== 'none' && role !== 'generic' ? role : undefined,
+			ariaLabel,
+			isInteractive,
+			isClickable: clickableSet.has(nodeIndex) || INTERACTIVE_TAGS.has(tagName),
+			isEditable,
+			isScrollable,
+			backendNodeId,
+			paintOrder: layoutInfo?.paintOrder,
+			inputValue: inputValueMap.get(nodeIndex),
+		};
+
+		// Assign highlight index for interactive/visible elements
+		if (isInteractive && isVisible) {
+			node.highlightIndex = elementIndex(this.indexCounter++);
+		}
