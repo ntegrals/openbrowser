@@ -38,3 +38,43 @@ export class SnapshotBuilder {
 			}) as Promise<unknown> as Promise<CDPSnapshotResult>,
 			cdpSession.send('Accessibility.getFullAXTree', {}) as Promise<unknown> as Promise<{ nodes: AXNode[] }>,
 		]);
+
+		// Convert flat AX tree list to the root node
+		const rootAx: AXNode = axTree.nodes?.[0] ?? {
+			nodeId: '0',
+			role: { value: 'WebArea' },
+		};
+
+		return { domSnapshot, axTree: rootAx };
+	}
+
+	buildTree(
+		snapshot: CDPSnapshotResult,
+		axTree: AXNode,
+		viewportSize: { width: number; height: number },
+		capturedAttributes: string[] = [],
+	): { root: PageTreeNode; indexCounter: number } {
+		this.indexCounter = 0;
+		const doc = snapshot.documents[0];
+		if (!doc) {
+			return {
+				root: this.createEmptyNode(),
+				indexCounter: 0,
+			};
+		}
+
+		const { nodes, layout, strings } = doc;
+
+		// Build backend node ID → AX node map
+		const axNodeMap = new Map<number, AXNode>();
+		this.buildAXMap(axTree, axNodeMap);
+
+		// Build layout index map
+		const layoutMap = new Map<number, { bounds: number[]; text?: string; paintOrder?: number }>();
+		for (let i = 0; i < layout.nodeIndex.length; i++) {
+			const nodeIdx = layout.nodeIndex[i];
+			layoutMap.set(nodeIdx, {
+				bounds: layout.bounds[i],
+				text: layout.text[i] !== -1 ? strings[layout.text[i]] : undefined,
+				paintOrder: layout.paintOrder?.[i],
+			});
