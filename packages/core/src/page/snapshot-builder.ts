@@ -198,3 +198,43 @@ export class SnapshotBuilder {
 		if (isInteractive && isVisible) {
 			node.highlightIndex = elementIndex(this.indexCounter++);
 		}
+
+		// Build children
+		const childIndexes: number[] = nodes.childNodeIndexes?.[nodeIndex] ?? [];
+		for (const childIdx of childIndexes) {
+			const child = this.buildNodeTree(
+				childIdx,
+				nodes,
+				strings,
+				layoutMap,
+				axNodeMap,
+				clickableSet,
+				inputValueMap,
+				viewportSize,
+				capturedAttributes,
+			);
+			child.parentNode = node;
+			node.children.push(child);
+		}
+
+		return node;
+	}
+
+	private buildAXMap(node: AXNode, map: Map<number, AXNode>): void {
+		if (node.backendDOMNodeId) {
+			map.set(node.backendDOMNodeId, node);
+		}
+		if (node.children) {
+			for (const child of node.children) {
+				this.buildAXMap(child, map);
+			}
+		}
+	}
+
+	private createEmptyNode(): PageTreeNode {
+		return {
+			tagName: 'html',
+			nodeType: 'element',
+			attributes: {},
+			children: [],
+			isVisible: false,
