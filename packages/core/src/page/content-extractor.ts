@@ -43,3 +43,48 @@ function getTurndown(): TurndownService {
 	}
 	return turndownInstance;
 }
+
+function htmlTableToMarkdown(table: HTMLTableElement): string {
+	const rows: string[][] = [];
+	const tableRows = table.querySelectorAll('tr');
+
+	for (const row of tableRows) {
+		const cells: string[] = [];
+		for (const cell of row.querySelectorAll('th, td')) {
+			cells.push((cell.textContent ?? '').trim().replace(/\|/g, '\\|'));
+		}
+		if (cells.length > 0) {
+			rows.push(cells);
+		}
+	}
+
+	if (rows.length === 0) return '';
+
+	const maxCols = Math.max(...rows.map((r) => r.length));
+
+	// Pad rows to same column count
+	for (const row of rows) {
+		while (row.length < maxCols) {
+			row.push('');
+		}
+	}
+
+	const lines: string[] = [];
+	// Header
+	lines.push(`| ${rows[0].join(' | ')} |`);
+	lines.push(`| ${rows[0].map(() => '---').join(' | ')} |`);
+
+	// Body
+	for (let i = 1; i < rows.length; i++) {
+		lines.push(`| ${rows[i].join(' | ')} |`);
+	}
+
+	return '\n' + lines.join('\n') + '\n';
+}
+
+/**
+ * Known programming language names used as a fallback for bare class name matching.
+ */
+const KNOWN_LANGUAGES = new Set([
+	'javascript', 'typescript', 'python', 'ruby', 'java', 'go', 'rust', 'c',
+	'cpp', 'csharp', 'swift', 'kotlin', 'scala', 'php', 'perl', 'lua',
