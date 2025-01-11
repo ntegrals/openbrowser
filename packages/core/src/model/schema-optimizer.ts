@@ -238,3 +238,43 @@ function flattenProperties(
 		) {
 			// Flatten: lift child properties up
 			const childRequired = new Set(
+				Array.isArray(schema.required) ? (schema.required as string[]) : [],
+			);
+			flattenProperties(
+				schema.properties as Record<string, Record<string, unknown>>,
+				childRequired,
+				fullKey,
+				currentDepth + 1,
+				maxDepth,
+				out,
+				outRequired,
+			);
+		} else {
+			out[fullKey] = schema;
+			if (isRequired) {
+				outRequired.push(fullKey);
+			}
+		}
+	}
+}
+
+// ── Provider-specific tweaks ──
+
+/**
+ * Apply provider-specific schema modifications:
+ * - Gemini: requires description on all properties
+ * - OpenAI: prefers simpler schemas, removes redundant constraints
+ */
+function applyProviderTweaks(
+	schema: Record<string, unknown>,
+	provider: ModelProvider,
+): Record<string, unknown> {
+	switch (provider) {
+		case 'google':
+			return applyGeminiTweaks(schema);
+		case 'openai':
+			return applyOpenAITweaks(schema);
+		default:
+			return schema;
+	}
+}
