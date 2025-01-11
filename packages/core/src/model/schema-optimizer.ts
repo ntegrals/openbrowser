@@ -278,3 +278,43 @@ function applyProviderTweaks(
 			return schema;
 	}
 }
+
+/**
+ * Gemini requires description fields on all object properties.
+ * Without descriptions, Gemini may produce empty or incorrect output.
+ */
+function applyGeminiTweaks(schema: Record<string, unknown>): Record<string, unknown> {
+	return walkSchema(schema, (node) => {
+		if (node.type !== 'object' || !node.properties) return node;
+
+		const props = node.properties as Record<string, Record<string, unknown>>;
+		const patched: Record<string, Record<string, unknown>> = {};
+
+		for (const [key, propSchema] of Object.entries(props)) {
+			if (!propSchema.description) {
+				patched[key] = {
+					...propSchema,
+					description: humanizePropertyName(key),
+				};
+			} else {
+				patched[key] = propSchema;
+			}
+		}
+
+		return { ...node, properties: patched };
+	});
+}
+
+/**
+ * OpenAI models work better with simpler schemas:
+ * - Remove additionalProperties: false (it's the default for structured output)
+ * - Ensure all required fields are listed
+ */
+function applyOpenAITweaks(schema: Record<string, unknown>): Record<string, unknown> {
+	return walkSchema(schema, (node) => {
+		if (node.type !== 'object') return node;
+
+		const cleaned = { ...node };
+
+		// OpenAI structured output doesn't need additionalProperties: false
+		if (cleaned.additionalProperties === false) {
