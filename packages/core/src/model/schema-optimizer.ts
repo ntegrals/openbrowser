@@ -358,3 +358,43 @@ function walkSchema(
 	}
 
 	// Walk into array items
+	if (node.items && typeof node.items === 'object' && !Array.isArray(node.items)) {
+		node.items = walkSchema(node.items as Record<string, unknown>, visitor);
+	}
+
+	// Walk into oneOf / anyOf / allOf
+	for (const combiner of ['oneOf', 'anyOf', 'allOf'] as const) {
+		if (Array.isArray(node[combiner])) {
+			node[combiner] = (node[combiner] as Record<string, unknown>[]).map((s) =>
+				typeof s === 'object' && s !== null ? walkSchema(s, visitor) : s,
+			);
+		}
+	}
+
+	// Walk into additionalProperties
+	if (
+		node.additionalProperties &&
+		typeof node.additionalProperties === 'object'
+	) {
+		node.additionalProperties = walkSchema(
+			node.additionalProperties as Record<string, unknown>,
+			visitor,
+		);
+	}
+
+	return visitor(node);
+}
+
+// ── Helpers ──
+
+/**
+ * Converts a camelCase or snake_case property name to a human-readable description.
+ * Used for Gemini which requires descriptions on all properties.
+ */
+function humanizePropertyName(name: string): string {
+	// Split on camelCase boundaries and underscores
+	const words = name
+		.replace(/([a-z])([A-Z])/g, '$1 $2')
+		.replace(/[_-]/g, ' ')
+		.toLowerCase()
+		.split(/\s+/);
