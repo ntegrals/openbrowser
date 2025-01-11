@@ -158,3 +158,43 @@ function collapseEnums(
 
 		// If still too many, truncate and annotate
 		if (deduped.length > maxValues) {
+			const truncated = deduped.slice(0, maxValues);
+			const description = node.description
+				? `${node.description} (${deduped.length - maxValues} more values omitted)`
+				: `${deduped.length - maxValues} additional values omitted`;
+			return { ...node, enum: truncated, description };
+		}
+
+		return { ...node, enum: deduped };
+	});
+}
+
+// ── Nested object flattening ──
+
+/**
+ * Flattens objects nested beyond maxDepth by lifting nested properties
+ * to the parent level with dot-separated keys.
+ */
+function flattenNesting(
+	schema: Record<string, unknown>,
+	maxDepth: number,
+): Record<string, unknown> {
+	return walkSchema(schema, (node) => {
+		if (node.type !== 'object' || !node.properties) return node;
+
+		const flatProps: Record<string, unknown> = {};
+		const flatRequired: string[] = [];
+		const origRequired = new Set(
+			Array.isArray(node.required) ? (node.required as string[]) : [],
+		);
+
+		flattenProperties(
+			node.properties as Record<string, Record<string, unknown>>,
+			origRequired,
+			'',
+			0,
+			maxDepth,
+			flatProps,
+			flatRequired,
+		);
+
