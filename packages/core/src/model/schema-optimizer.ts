@@ -118,3 +118,43 @@ function collapseUnions(
 		// Keep the first N-1 variants, replace the rest with a permissive catch-all
 		const kept = variants.slice(0, maxVariants - 1);
 		const catchAll: Record<string, unknown> = {
+			type: 'object',
+			description: `One of ${variants.length - maxVariants + 1} additional variants (see documentation)`,
+			additionalProperties: true,
+		};
+
+		return { ...node, [unionKey]: [...kept, catchAll] };
+	});
+
+	return schema;
+}
+
+// ── Enum collapsing ──
+
+/**
+ * When an enum has too many values, collapse similar values by removing
+ * duplicates after case-normalization, and truncate with an annotation.
+ */
+function collapseEnums(
+	schema: Record<string, unknown>,
+	maxValues: number,
+): Record<string, unknown> {
+	return walkSchema(schema, (node) => {
+		if (!Array.isArray(node.enum)) return node;
+
+		const values = node.enum as unknown[];
+		if (values.length <= maxValues) return node;
+
+		// Deduplicate by lowercase string representation
+		const seen = new Set<string>();
+		const deduped: unknown[] = [];
+		for (const v of values) {
+			const key = String(v).toLowerCase();
+			if (!seen.has(key)) {
+				seen.add(key);
+				deduped.push(v);
+			}
+		}
+
+		// If still too many, truncate and annotate
+		if (deduped.length > maxValues) {
