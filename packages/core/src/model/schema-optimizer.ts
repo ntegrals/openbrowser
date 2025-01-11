@@ -318,3 +318,43 @@ function applyOpenAITweaks(schema: Record<string, unknown>): Record<string, unkn
 
 		// OpenAI structured output doesn't need additionalProperties: false
 		if (cleaned.additionalProperties === false) {
+			delete cleaned.additionalProperties;
+		}
+
+		// Ensure all properties are marked required (OpenAI prefers explicit required lists)
+		if (cleaned.properties && !cleaned.required) {
+			cleaned.required = Object.keys(cleaned.properties as object);
+		}
+
+		return cleaned;
+	});
+}
+
+// ── Schema walking utility ──
+
+type SchemaVisitor = (node: Record<string, unknown>) => Record<string, unknown>;
+
+/**
+ * Recursively walks a JSON Schema tree, applying a visitor function
+ * to each schema node (depth-first, post-order).
+ */
+function walkSchema(
+	schema: Record<string, unknown>,
+	visitor: SchemaVisitor,
+): Record<string, unknown> {
+	let node = { ...schema };
+
+	// Walk into properties
+	if (node.properties && typeof node.properties === 'object') {
+		const props: Record<string, unknown> = {};
+		for (const [key, val] of Object.entries(node.properties as Record<string, unknown>)) {
+			if (val && typeof val === 'object' && !Array.isArray(val)) {
+				props[key] = walkSchema(val as Record<string, unknown>, visitor);
+			} else {
+				props[key] = val;
+			}
+		}
+		node.properties = props;
+	}
+
+	// Walk into array items
