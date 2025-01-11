@@ -198,3 +198,43 @@ function flattenNesting(
 			flatRequired,
 		);
 
+		// Only return the flattened version if we actually changed something
+		const origKeys = Object.keys(node.properties as object);
+		const flatKeys = Object.keys(flatProps);
+		if (
+			flatKeys.length === origKeys.length &&
+			flatKeys.every((k) => origKeys.includes(k))
+		) {
+			return node;
+		}
+
+		const result: Record<string, unknown> = { ...node, properties: flatProps };
+		if (flatRequired.length > 0) {
+			result.required = flatRequired;
+		} else {
+			delete result.required;
+		}
+		return result;
+	});
+}
+
+function flattenProperties(
+	properties: Record<string, Record<string, unknown>>,
+	required: Set<string>,
+	prefix: string,
+	currentDepth: number,
+	maxDepth: number,
+	out: Record<string, unknown>,
+	outRequired: string[],
+): void {
+	for (const [key, schema] of Object.entries(properties)) {
+		const fullKey = prefix ? `${prefix}.${key}` : key;
+		const isRequired = required.has(key);
+
+		if (
+			schema.type === 'object' &&
+			schema.properties &&
+			currentDepth >= maxDepth
+		) {
+			// Flatten: lift child properties up
+			const childRequired = new Set(
