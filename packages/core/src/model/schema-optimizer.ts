@@ -438,3 +438,38 @@ export function zodToJsonSchema(schema: ZodTypeAny): Record<string, unknown> {
 	} else if (schema instanceof z.ZodBoolean) {
 		jsonSchema.type = 'boolean';
 	} else if (schema instanceof z.ZodArray) {
+		jsonSchema.type = 'array';
+		jsonSchema.items = zodToJsonSchema(schema.element);
+	} else if (schema instanceof z.ZodOptional) {
+		return zodToJsonSchema(schema.unwrap()) as any;
+	} else if (schema instanceof z.ZodDefault) {
+		const inner = zodToJsonSchema(schema.removeDefault()) as any;
+		inner.default = schema._def.defaultValue();
+		return inner as any;
+	} else if (schema instanceof z.ZodEnum) {
+		jsonSchema.type = 'string';
+		jsonSchema.enum = schema.options;
+	} else if (schema instanceof z.ZodLiteral) {
+		jsonSchema.const = schema.value;
+	} else if (schema instanceof z.ZodUnion) {
+		jsonSchema.oneOf = (schema.options as ZodTypeAny[]).map(zodToJsonSchema);
+	} else if (schema instanceof z.ZodDiscriminatedUnion) {
+		jsonSchema.oneOf = [...schema.options.values()].map((opt: ZodTypeAny) =>
+			zodToJsonSchema(opt),
+		);
+	} else if (schema instanceof z.ZodNullable) {
+		const inner = zodToJsonSchema(schema.unwrap());
+		return { oneOf: [inner, { type: 'null' }] } as any;
+	} else if (schema instanceof z.ZodRecord) {
+		jsonSchema.type = 'object';
+		jsonSchema.additionalProperties = zodToJsonSchema(schema.element);
+	} else {
+		jsonSchema.type = 'object';
+	}
+
+	if (schema.description) {
+		jsonSchema.description = schema.description;
+	}
+
+	return jsonSchema as any;
+}
