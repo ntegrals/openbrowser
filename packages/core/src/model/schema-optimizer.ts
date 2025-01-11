@@ -398,3 +398,43 @@ function humanizePropertyName(name: string): string {
 		.replace(/[_-]/g, ' ')
 		.toLowerCase()
 		.split(/\s+/);
+
+	if (words.length === 0) return name;
+
+	// Capitalize first word
+	words[0] = words[0].charAt(0).toUpperCase() + words[0].slice(1);
+	return words.join(' ');
+}
+
+// ── zodToJsonSchema (existing, unchanged) ──
+
+/**
+ * Converts a Zod schema to a JSON Schema representation suitable for LLM tool use.
+ */
+export function zodToJsonSchema(schema: ZodTypeAny): Record<string, unknown> {
+	const jsonSchema: Record<string, unknown> = {};
+
+	if (schema instanceof z.ZodObject) {
+		jsonSchema.type = 'object';
+		const shape = schema.shape;
+		const properties: Record<string, unknown> = {};
+		const required: string[] = [];
+
+		for (const [key, value] of Object.entries(shape)) {
+			properties[key] = zodToJsonSchema(value as ZodTypeAny);
+			if (!(value instanceof z.ZodOptional)) {
+				required.push(key);
+			}
+		}
+
+		jsonSchema.properties = properties;
+		if (required.length > 0) {
+			jsonSchema.required = required;
+		}
+	} else if (schema instanceof z.ZodString) {
+		jsonSchema.type = 'string';
+	} else if (schema instanceof z.ZodNumber) {
+		jsonSchema.type = 'number';
+	} else if (schema instanceof z.ZodBoolean) {
+		jsonSchema.type = 'boolean';
+	} else if (schema instanceof z.ZodArray) {
