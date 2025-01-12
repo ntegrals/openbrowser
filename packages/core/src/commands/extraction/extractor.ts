@@ -118,3 +118,43 @@ export class ContentExtractor {
 	// ── Link extraction ──
 
 	/**
+	 * Extract all links from a page, returning text, url, and whether external.
+	 */
+	async extractLinks(
+		page: Page,
+	): Promise<Array<{ text: string; url: string; isExternal: boolean }>> {
+		return extractPageLinks(page);
+	}
+
+	// ── Text extraction with optional JSON schema ──
+
+	async extractFromText(
+		text: string,
+		goal: string,
+		outputJsonSchema?: Record<string, unknown>,
+	): Promise<string> {
+		// If a JSON schema is provided, ask the LLM to produce structured output
+		if (outputJsonSchema) {
+			return this.extractFromTextWithJsonSchema(text, goal, outputJsonSchema);
+		}
+
+		const result = await this.model.invoke({
+			messages: [
+				systemMessage(
+					'You are a precise information extractor. Extract only the requested information from the provided text. Be concise and accurate.',
+				),
+				userMessage(
+					`Goal: ${goal}\n\nText content:\n${text}\n\nExtract the information specified in the goal. If the information is not found, say "No relevant information found."`,
+				),
+			],
+			responseSchema: ExtractionResultSchema,
+			schemaName: 'ExtractionResult',
+			temperature: 0,
+		});
+
+		return result.parsed.content;
+	}
+
+	// ── Private helpers ──
+
+	private async extractFromTextWithJsonSchema(
