@@ -68,3 +68,38 @@ function inspectHandlerParams(handler: Function): string[] {
 		params.push(current.trim());
 	}
 
+	// Clean up: remove type annotations, defaults, destructuring
+	return params.map((p) => {
+		// Remove default values: param = defaultVal
+		const withoutDefault = p.split('=')[0].trim();
+		// Remove type annotations: param: Type
+		const withoutType = withoutDefault.split(':')[0].trim();
+		// If it's a destructured param like { a, b }, keep the braces stripped name
+		// For our purposes we only care about top-level named params
+		return withoutType.replace(/^[{[(]|[})\]]$/g, '').trim();
+	});
+}
+
+/**
+ * Detect which special parameters a handler function expects,
+ * based on its parameter names (beyond the standard params + context args).
+ */
+function detectSpecialParams(handler: Function): Set<string> {
+	const paramNames = inspectHandlerParams(handler);
+	const detected = new Set<string>();
+	for (const name of paramNames) {
+		if (SPECIAL_PARAMS.has(name)) {
+			detected.add(name);
+		}
+	}
+	return detected;
+}
+
+/**
+ * Resolve a special parameter value from the ExecutionContext.
+ */
+function resolveSpecialParam(
+	name: string,
+	context: ExecutionContext,
+): unknown {
+	switch (name) {
