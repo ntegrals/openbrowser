@@ -173,3 +173,38 @@ export class CommandCatalog {
 		return this.actions.has(name);
 	}
 
+	getAll(): CatalogEntry[] {
+		return [...this.actions.values()];
+	}
+
+	getNames(): string[] {
+		return [...this.actions.keys()];
+	}
+
+	async execute(
+		name: string,
+		params: Record<string, unknown>,
+		context: ExecutionContext,
+	): Promise<CommandResult> {
+		const action = this.actions.get(name);
+		if (!action) {
+			throw new CommandFailedError(name, `Action "${name}" is not registered`);
+		}
+
+		try {
+			// Validate params against schema
+			const validated = action.schema.parse(params);
+
+			// Inject special parameters from context into the validated params
+			const enriched = this.injectSpecialParams(name, validated, context);
+
+			return await action.handler(enriched, context);
+		} catch (error) {
+			if (error instanceof CommandFailedError) throw error;
+
+			const message = error instanceof Error ? error.message : String(error);
+			throw new CommandFailedError(name, message, {
+				cause: error instanceof Error ? error : undefined,
+			});
+		}
+	}
