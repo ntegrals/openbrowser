@@ -103,3 +103,38 @@ function resolveSpecialParam(
 	context: ExecutionContext,
 ): unknown {
 	switch (name) {
+		case 'browserSession':
+			return context.browserSession;
+		case 'cdpSession':
+			return context.cdpSession;
+		case 'page':
+			return context.page;
+		case 'domService':
+			return context.domService;
+		case 'extractionLlm':
+			return context.extractionLlm;
+		case 'fileSystem':
+			return context.fileSystem;
+		case 'maskedValues':
+			return context.maskedValues;
+		default:
+			return undefined;
+	}
+}
+
+export class CommandCatalog {
+	private actions = new Map<string, CatalogEntry>();
+	private specialParamsCache = new Map<string, Set<string>>();
+	private options: CatalogOptions;
+
+	constructor(options?: CatalogOptions) {
+		this.options = options ?? {};
+	}
+
+	register(action: CatalogEntry): void {
+		if (this.options.excludeActions?.includes(action.name)) return;
+		if (
+			this.options.includeActions &&
+			this.options.includeActions.length > 0 &&
+			!this.options.includeActions.includes(action.name)
+		) {
