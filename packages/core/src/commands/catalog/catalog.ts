@@ -243,3 +243,38 @@ export class CommandCatalog {
 			}
 		}
 		return enriched;
+	}
+
+	buildDynamicSchema(): z.ZodType {
+		const actionSchemas = this.getAll().map((action) => {
+			if (action.schema instanceof z.ZodObject) {
+				return action.schema.extend({
+					action: z.literal(action.name),
+				});
+			}
+			return action.schema;
+		});
+
+		if (actionSchemas.length === 0) {
+			return z.object({ action: z.string() });
+		}
+
+		if (actionSchemas.length === 1) {
+			return actionSchemas[0];
+		}
+
+		return z.union(actionSchemas as [ZodTypeAny, ZodTypeAny, ...ZodTypeAny[]]);
+	}
+
+	get size(): number {
+		return this.actions.size;
+	}
+
+	// ── Prompt description ──
+
+	/**
+	 * Build a formatted multi-line description of all available actions.
+	 * Optionally filter by page URL domain so only relevant actions appear.
+	 */
+	getPromptDescription(pageUrl?: string): string {
+		let actions = this.getAll();
