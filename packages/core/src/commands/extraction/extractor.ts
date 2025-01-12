@@ -78,3 +78,43 @@ export class ContentExtractor {
 		}
 
 		// Build a JSON schema description for the prompt
+		const schemaDescription =
+			schema instanceof z.ZodObject
+				? JSON.stringify(
+						(schema as z.ZodObject<z.ZodRawShape>).shape,
+						(_key, value) => {
+							if (value?._def?.description) return `(${value._def.description})`;
+							if (value?._def?.typeName) return value._def.typeName;
+							return value;
+						},
+						2,
+					)
+				: 'See schema constraints';
+
+		const text = markdown.length > 8000 ? markdown.slice(0, 8000) : markdown;
+
+		const StructuredOutputSchema = z.object({
+			result: z.string().describe('JSON string conforming to the requested schema'),
+		});
+
+		const response = await this.model.invoke({
+			messages: [
+				systemMessage(
+					'You are a precise information extractor. Extract the requested information from the provided text and return it as a valid JSON string in the "result" field. The JSON must conform to the schema described below.',
+				),
+				userMessage(
+					`Goal: ${goal}\n\nExpected schema:\n${schemaDescription}\n\nText content:\n${text}\n\nReturn the extracted data as a JSON string in the "result" field.`,
+				),
+			],
+			responseSchema: StructuredOutputSchema,
+			schemaName: 'StructuredOutput',
+			temperature: 0,
+		});
+
+		const parsed = JSON.parse(response.parsed.result);
+		return schema.parse(parsed);
+	}
+
+	// ── Link extraction ──
+
+	/**
