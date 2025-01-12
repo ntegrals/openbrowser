@@ -348,3 +348,38 @@ export class CommandCatalog {
 		if (!text) return text;
 
 		// Sort entries by value length descending so longer values are replaced first
+		const entries = Object.entries(maskedValues).sort(
+			(a, b) => b[1].length - a[1].length,
+		);
+
+		let result = text;
+		for (const [key, value] of entries) {
+			if (!value) continue;
+			const pattern = new RegExp(escapeRegExp(value), 'g');
+			result = result.replace(pattern, `<${key}>`);
+		}
+
+		return result;
+	}
+
+	// ── Actions that terminate the sequence ──
+
+	/**
+	 * Return the names of all actions marked as terminatesSequence.
+	 */
+	getTerminatingActions(): string[] {
+		return this.getAll()
+			.filter((a) => a.terminatesSequence)
+			.map((a) => a.name);
+	}
+
+	/**
+	 * Check whether a given action name is marked as terminatesSequence.
+	 */
+	isTerminating(name: string): boolean {
+		const action = this.actions.get(name);
+		return action?.terminatesSequence === true;
+	}
+}
+
+// ── Helpers ──
