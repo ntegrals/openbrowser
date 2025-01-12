@@ -278,3 +278,38 @@ export class CommandCatalog {
 	 */
 	getPromptDescription(pageUrl?: string): string {
 		let actions = this.getAll();
+
+		// If a URL is provided, filter out actions whose domainFilter does not match
+		if (pageUrl) {
+			const domain = extractDomain(pageUrl);
+			if (domain) {
+				actions = actions.filter((a) => {
+					// Actions without a domainFilter are always shown
+					if (!a.domainFilter || a.domainFilter.length === 0) return true;
+					return a.domainFilter.some(
+						(pattern) =>
+							domain === pattern ||
+							domain.endsWith(`.${pattern}`),
+					);
+				});
+			}
+		}
+
+		const lines: string[] = [];
+		for (const action of actions) {
+			const termFlag = action.terminatesSequence ? ' [terminates]' : '';
+			lines.push(`- ${action.name}: ${action.description}${termFlag}`);
+
+			// Describe the schema parameters
+			if (action.schema instanceof z.ZodObject) {
+				const shape = action.schema.shape as Record<string, ZodTypeAny>;
+				for (const [key, zodType] of Object.entries(shape)) {
+					if (key === 'action') continue;
+					const desc = zodType.description ?? '';
+					const isOptional = zodType.isOptional?.() ?? false;
+					const optLabel = isOptional ? ' (optional)' : '';
+					lines.push(`    ${key}${optLabel}: ${desc}`);
+				}
+			}
+		}
+
