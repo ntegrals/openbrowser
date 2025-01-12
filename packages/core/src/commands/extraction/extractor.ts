@@ -158,3 +158,43 @@ export class ContentExtractor {
 	// ── Private helpers ──
 
 	private async extractFromTextWithJsonSchema(
+		text: string,
+		goal: string,
+		jsonSchema: Record<string, unknown>,
+	): Promise<string> {
+		const schemaStr = JSON.stringify(jsonSchema, null, 2);
+
+		const JsonExtractionSchema = z.object({
+			json: z.string().describe('JSON conforming to the requested schema'),
+		});
+
+		const result = await this.model.invoke({
+			messages: [
+				systemMessage(
+					'You are a precise information extractor. Extract the requested information and return it as valid JSON conforming to the provided schema. Put the JSON string in the "json" field.',
+				),
+				userMessage(
+					`Goal: ${goal}\n\nRequired JSON schema:\n${schemaStr}\n\nText content:\n${text}\n\nExtract and return as JSON.`,
+				),
+			],
+			responseSchema: JsonExtractionSchema,
+			schemaName: 'JsonExtraction',
+			temperature: 0,
+		});
+
+		// Validate the JSON parses correctly
+		const parsed = JSON.parse(result.parsed.json);
+		return JSON.stringify(parsed);
+	}
+
+	private async combineExtractions(results: string[], goal: string): Promise<string> {
+		const combined = results.map((r, i) => `Part ${i + 1}:\n${r}`).join('\n\n');
+
+		const result = await this.model.invoke({
+			messages: [
+				systemMessage(
+					'Combine the following extracted information into a single coherent response. Remove duplicates and organize logically.',
+				),
+				userMessage(`Goal: ${goal}\n\nExtracted parts:\n${combined}`),
+			],
+			responseSchema: ExtractionResultSchema,
