@@ -38,3 +38,43 @@ export class ContentExtractor {
 
 		// For longer pages, chunk and extract from each chunk
 		const chunks = chunkText(markdown, 6000);
+		const results: string[] = [];
+
+		for (const chunk of chunks) {
+			const result = await this.extractFromText(chunk, goal);
+			if (result && result !== 'No relevant information found.') {
+				results.push(result);
+			}
+		}
+
+		if (results.length === 0) {
+			return 'No relevant information found on the page.';
+		}
+
+		if (results.length === 1) {
+			return results[0];
+		}
+
+		// Combine results
+		return this.combineExtractions(results, goal);
+	}
+
+	// ── Structured extraction ──
+
+	/**
+	 * Extract information from a page and validate against a Zod schema.
+	 * The LLM is prompted to return JSON conforming to the schema, then the
+	 * output is parsed/validated with Zod.
+	 */
+	async extractStructured<T>(
+		page: Page,
+		goal: string,
+		schema: z.ZodType<T>,
+	): Promise<T> {
+		const markdown = await extractMarkdown(page);
+
+		if (!markdown.trim()) {
+			throw new Error('No content found on the page for structured extraction.');
+		}
+
+		// Build a JSON schema description for the prompt
