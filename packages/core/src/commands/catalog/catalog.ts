@@ -313,3 +313,38 @@ export class CommandCatalog {
 			}
 		}
 
+		return lines.join('\n');
+	}
+
+	// ── Domain-based filtering ──
+
+	/**
+	 * Return actions that have a domainFilter matching the given domain,
+	 * plus all actions that have no domainFilter (universal actions).
+	 */
+	getActionsForDomain(domain: string): CatalogEntry[] {
+		const normalized = domain.replace(/^www\./, '').toLowerCase();
+
+		return this.getAll().filter((action) => {
+			if (!action.domainFilter || action.domainFilter.length === 0) return true;
+
+			return action.domainFilter.some((pattern) => {
+				const p = pattern.toLowerCase();
+				return normalized === p || normalized.endsWith(`.${p}`);
+			});
+		});
+	}
+
+	// ── Sensitive data replacement ──
+
+	/**
+	 * Replace sensitive data values in text with `<key>` placeholders.
+	 * Keys are sorted longest-value-first to avoid partial replacements.
+	 */
+	replaceSensitiveData(
+		text: string,
+		maskedValues: Record<string, string>,
+	): string {
+		if (!text) return text;
+
+		// Sort entries by value length descending so longer values are replaced first
