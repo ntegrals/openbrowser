@@ -208,3 +208,38 @@ export class CommandCatalog {
 			});
 		}
 	}
+
+	/**
+	 * Return the set of special parameter names detected for a given action.
+	 * Returns an empty set if no special params were detected.
+	 */
+	getSpecialParams(name: string): Set<string> {
+		return this.specialParamsCache.get(name) ?? new Set();
+	}
+
+	/**
+	 * Inject special parameters from ExecutionContext into the params object.
+	 * Special params are resolved from context and merged into the params
+	 * so the handler can destructure them directly from its first argument.
+	 */
+	private injectSpecialParams(
+		actionName: string,
+		params: Record<string, unknown>,
+		context: ExecutionContext,
+	): Record<string, unknown> {
+		const specialParams = this.specialParamsCache.get(actionName);
+		if (!specialParams || specialParams.size === 0) {
+			return params;
+		}
+
+		const enriched = { ...params };
+		for (const paramName of specialParams) {
+			// Only inject if not already present in the validated params
+			if (!(paramName in enriched)) {
+				const value = resolveSpecialParam(paramName, context);
+				if (value !== undefined) {
+					enriched[paramName] = value;
+				}
+			}
+		}
+		return enriched;
