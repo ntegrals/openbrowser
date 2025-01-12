@@ -383,3 +383,11 @@ export class CommandCatalog {
 }
 
 // ── Helpers ──
+
+function extractDomain(url: string): string | null {
+	try {
+		return new URL(url).hostname.replace(/^www\./, '').toLowerCase();
+	} catch {
+		return null;
+	}
+}
