@@ -198,3 +198,10 @@ export class ContentExtractor {
 				userMessage(`Goal: ${goal}\n\nExtracted parts:\n${combined}`),
 			],
 			responseSchema: ExtractionResultSchema,
+			schemaName: 'ExtractionResult',
+			temperature: 0,
+		});
+
+		return result.parsed.content;
+	}
+}
