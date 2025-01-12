@@ -138,3 +138,38 @@ export class CommandCatalog {
 			this.options.includeActions.length > 0 &&
 			!this.options.includeActions.includes(action.name)
 		) {
+			return;
+		}
+
+		this.actions.set(action.name, action);
+
+		// Pre-compute which special parameters the handler expects
+		const specialParams = detectSpecialParams(action.handler);
+		if (specialParams.size > 0) {
+			this.specialParamsCache.set(action.name, specialParams);
+		}
+	}
+
+	registerCustom(definition: CustomCommandSpec): void {
+		this.register({
+			name: definition.name,
+			description: definition.description,
+			schema: definition.schema,
+			handler: definition.handler,
+			terminatesSequence: definition.terminatesSequence,
+		});
+	}
+
+	unregister(name: string): void {
+		this.actions.delete(name);
+		this.specialParamsCache.delete(name);
+	}
+
+	get(name: string): CatalogEntry | undefined {
+		return this.actions.get(name);
+	}
+
+	has(name: string): boolean {
+		return this.actions.has(name);
+	}
+
