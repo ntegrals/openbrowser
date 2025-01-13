@@ -278,3 +278,38 @@ export class CommandExecutor {
 				await ctx.browserSession.switchTab(tabIndex);
 				return { success: true };
 			},
+		});
+
+		// Open tab
+		this.registry.register({
+			name: 'new_tab',
+			description: 'Open a new tab with a URL',
+			schema: NewTabCommandSchema.omit({ action: true }),
+			handler: async (params, ctx) => {
+				const { url } = params as { url: string };
+				if (!isUrlPermitted(url, this.allowedUrls, this.blockedUrls)) {
+					throw new UrlBlockedError(url);
+				}
+				await ctx.browserSession.newTab(url);
+				return { success: true };
+			},
+		});
+
+		// Close tab
+		this.registry.register({
+			name: 'close_tab',
+			description: 'Close a browser tab',
+			schema: CloseTabCommandSchema.omit({ action: true }),
+			handler: async (params, ctx) => {
+				const { tabIndex } = params as { tabIndex?: number };
+				await ctx.browserSession.closeTab(tabIndex);
+				return { success: true };
+			},
+		});
+
+		// Search Google
+		this.registry.register({
+			name: 'web_search',
+			description: 'Search Google for a query',
+			schema: WebSearchCommandSchema.omit({ action: true }),
+			handler: async (params, ctx) => {
