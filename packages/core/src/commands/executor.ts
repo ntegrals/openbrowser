@@ -103,3 +103,38 @@ export class CommandExecutor {
 					this.coordinateClickingEnabled &&
 					coordinateX !== undefined &&
 					coordinateY !== undefined
+				) {
+					const clicks = clickCount ?? 1;
+					for (let i = 0; i < clicks; i++) {
+						await ctx.page.mouse.click(coordinateX, coordinateY);
+					}
+					return { success: true };
+				}
+
+				await ctx.domService.clickElementByIndex(ctx.page, ctx.cdpSession, index);
+				if (clickCount && clickCount > 1) {
+					for (let i = 1; i < clickCount; i++) {
+						await ctx.domService.clickElementByIndex(ctx.page, ctx.cdpSession, index);
+					}
+				}
+				return { success: true };
+			},
+		});
+
+		// Input text
+		this.registry.register({
+			name: 'type_text',
+			description: 'Type text into an input element',
+			schema: TypeTextCommandSchema.omit({ action: true }),
+			handler: async (params, ctx) => {
+				const { index, text, clearFirst } = params as {
+					index: number;
+					text: string;
+					clearFirst?: boolean;
+				};
+				await ctx.domService.inputTextByIndex(
+					ctx.page,
+					ctx.cdpSession,
+					index,
+					text,
+					clearFirst ?? true,
