@@ -138,3 +138,38 @@ export class CommandExecutor {
 					index,
 					text,
 					clearFirst ?? true,
+				);
+				return { success: true };
+			},
+		});
+
+		// Navigate
+		this.registry.register({
+			name: 'navigate',
+			description: 'Navigate to a URL',
+			schema: NavigateCommandSchema.omit({ action: true }),
+			handler: async (params, ctx) => {
+				const { url } = params as { url: string };
+				if (!isUrlPermitted(url, this.allowedUrls, this.blockedUrls)) {
+					throw new UrlBlockedError(url);
+				}
+				await ctx.browserSession.navigate(url);
+				return { success: true };
+			},
+		});
+
+		// Go back
+		this.registry.register({
+			name: 'back',
+			description: 'Go back to previous page',
+			schema: BackCommandSchema.omit({ action: true }),
+			handler: async (_params, ctx) => {
+				await ctx.page.goBack({ timeout: 5000 }).catch(() => {});
+				await ctx.browserSession.waitForPageReady();
+				return { success: true };
+			},
+		});
+
+		// Scroll
+		this.registry.register({
+			name: 'scroll',
