@@ -173,3 +173,38 @@ export class CommandExecutor {
 		// Scroll
 		this.registry.register({
 			name: 'scroll',
+			description: 'Scroll the page or an element',
+			schema: ScrollCommandSchema.omit({ action: true }),
+			handler: async (params, ctx) => {
+				const { direction, amount, index } = params as {
+					direction: 'up' | 'down';
+					amount?: number;
+					index?: number;
+				};
+
+				if (index !== undefined) {
+					const selector = await ctx.domService.getElementSelector(index);
+					if (selector) {
+						await scrollElement(ctx.page, selector, direction, amount);
+					}
+				} else {
+					await scrollPage(ctx.page, direction, amount);
+				}
+
+				return { success: true };
+			},
+		});
+
+		// Send keys
+		this.registry.register({
+			name: 'press_keys',
+			description: 'Send keyboard keys (e.g., Enter, Escape, Control+a)',
+			schema: PressKeysCommandSchema.omit({ action: true }),
+			handler: async (params, ctx) => {
+				const { keys } = params as { keys: string };
+				await ctx.page.keyboard.press(keys);
+				return { success: true };
+			},
+		});
+
+		// Extract content
