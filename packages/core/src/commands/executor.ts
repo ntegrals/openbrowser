@@ -208,3 +208,38 @@ export class CommandExecutor {
 		});
 
 		// Extract content
+		this.registry.register({
+			name: 'extract',
+			description: 'Extract specific information from the current page',
+			schema: ExtractCommandSchema.omit({ action: true }),
+			handler: async (params, ctx) => {
+				const { goal, outputSchema } = params as {
+					goal: string;
+					outputSchema?: Record<string, unknown>;
+				};
+
+				// Use the extraction LLM from context if available, otherwise fall back
+				const extractionModel = ctx.extractionLlm;
+				const service =
+					extractionModel
+						? new ContentExtractor(extractionModel)
+						: this.extractionService;
+
+				if (!service) {
+					// Fallback: just extract markdown
+					const markdown = await extractMarkdown(ctx.page);
+					return {
+						success: true,
+						extractedContent: markdown.slice(0, 5000),
+						includeInMemory: true,
+					};
+				}
+
+				// If an outputSchema is provided, use structured extraction from text
+				if (outputSchema) {
+					const markdown = await extractMarkdown(ctx.page);
+					const content = await service.extractFromText(
+						markdown.slice(0, 8000),
+						goal,
+						outputSchema,
+					);
