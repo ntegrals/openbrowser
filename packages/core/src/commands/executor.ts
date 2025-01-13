@@ -383,3 +383,38 @@ export class CommandExecutor {
 			},
 		});
 
+		// Read content
+		this.registry.register({
+			name: 'read_page',
+			description: 'Read the text content of the current page',
+			schema: ReadPageCommandSchema.omit({ action: true }),
+			handler: async (_params, ctx) => {
+				const markdown = await extractMarkdown(ctx.page);
+				return {
+					success: true,
+					extractedContent: markdown.slice(0, 10000),
+					includeInMemory: true,
+				};
+			},
+		});
+
+		// Wait
+		this.registry.register({
+			name: 'wait',
+			description: 'Wait for a specified number of seconds',
+			schema: WaitCommandSchema.omit({ action: true }),
+			handler: async (params) => {
+				const { seconds } = params as { seconds?: number };
+				await sleep((seconds ?? 3) * 1000);
+				return { success: true };
+			},
+		});
+
+		// ── New actions ──
+
+		// Scroll to text
+		this.registry.register({
+			name: 'scroll_to',
+			description: 'Scroll to a specific text on the page',
+			schema: ScrollToCommandSchema.omit({ action: true }),
+			handler: async (params, ctx) => {
