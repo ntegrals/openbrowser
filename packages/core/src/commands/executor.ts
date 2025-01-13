@@ -243,3 +243,38 @@ export class CommandExecutor {
 						goal,
 						outputSchema,
 					);
+					return { success: true, extractedContent: content, includeInMemory: true };
+				}
+
+				const content = await service.extract(ctx.page, goal);
+				return { success: true, extractedContent: content, includeInMemory: true };
+			},
+		});
+
+		// Done
+		this.registry.register({
+			name: 'finish',
+			description: 'Mark the task as completed with a result',
+			schema: FinishCommandSchema.omit({ action: true }),
+			terminatesSequence: true,
+			handler: async (params) => {
+				const { text, success } = params as { text: string; success?: boolean };
+				return {
+					success: success ?? true,
+					isDone: true,
+					extractedContent: text,
+					includeInMemory: true,
+				};
+			},
+		});
+
+		// Switch tab
+		this.registry.register({
+			name: 'focus_tab',
+			description: 'Switch to a different browser tab',
+			schema: FocusTabCommandSchema.omit({ action: true }),
+			handler: async (params, ctx) => {
+				const { tabIndex } = params as { tabIndex: number };
+				await ctx.browserSession.switchTab(tabIndex);
+				return { success: true };
+			},
