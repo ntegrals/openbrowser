@@ -313,3 +313,38 @@ export class CommandExecutor {
 			description: 'Search Google for a query',
 			schema: WebSearchCommandSchema.omit({ action: true }),
 			handler: async (params, ctx) => {
+				const { query } = params as { query: string };
+				const url = buildGoogleSearchUrl(query);
+				await ctx.browserSession.navigate(url);
+				return { success: true };
+			},
+		});
+
+		// Upload file
+		this.registry.register({
+			name: 'upload',
+			description: 'Upload files to a file input',
+			schema: UploadCommandSchema.omit({ action: true }),
+			handler: async (params, ctx) => {
+				const { index, filePaths } = params as { index: number; filePaths: string[] };
+
+				// If a fileSystem is available in context, resolve relative paths
+				// against the sandbox directory
+				let resolvedPaths = filePaths;
+				if (ctx.fileSystem) {
+					const sandboxDir = ctx.fileSystem.getSandboxDir();
+					const { resolve: pathResolve } = await import('node:path');
+					resolvedPaths = filePaths.map((fp) =>
+						fp.startsWith('/') ? fp : pathResolve(sandboxDir, fp),
+					);
+				}
+
+				const selector = await ctx.domService.getElementSelector(index);
+				if (!selector) {
+					return { success: false, error: `Element ${index} not found` };
+				}
+				const fileInput = await ctx.page.$(selector);
+				if (!fileInput) {
+					return { success: false, error: `File input element not found` };
+				}
+				await fileInput.setInputFiles(resolvedPaths);
