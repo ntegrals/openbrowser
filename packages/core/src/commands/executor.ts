@@ -348,3 +348,38 @@ export class CommandExecutor {
 					return { success: false, error: `File input element not found` };
 				}
 				await fileInput.setInputFiles(resolvedPaths);
+				return { success: true };
+			},
+		});
+
+		// Select option
+		this.registry.register({
+			name: 'select',
+			description: 'Select an option in a dropdown',
+			schema: SelectCommandSchema.omit({ action: true }),
+			handler: async (params, ctx) => {
+				const { index, value } = params as { index: number; value: string };
+				const selector = await ctx.domService.getElementSelector(index);
+				if (!selector) {
+					return { success: false, error: `Element ${index} not found` };
+				}
+				await ctx.page.selectOption(selector, value);
+				return { success: true };
+			},
+		});
+
+		// Screenshot
+		this.registry.register({
+			name: 'capture',
+			description: 'Take a screenshot of the current page',
+			schema: CaptureCommandSchema.omit({ action: true }),
+			handler: async (params, ctx) => {
+				const { fullPage } = params as { fullPage?: boolean };
+				const result = await ctx.browserSession.screenshot(fullPage);
+				return {
+					success: true,
+					extractedContent: `Screenshot taken (${result.width}x${result.height})`,
+				};
+			},
+		});
+
