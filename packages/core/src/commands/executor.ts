@@ -68,3 +68,38 @@ export class CommandExecutor {
 		this.blockedUrls = options?.blockedUrls;
 		this.commandsPerStep = options?.commandsPerStep ?? 10;
 
+		if (options?.model) {
+			this.extractionService = new ContentExtractor(options.model);
+		}
+
+		this.registerBuiltinActions();
+	}
+
+	/**
+	 * Enable or disable coordinate-based clicking.
+	 * When enabled, click actions with coordinateX/coordinateY will use
+	 * page.mouse.click instead of element index lookup.
+	 */
+	setCoordinateClicking(enabled: boolean): void {
+		this.coordinateClickingEnabled = enabled;
+	}
+
+	private registerBuiltinActions(): void {
+		// Click
+		this.registry.register({
+			name: 'tap',
+			description: 'Click on an element by its index',
+			schema: TapCommandSchema.omit({ action: true }),
+			handler: async (params, ctx) => {
+				const { index, clickCount, coordinateX, coordinateY } = params as {
+					index: number;
+					clickCount?: number;
+					coordinateX?: number;
+					coordinateY?: number;
+				};
+
+				// Coordinate-based clicking
+				if (
+					this.coordinateClickingEnabled &&
+					coordinateX !== undefined &&
+					coordinateY !== undefined
