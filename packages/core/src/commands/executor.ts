@@ -558,3 +558,38 @@ export class CommandExecutor {
 		});
 
 		// Search page (multi-engine)
+		this.registry.register({
+			name: 'search',
+			description: 'Search the web using a specified search engine',
+			schema: SearchCommandSchema.omit({ action: true }),
+			handler: async (params, ctx) => {
+				const { query, engine } = params as {
+					query: string;
+					engine?: 'google' | 'duckduckgo' | 'bing';
+				};
+
+				const searchEngine = engine ?? 'google';
+				const url = buildSearchUrl(query, searchEngine);
+
+				if (!isUrlPermitted(url, this.allowedUrls, this.blockedUrls)) {
+					throw new UrlBlockedError(url);
+				}
+
+				await ctx.browserSession.navigate(url);
+				return { success: true };
+			},
+		});
+
+		// Get dropdown options
+		this.registry.register({
+			name: 'list_options',
+			description: 'Get all options from a select/dropdown element',
+			schema: ListOptionsCommandSchema.omit({ action: true }),
+			handler: async (params, ctx) => {
+				const { index } = params as { index: number };
+				const selector = await ctx.domService.getElementSelector(index);
+				if (!selector) {
+					return { success: false, error: `Element ${index} not found` };
+				}
+
+				const options = await ctx.page.evaluate((sel: string) => {
