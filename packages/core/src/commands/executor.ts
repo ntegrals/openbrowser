@@ -1013,3 +1013,38 @@ const ERROR_PATTERNS: Array<{
 	},
 	{
 		pattern: /Permission denied|not allowed/i,
+		category: 'permission',
+		message: () => 'Permission denied for this operation.',
+		suggestion: 'The action requires permissions that are not available. Try an alternative approach.',
+		isRetryable: false,
+	},
+];
+
+/**
+ * Analyze a browser or tool error and return a structured interpretation
+ * with a human-readable message, category, and actionable suggestion.
+ */
+export function classifyViewportError(error: unknown): InterpretedViewportError {
+	const rawMessage = error instanceof Error ? error.message : String(error);
+
+	// Check for known error types first
+	if (error instanceof NavigationFailedError) {
+		return {
+			category: 'navigation',
+			message: `Navigation failed for ${error.url}: ${rawMessage}`,
+			suggestion: 'Check the URL for correctness and try again.',
+			isRetryable: true,
+		};
+	}
+
+	if (error instanceof ViewportCrashedError) {
+		return {
+			category: 'crash',
+			message: rawMessage,
+			suggestion: 'The browser has crashed and the session must be restarted.',
+			isRetryable: false,
+		};
+	}
+
+	if (error instanceof UrlBlockedError) {
+		return {
