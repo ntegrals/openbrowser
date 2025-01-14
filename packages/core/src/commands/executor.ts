@@ -523,3 +523,38 @@ export class CommandExecutor {
 									text: text.slice(0, 100),
 									attributes: attrs,
 								});
+							}
+
+							// Cap at 20 results
+							if (results.length >= 20) break;
+						}
+						if (results.length >= 20) break;
+					}
+
+					return results;
+				}, query);
+
+				if (elements.length === 0) {
+					return {
+						success: true,
+						extractedContent: `No elements found matching "${query}"`,
+						includeInMemory: true,
+					};
+				}
+
+				const descriptions = elements.map((el, i) => {
+					const attrStr = Object.entries(el.attributes)
+						.map(([k, v]) => `${k}="${v}"`)
+						.join(' ');
+					return `[${i}] <${el.tag}${attrStr ? ` ${attrStr}` : ''}> ${el.text}`;
+				});
+
+				return {
+					success: true,
+					extractedContent: `Found ${elements.length} element(s):\n${descriptions.join('\n')}`,
+					includeInMemory: true,
+				};
+			},
+		});
+
+		// Search page (multi-engine)
