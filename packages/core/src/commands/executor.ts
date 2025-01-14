@@ -803,3 +803,38 @@ export class CommandExecutor {
 	}
 
 	// ── Sensitive data masking ──
+
+	/**
+	 * Mask sensitive data values in an CommandResult's extractedContent and error fields.
+	 */
+	private maskSensitiveResult(
+		result: CommandResult,
+		context: ExecutionContext,
+	): CommandResult {
+		if (!context.maskedValues) return result;
+
+		const masked = { ...result };
+		if (masked.extractedContent) {
+			masked.extractedContent = this.registry.replaceSensitiveData(
+				masked.extractedContent,
+				context.maskedValues,
+			);
+		}
+		if (masked.error) {
+			masked.error = this.registry.replaceSensitiveData(
+				masked.error,
+				context.maskedValues,
+			);
+		}
+		return masked;
+	}
+
+	/**
+	 * Mask sensitive data in a plain text string.
+	 */
+	private maskSensitiveText(
+		text: string,
+		context: ExecutionContext,
+	): string {
+		if (!context.maskedValues) return text;
+		return this.registry.replaceSensitiveData(text, context.maskedValues);
