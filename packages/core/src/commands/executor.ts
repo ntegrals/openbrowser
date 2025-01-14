@@ -768,3 +768,38 @@ export class CommandExecutor {
 	): Promise<CommandResult[]> {
 		const results: CommandResult[] = [];
 		const limit = Math.min(actions.length, this.commandsPerStep);
+
+		for (let i = 0; i < limit; i++) {
+			try {
+				const result = await this.executeAction(actions[i], context);
+
+				// Mask sensitive data in extracted content
+				const maskedResult = this.maskSensitiveResult(result, context);
+				results.push(maskedResult);
+
+				// Stop if we hit a terminating action (done, or custom terminatesSequence)
+				if (maskedResult.isDone) break;
+
+				const actionName = actions[i].action;
+				if (this.registry.isTerminating(actionName)) break;
+			} catch (error) {
+				// Interpret the browser error for a more meaningful result
+				const interpreted = classifyViewportError(error);
+				const errorMessage = `${interpreted.message} | Suggestion: ${interpreted.suggestion}`;
+
+				// Mask sensitive data in error messages too
+				const maskedMessage = this.maskSensitiveText(errorMessage, context);
+				results.push({
+					success: false,
+					error: maskedMessage,
+				});
+
+				// If the error is not retryable (e.g., browser crash), stop the sequence
+				if (!interpreted.isRetryable) break;
+			}
+		}
+
+		return results;
+	}
+
+	// ── Sensitive data masking ──
