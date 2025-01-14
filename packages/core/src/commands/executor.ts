@@ -663,3 +663,38 @@ export class CommandExecutor {
 								return opt.value;
 							}
 						}
+
+						return null;
+					},
+					{ sel: selector, text: optionText },
+				);
+
+				if (matchedValue === null) {
+					return {
+						success: false,
+						error: `No option matching "${optionText}" found in dropdown at element ${index}`,
+					};
+				}
+
+				await ctx.page.selectOption(selector, matchedValue);
+				return { success: true };
+			},
+		});
+
+		// Structured output
+		this.useStructuredOutputAction();
+	}
+
+	/**
+	 * Register the structured_output action.
+	 * Uses the extraction LLM to produce structured JSON output from
+	 * the current page content according to a caller-provided JSON schema.
+	 */
+	private useStructuredOutputAction(): void {
+		this.registry.register({
+			name: 'extract_structured',
+			description:
+				'Extract structured data from the current page content. Returns JSON conforming to the provided schema.',
+			schema: ExtractStructuredCommandSchema.omit({ action: true }),
+			handler: async (params, ctx) => {
+				const { goal, outputSchema, maxContentLength } = params as {
