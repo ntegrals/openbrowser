@@ -593,3 +593,38 @@ export class CommandExecutor {
 				}
 
 				const options = await ctx.page.evaluate((sel: string) => {
+					const selectEl = document.querySelector(sel) as HTMLSelectElement | null;
+					if (!selectEl || selectEl.tagName !== 'SELECT') {
+						return null;
+					}
+
+					return Array.from(selectEl.options).map((opt) => ({
+						value: opt.value,
+						text: opt.text.trim(),
+						selected: opt.selected,
+					}));
+				}, selector);
+
+				if (!options) {
+					return {
+						success: false,
+						error: `Element ${index} is not a select element`,
+					};
+				}
+
+				const formatted = options
+					.map(
+						(opt, i) =>
+							`[${i}] "${opt.text}" (value="${opt.value}")${opt.selected ? ' [selected]' : ''}`,
+					)
+					.join('\n');
+
+				return {
+					success: true,
+					extractedContent: `Dropdown options:\n${formatted}`,
+					includeInMemory: true,
+				};
+			},
+		});
+
+		// Select dropdown option (by text match)
