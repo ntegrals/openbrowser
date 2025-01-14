@@ -698,3 +698,38 @@ export class CommandExecutor {
 			schema: ExtractStructuredCommandSchema.omit({ action: true }),
 			handler: async (params, ctx) => {
 				const { goal, outputSchema, maxContentLength } = params as {
+					goal: string;
+					outputSchema: Record<string, unknown>;
+					maxContentLength?: number;
+				};
+
+				const contentLimit = maxContentLength ?? 8000;
+
+				// Resolve the extraction model: prefer context-provided, fall back to Tools-level
+				const extractionModel = ctx.extractionLlm;
+				const service = extractionModel
+					? new ContentExtractor(extractionModel)
+					: this.extractionService;
+
+				if (!service) {
+					return {
+						success: false,
+						error:
+							'No extraction LLM configured. Provide a model via CommandExecutorOptions or ExecutionContext.extractionLlm.',
+					};
+				}
+
+				// Extract page content as markdown
+				const markdown = await extractMarkdown(ctx.page);
+				if (!markdown.trim()) {
+					return {
+						success: false,
+						error: 'No content found on the page for structured extraction.',
+					};
+				}
+
+				const truncatedContent = markdown.slice(0, contentLimit);
+
+				try {
+					const result = await service.extractFromText(
+						truncatedContent,
