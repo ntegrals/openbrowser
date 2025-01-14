@@ -943,3 +943,38 @@ const ERROR_PATTERNS: Array<{
 	},
 	{
 		pattern: /Element is not visible/i,
+		category: 'element_not_interactable',
+		message: () => 'The element exists but is not visible.',
+		suggestion: 'Try scrolling to make the element visible, or use a different element.',
+		isRetryable: true,
+	},
+	{
+		pattern: /Element is not attached to the DOM/i,
+		category: 'element_stale',
+		message: () => 'The element reference is stale - the element was removed from the page.',
+		suggestion: 'The page content has changed. Re-read the page and use updated element indices.',
+		isRetryable: true,
+	},
+	{
+		pattern: /Element is outside of the viewport/i,
+		category: 'element_not_interactable',
+		message: () => 'The element is outside the visible viewport.',
+		suggestion: 'Scroll to bring the element into view before interacting with it.',
+		isRetryable: true,
+	},
+	{
+		pattern: /Element is not (?:enabled|editable)/i,
+		category: 'element_not_interactable',
+		message: () => 'The element is disabled or read-only.',
+		suggestion: 'The element cannot be interacted with in its current state. Look for an alternative element or action.',
+		isRetryable: false,
+	},
+	{
+		pattern: /intercepts pointer events/i,
+		category: 'element_not_interactable',
+		message: () => 'Another element is covering the target element.',
+		suggestion: 'An overlay or dialog may be blocking the click. Try closing it first, or use send_keys as an alternative.',
+		isRetryable: true,
+	},
+	{
+		pattern: /(?:Element|Node)\s+(?:\d+\s+)?not found/i,
