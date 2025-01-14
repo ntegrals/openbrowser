@@ -838,3 +838,38 @@ export class CommandExecutor {
 	): string {
 		if (!context.maskedValues) return text;
 		return this.registry.replaceSensitiveData(text, context.maskedValues);
+	}
+}
+
+// ── Helpers ──
+
+function buildSearchUrl(
+	query: string,
+	engine: 'google' | 'duckduckgo' | 'bing',
+): string {
+	const encoded = encodeURIComponent(query);
+	switch (engine) {
+		case 'google':
+			return `https://www.google.com/search?q=${encoded}&udm=14`;
+		case 'duckduckgo':
+			return `https://duckduckgo.com/?q=${encoded}`;
+		case 'bing':
+			return `https://www.bing.com/search?q=${encoded}`;
+	}
+}
+
+// ── Browser error interpretation ──
+
+/**
+ * Error pattern matcher: maps regex patterns against error messages to
+ * categories, human-readable messages, and actionable suggestions.
+ */
+const ERROR_PATTERNS: Array<{
+	pattern: RegExp;
+	category: ViewportErrorCategory;
+	message: (match: RegExpMatchArray) => string;
+	suggestion: string;
+	isRetryable: boolean;
+}> = [
+	{
+		pattern: /net::ERR_NAME_NOT_RESOLVED/i,
