@@ -978,3 +978,38 @@ const ERROR_PATTERNS: Array<{
 	},
 	{
 		pattern: /(?:Element|Node)\s+(?:\d+\s+)?not found/i,
+		category: 'element_not_found',
+		message: () => 'The specified element was not found on the page.',
+		suggestion: 'The element index may be invalid. Re-read the page content to get updated element indices.',
+		isRetryable: true,
+	},
+	{
+		pattern: /frame was detached/i,
+		category: 'element_stale',
+		message: () => 'The frame containing the element has been detached.',
+		suggestion: 'The page structure changed. Navigate to a stable page and retry.',
+		isRetryable: true,
+	},
+	{
+		pattern: /browser has been closed/i,
+		category: 'crash',
+		message: () => 'The browser has been closed unexpectedly.',
+		suggestion: 'The browser session is no longer available.',
+		isRetryable: false,
+	},
+	{
+		pattern: /Target (?:page|context|browser) (?:closed|crashed)/i,
+		category: 'crash',
+		message: () => 'The browser page or context has crashed.',
+		suggestion: 'The browser session is no longer available.',
+		isRetryable: false,
+	},
+	{
+		pattern: /Protocol error/i,
+		category: 'crash',
+		message: () => 'Browser protocol communication error.',
+		suggestion: 'The browser may have crashed or become unresponsive.',
+		isRetryable: false,
+	},
+	{
+		pattern: /Permission denied|not allowed/i,
