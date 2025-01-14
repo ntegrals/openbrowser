@@ -628,3 +628,38 @@ export class CommandExecutor {
 		});
 
 		// Select dropdown option (by text match)
+		this.registry.register({
+			name: 'pick_option',
+			description: 'Select a dropdown option by its visible text',
+			schema: PickOptionCommandSchema.omit({ action: true }),
+			handler: async (params, ctx) => {
+				const { index, optionText } = params as {
+					index: number;
+					optionText: string;
+				};
+				const selector = await ctx.domService.getElementSelector(index);
+				if (!selector) {
+					return { success: false, error: `Element ${index} not found` };
+				}
+
+				// Find the option value by matching text content
+				const matchedValue = await ctx.page.evaluate(
+					({ sel, text }: { sel: string; text: string }) => {
+						const selectEl = document.querySelector(sel) as HTMLSelectElement | null;
+						if (!selectEl || selectEl.tagName !== 'SELECT') return null;
+
+						const textLower = text.toLowerCase();
+
+						// Try exact match first
+						for (const opt of selectEl.options) {
+							if (opt.text.trim().toLowerCase() === textLower) {
+								return opt.value;
+							}
+						}
+
+						// Try partial / includes match
+						for (const opt of selectEl.options) {
+							if (opt.text.trim().toLowerCase().includes(textLower)) {
+								return opt.value;
+							}
+						}
