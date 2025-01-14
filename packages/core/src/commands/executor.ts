@@ -873,3 +873,38 @@ const ERROR_PATTERNS: Array<{
 }> = [
 	{
 		pattern: /net::ERR_NAME_NOT_RESOLVED/i,
+		category: 'network',
+		message: () => 'DNS resolution failed - the domain could not be found.',
+		suggestion: 'Check the URL for typos or try a different URL.',
+		isRetryable: false,
+	},
+	{
+		pattern: /net::ERR_CONNECTION_REFUSED/i,
+		category: 'network',
+		message: () => 'Connection refused by the server.',
+		suggestion: 'The server may be down. Try again later or use a different URL.',
+		isRetryable: true,
+	},
+	{
+		pattern: /net::ERR_CONNECTION_TIMED_OUT/i,
+		category: 'network',
+		message: () => 'Connection timed out.',
+		suggestion: 'The server is not responding. Try again or use a different URL.',
+		isRetryable: true,
+	},
+	{
+		pattern: /net::ERR_SSL/i,
+		category: 'network',
+		message: () => 'SSL/TLS connection error.',
+		suggestion: 'The site has an invalid certificate. Try an alternative URL.',
+		isRetryable: false,
+	},
+	{
+		pattern: /net::ERR_CERT/i,
+		category: 'network',
+		message: () => 'Certificate verification failed.',
+		suggestion: 'The site has a certificate issue. Try a different URL.',
+		isRetryable: false,
+	},
+	{
+		pattern: /net::ERR_ABORTED/i,
