@@ -488,3 +488,38 @@ export class CommandExecutor {
 						'[role="link"]',
 						'[role="tab"]',
 						'[role="menuitem"]',
+						'h1',
+						'h2',
+						'h3',
+						'h4',
+						'h5',
+						'h6',
+						'label',
+						'[aria-label]',
+					];
+
+					for (const selector of selectors) {
+						for (const el of document.querySelectorAll(selector)) {
+							const htmlEl = el as HTMLElement;
+							const text = (htmlEl.innerText || htmlEl.textContent || '').trim();
+							const ariaLabel = el.getAttribute('aria-label') || '';
+							const placeholder = el.getAttribute('placeholder') || '';
+							const title = el.getAttribute('title') || '';
+
+							const searchableText =
+								`${text} ${ariaLabel} ${placeholder} ${title}`.toLowerCase();
+
+							if (searchableText.includes(queryLower)) {
+								const attrs: Record<string, string> = {};
+								if (el.id) attrs.id = el.id;
+								if (el.className && typeof el.className === 'string') {
+									attrs.class = el.className;
+								}
+								if (ariaLabel) attrs['aria-label'] = ariaLabel;
+								if (placeholder) attrs.placeholder = placeholder;
+
+								results.push({
+									tag: el.tagName.toLowerCase(),
+									text: text.slice(0, 100),
+									attributes: attrs,
+								});
