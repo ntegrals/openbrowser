@@ -733,3 +733,38 @@ export class CommandExecutor {
 				try {
 					const result = await service.extractFromText(
 						truncatedContent,
+						goal,
+						outputSchema,
+					);
+
+					return {
+						success: true,
+						extractedContent: result,
+						includeInMemory: true,
+					};
+				} catch (error) {
+					const message =
+						error instanceof Error ? error.message : String(error);
+					return {
+						success: false,
+						error: `Structured extraction failed: ${message}`,
+					};
+				}
+			},
+		});
+	}
+
+	async executeAction(
+		action: Command,
+		context: ExecutionContext,
+	): Promise<CommandResult> {
+		const { action: actionName, ...params } = action;
+		return this.registry.execute(actionName, params, context);
+	}
+
+	async executeActions(
+		actions: Command[],
+		context: ExecutionContext,
+	): Promise<CommandResult[]> {
+		const results: CommandResult[] = [];
+		const limit = Math.min(actions.length, this.commandsPerStep);
