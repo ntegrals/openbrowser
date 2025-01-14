@@ -453,3 +453,38 @@ export class CommandExecutor {
 						success: false,
 						error: `Text "${text}" not found on the page`,
 					};
+				}
+
+				// Allow time for the smooth scroll to finish
+				await sleep(500);
+				return { success: true };
+			},
+		});
+
+		// Find elements
+		this.registry.register({
+			name: 'find',
+			description: 'Find elements on the page matching a description',
+			schema: FindCommandSchema.omit({ action: true }),
+			handler: async (params, ctx) => {
+				const { query } = params as { query: string };
+
+				const elements = await ctx.page.evaluate((searchQuery: string) => {
+					const results: Array<{
+						tag: string;
+						text: string;
+						attributes: Record<string, string>;
+					}> = [];
+					const queryLower = searchQuery.toLowerCase();
+
+					// Search through interactive and content elements
+					const selectors = [
+						'a',
+						'button',
+						'input',
+						'select',
+						'textarea',
+						'[role="button"]',
+						'[role="link"]',
+						'[role="tab"]',
+						'[role="menuitem"]',
