@@ -1048,3 +1048,31 @@ export function classifyViewportError(error: unknown): InterpretedViewportError 
 
 	if (error instanceof UrlBlockedError) {
 		return {
+			category: 'permission',
+			message: rawMessage,
+			suggestion: 'This URL is blocked by the allowed/blocked URL configuration. Use a different URL.',
+			isRetryable: false,
+		};
+	}
+
+	// Match against known patterns
+	for (const entry of ERROR_PATTERNS) {
+		const match = rawMessage.match(entry.pattern);
+		if (match) {
+			return {
+				category: entry.category,
+				message: entry.message(match),
+				suggestion: entry.suggestion,
+				isRetryable: entry.isRetryable,
+			};
+		}
+	}
+
+	// Unknown error - default interpretation
+	return {
+		category: 'unknown',
+		message: rawMessage,
+		suggestion: 'An unexpected error occurred. Try a different action or approach.',
+		isRetryable: true,
+	};
+}
