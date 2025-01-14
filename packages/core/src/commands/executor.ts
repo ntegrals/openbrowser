@@ -418,3 +418,38 @@ export class CommandExecutor {
 			description: 'Scroll to a specific text on the page',
 			schema: ScrollToCommandSchema.omit({ action: true }),
 			handler: async (params, ctx) => {
+				const { text } = params as { text: string };
+
+				const found = await ctx.page.evaluate((searchText: string) => {
+					// Use TreeWalker to find text nodes containing the search text
+					const walker = document.createTreeWalker(
+						document.body,
+						NodeFilter.SHOW_TEXT,
+						{
+							acceptNode(node) {
+								if (
+									node.textContent &&
+									node.textContent.toLowerCase().includes(searchText.toLowerCase())
+								) {
+									return NodeFilter.FILTER_ACCEPT;
+								}
+								return NodeFilter.FILTER_REJECT;
+							},
+						},
+					);
+
+					const node = walker.nextNode();
+					if (!node?.parentElement) return false;
+
+					node.parentElement.scrollIntoView({
+						behavior: 'smooth',
+						block: 'center',
+					});
+					return true;
+				}, text);
+
+				if (!found) {
+					return {
+						success: false,
+						error: `Text "${text}" not found on the page`,
+					};
