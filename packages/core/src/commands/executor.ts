@@ -908,3 +908,38 @@ const ERROR_PATTERNS: Array<{
 	},
 	{
 		pattern: /net::ERR_ABORTED/i,
+		category: 'navigation',
+		message: () => 'Navigation was aborted.',
+		suggestion: 'The page load was interrupted. Try navigating again.',
+		isRetryable: true,
+	},
+	{
+		pattern: /net::ERR_/i,
+		category: 'network',
+		message: (m) => `Network error: ${m[0]}`,
+		suggestion: 'A network error occurred. Check the URL and try again.',
+		isRetryable: true,
+	},
+	{
+		pattern: /Navigation timeout of \d+ms exceeded/i,
+		category: 'timeout',
+		message: () => 'Page navigation timed out.',
+		suggestion: 'The page took too long to load. Try again or navigate to a simpler page.',
+		isRetryable: true,
+	},
+	{
+		pattern: /Timeout \d+ms exceeded/i,
+		category: 'timeout',
+		message: () => 'Operation timed out.',
+		suggestion: 'The operation took too long. Try a simpler action or wait and retry.',
+		isRetryable: true,
+	},
+	{
+		pattern: /waiting for selector/i,
+		category: 'timeout',
+		message: () => 'Timed out waiting for an element to appear.',
+		suggestion: 'The element may not exist on this page. Check the page content and try a different selector or index.',
+		isRetryable: true,
+	},
+	{
+		pattern: /Element is not visible/i,
