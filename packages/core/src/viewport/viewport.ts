@@ -248,3 +248,28 @@ export class Viewport {
 		});
 	}
 
+	private setupPageLifecycleListeners(): void {
+		if (!this.context) return;
+
+		// Track new pages (tabs) being created
+		this.context.on('page', async (page: Page) => {
+			const url = page.url();
+			logger.debug(`New page created: ${url}`);
+			this.eventBus.emit('tab-opened', { url });
+
+			// Refresh target list when new pages appear
+			await this.refreshTargets();
+
+			// Emit browser-state update
+			try {
+				this.eventBus.emit('viewport-state', {
+					url: this._currentPage?.url() ?? url,
+					title: this._currentPage ? await this._currentPage.title() : '',
+					tabCount: this.context?.pages().length ?? 1,
+				});
+			} catch {
+				// Page might be closed already
+			}
+
+			// When the new page loads, emit page-loaded
+			page.on('load', () => {
