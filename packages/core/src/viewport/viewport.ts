@@ -148,3 +148,28 @@ export class Viewport {
 	get browserContext(): BrowserContext {
 		if (!this.context) {
 			throw new ViewportCrashedError('No active browser context');
+		}
+		return this.context;
+	}
+
+	get cdp(): CDPSession | null {
+		return this.cdpSession;
+	}
+
+	// ── Lifecycle ──
+
+	async start(): Promise<void> {
+		const { durationMs } = await timed('browser-session.start', async () => {
+			try {
+				logger.info('Starting browser session');
+
+				if (this.options.wsEndpoint) {
+					logger.debug(`Connecting via WebSocket: ${this.options.wsEndpoint}`);
+					this.browser = await chromium.connect(this.options.wsEndpoint);
+				} else if (this.options.cdpUrl) {
+					logger.debug(`Connecting via CDP: ${this.options.cdpUrl}`);
+					this.browser = await chromium.connectOverCDP(this.options.cdpUrl);
+				} else {
+					this.browser = await this.launchBrowser();
+				}
+
