@@ -173,3 +173,28 @@ export class Viewport {
 					this.browser = await this.launchBrowser();
 				}
 
+				const contexts = this.browser.contexts();
+				if (contexts.length > 0) {
+					this.context = contexts[0];
+					logger.debug('Reusing existing browser context');
+				} else {
+					this.context = await this.createContext();
+					logger.debug('Created new browser context');
+				}
+
+				const pages = this.context.pages();
+				if (pages.length > 0) {
+					this._currentPage = pages[0];
+				} else {
+					this._currentPage = await this.context.newPage();
+				}
+
+				// Create CDP session
+				this.cdpSession = await this._currentPage.context().newCDPSession(this._currentPage);
+
+				this._isConnected = true;
+
+				// Wire up disconnect detection on the browser
+				this.setupDisconnectHandler();
+
+				// Discover initial targets
