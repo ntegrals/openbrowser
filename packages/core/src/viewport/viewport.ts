@@ -223,3 +223,28 @@ export class Viewport {
 				this.eventBus.emit('viewport-state', {
 					url: pageUrl,
 					title: pageTitle,
+					tabCount: this.context.pages().length,
+				});
+
+				logger.info(`Browser session started: ${pageUrl}`);
+			} catch (error) {
+				throw new LaunchFailedError(
+					`Failed to start browser: ${error instanceof Error ? error.message : String(error)}`,
+					{ cause: error instanceof Error ? error : undefined },
+				);
+			}
+		});
+
+		logger.debug(`start() completed in ${durationMs.toFixed(1)}ms`);
+	}
+
+	private setupDisconnectHandler(): void {
+		if (!this.browser) return;
+
+		this.browser.on('disconnected', () => {
+			logger.warn('Browser disconnected');
+			this._isConnected = false;
+			this.eventBus.emit('crash', { reason: 'Browser disconnected unexpectedly' });
+		});
+	}
+
