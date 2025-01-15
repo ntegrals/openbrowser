@@ -273,3 +273,28 @@ export class Viewport {
 
 			// When the new page loads, emit page-loaded
 			page.on('load', () => {
+				const loadedUrl = page.url();
+				if (!isNewTabPage(loadedUrl)) {
+					logger.debug(`Page loaded in new tab: ${loadedUrl}`);
+				}
+			});
+		});
+	}
+
+	// ── Multi-target tracking ──
+
+	/**
+	 * Queries CDP for the current list of targets (pages, iframes, workers, etc.)
+	 * and updates the internal target map.
+	 */
+	async getTargets(): Promise<Target[]> {
+		await this.refreshTargets();
+		return Array.from(this.knownTargets.values());
+	}
+
+	private async refreshTargets(): Promise<void> {
+		if (!this.cdpSession) return;
+
+		try {
+			const result = await (
+				this.cdpSession.send('Target.getTargets') as Promise<unknown>
