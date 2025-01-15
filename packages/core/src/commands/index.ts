@@ -1,0 +1,37 @@
+export { CommandExecutor, type CommandExecutorOptions, classifyViewportError } from './executor.js';
+export { CommandCatalog } from './catalog/catalog.js';
+export { ContentExtractor } from './extraction/extractor.js';
+export { type CatalogEntry, type CatalogOptions } from './catalog/types.js';
+export {
+	CommandSchema,
+	type Command,
+	type CommandName,
+	type CommandResult,
+	type ExecutionContext,
+	type CustomCommandSpec,
+	type ViewportErrorCategory,
+	type InterpretedViewportError,
+	TapCommandSchema,
+	TypeTextCommandSchema,
+	NavigateCommandSchema,
+	BackCommandSchema,
+	ScrollCommandSchema,
+	PressKeysCommandSchema,
+	ExtractCommandSchema,
+	FinishCommandSchema,
+	FocusTabCommandSchema,
+	NewTabCommandSchema,
+	CloseTabCommandSchema,
+	WebSearchCommandSchema,
+	UploadCommandSchema,
+	SelectCommandSchema,
+	CaptureCommandSchema,
+	ReadPageCommandSchema,
+	WaitCommandSchema,
+	ScrollToCommandSchema,
+	FindCommandSchema,
+	SearchCommandSchema,
+	ListOptionsCommandSchema,
+	PickOptionCommandSchema,
+	ExtractStructuredCommandSchema,
+} from './types.js';
