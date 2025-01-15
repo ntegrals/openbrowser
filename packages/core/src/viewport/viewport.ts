@@ -323,3 +323,28 @@ export class Viewport {
 
 	/**
 	 * Find a target by its targetId.
+	 */
+	findTarget(id: TargetId): Target | undefined {
+		return this.knownTargets.get(id);
+	}
+
+	/**
+	 * Get only page-type targets, filtering out new-tab pages.
+	 */
+	async getPageTargets(): Promise<Target[]> {
+		const targets = await this.getTargets();
+		return targets.filter((t) => t.type === 'page' && !isNewTabPage(t.url));
+	}
+
+	// ── Viewport detection via CDP ──
+
+	/**
+	 * Detects the actual viewport dimensions by evaluating JavaScript in the page
+	 * via CDP Runtime.evaluate. This is more accurate than Playwright's viewportSize()
+	 * because it reflects the real rendered viewport including device pixel ratio.
+	 */
+	async detectViewport(): Promise<ViewportInfo> {
+		if (this.cachedViewport) {
+			return this.cachedViewport;
+		}
+
