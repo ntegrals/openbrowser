@@ -198,3 +198,28 @@ export class Viewport {
 				this.setupDisconnectHandler();
 
 				// Discover initial targets
+				await this.refreshTargets();
+
+				// Detect initial viewport via CDP
+				this.cachedViewport = null;
+				await this.detectViewport();
+
+				// Initialize watchdogs
+				await this.initializeWatchdogs();
+
+				// Set up page lifecycle listeners on the context
+				this.setupPageLifecycleListeners();
+
+				const pageUrl = this._currentPage.url();
+				const pageTitle = await this._currentPage.title();
+
+				// Emit initial lifecycle events
+				this.eventBus.emit('content-ready', undefined as any);
+
+				if (!isNewTabPage(pageUrl)) {
+					this.eventBus.emit('page-ready', { url: pageUrl });
+				}
+
+				this.eventBus.emit('viewport-state', {
+					url: pageUrl,
+					title: pageTitle,
