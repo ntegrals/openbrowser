@@ -123,3 +123,28 @@ export class Viewport {
 				userDataDir: options.launchOptions?.userDataDir,
 				browserBinaryPath: options.launchOptions?.browserBinaryPath,
 				persistAfterClose: options.launchOptions?.persistAfterClose ?? false,
+				channelName: options.launchOptions?.channelName,
+			};
+		}
+
+		this.minWaitPageLoadMs = options.minWaitPageLoadMs ?? 500;
+		this.waitForNetworkIdleMs = options.waitForNetworkIdleMs ?? 1000;
+		this.maxWaitPageLoadMs = options.maxWaitPageLoadMs ?? 5000;
+		this.maxReconnectAttempts = options.maxReconnectAttempts ?? 3;
+		this.reconnectDelayMs = options.reconnectDelayMs ?? 1000;
+	}
+
+	get isConnected(): boolean {
+		return this._isConnected;
+	}
+
+	get currentPage(): Page {
+		if (!this._currentPage) {
+			throw new ViewportCrashedError('No active page');
+		}
+		return this._currentPage;
+	}
+
+	get browserContext(): BrowserContext {
+		if (!this.context) {
+			throw new ViewportCrashedError('No active browser context');
