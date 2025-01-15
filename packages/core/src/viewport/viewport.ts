@@ -298,3 +298,28 @@ export class Viewport {
 		try {
 			const result = await (
 				this.cdpSession.send('Target.getTargets') as Promise<unknown>
+			) as Promise<{ targetInfos: Array<{ targetId: string; type: string; url: string; title: string }> }>;
+
+			const { targetInfos } = await result;
+
+			this.knownTargets.clear();
+			for (const info of targetInfos) {
+				const type = normalizeTargetType(info.type);
+				this.knownTargets.set(info.targetId, {
+					targetId: targetId(info.targetId),
+					type,
+					url: info.url,
+					title: info.title,
+				});
+			}
+
+			logger.debug(`Refreshed targets: ${this.knownTargets.size} found`);
+		} catch (error) {
+			logger.debug(
+				`Failed to refresh targets: ${error instanceof Error ? error.message : String(error)}`,
+			);
+		}
+	}
+
+	/**
+	 * Find a target by its targetId.
