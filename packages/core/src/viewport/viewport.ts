@@ -73,3 +73,28 @@ export interface ViewportOptions {
 	waitForNetworkIdleMs?: number;
 	/** Max wait for page load (ms) */
 	maxWaitPageLoadMs?: number;
+	/** Max reconnection attempts */
+	maxReconnectAttempts?: number;
+	/** Delay between reconnection attempts (ms) */
+	reconnectDelayMs?: number;
+}
+
+export class Viewport {
+	private browser: Browser | null = null;
+	private context: BrowserContext | null = null;
+	private _currentPage: Page | null = null;
+	private cdpSession: CDPSession | null = null;
+
+	readonly eventBus: EventHub<ViewportEventMap, ViewportRequestMap>;
+	private watchdogs: BaseGuard[] = [];
+	private options: ViewportOptions;
+	private launchOptions: LaunchOptions;
+	private _isConnected = false;
+
+	private readonly minWaitPageLoadMs: number;
+	private readonly waitForNetworkIdleMs: number;
+	private readonly maxWaitPageLoadMs: number;
+	private readonly maxReconnectAttempts: number;
+	private readonly reconnectDelayMs: number;
+
+	/** Tracks known CDP targets keyed by targetId */
