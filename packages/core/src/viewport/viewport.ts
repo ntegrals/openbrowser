@@ -98,3 +98,28 @@ export class Viewport {
 	private readonly reconnectDelayMs: number;
 
 	/** Tracks known CDP targets keyed by targetId */
+	private knownTargets = new Map<string, Target>();
+
+	/** Cached viewport info, invalidated on page/tab switch */
+	private cachedViewport: ViewportInfo | null = null;
+
+	/** Tracks whether a reconnection is currently in progress */
+	private reconnecting = false;
+
+	constructor(options: ViewportOptions = {}) {
+		this.options = options;
+		this.eventBus = new EventHub({ maxHistory: 200 });
+
+		if (options.profile) {
+			this.launchOptions = options.profile.build();
+		} else {
+			this.launchOptions = {
+				headless: options.headless ?? options.launchOptions?.headless ?? true,
+				relaxedSecurity: options.launchOptions?.relaxedSecurity ?? false,
+				extraArgs: options.launchOptions?.extraArgs ?? [],
+				windowWidth: options.launchOptions?.windowWidth ?? 1280,
+				windowHeight: options.launchOptions?.windowHeight ?? 1100,
+				proxy: options.launchOptions?.proxy,
+				userDataDir: options.launchOptions?.userDataDir,
+				browserBinaryPath: options.launchOptions?.browserBinaryPath,
+				persistAfterClose: options.launchOptions?.persistAfterClose ?? false,
