@@ -48,3 +48,28 @@ export interface ViewportInfo {
 	isMobile: boolean;
 }
 
+export interface ViewportOptions {
+	/** Launch options (or use LaunchProfile) */
+	launchOptions?: Partial<LaunchOptions>;
+	/** Pre-built browser profile */
+	profile?: LaunchProfile;
+	/** Connect to existing browser via WebSocket URL */
+	wsEndpoint?: string;
+	/** Connect to existing browser via CDP URL */
+	cdpUrl?: string;
+	/** Headless mode shortcut */
+	headless?: boolean;
+	/** Allowed URLs for security watchdog */
+	allowedUrls?: string[];
+	/** Blocked URLs for security watchdog */
+	blockedUrls?: string[];
+	/** Storage state file path */
+	storageStatePath?: string;
+	/** Extra watchdogs */
+	watchdogs?: BaseGuard[];
+	/** Minimum wait after page load (ms) */
+	minWaitPageLoadMs?: number;
+	/** Wait for network idle (ms) */
+	waitForNetworkIdleMs?: number;
+	/** Max wait for page load (ms) */
+	maxWaitPageLoadMs?: number;
