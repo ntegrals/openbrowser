@@ -348,3 +348,28 @@ export class Viewport {
 			return this.cachedViewport;
 		}
 
+		if (!this.cdpSession) {
+			// Fallback to launch options if no CDP session
+			const fallback: ViewportInfo = {
+				width: this.launchOptions.windowWidth,
+				height: this.launchOptions.windowHeight,
+				deviceScaleFactor: 1,
+				isMobile: false,
+			};
+			this.cachedViewport = fallback;
+			return fallback;
+		}
+
+		try {
+			const { result: viewportResult } = await timed('detectViewport', async () => {
+				const evalResult = await (
+					this.cdpSession!.send('Runtime.evaluate', {
+						expression: `JSON.stringify({
+							width: window.innerWidth,
+							height: window.innerHeight,
+							deviceScaleFactor: window.devicePixelRatio || 1,
+							isMobile: /Mobi|Android/i.test(navigator.userAgent)
+						})`,
+						returnByValue: true,
+					}) as Promise<unknown>
+				) as Promise<{ result: { value: string } }>;
