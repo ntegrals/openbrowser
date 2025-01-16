@@ -723,3 +723,28 @@ export class Viewport {
 
 	private async createContext(): Promise<BrowserContext> {
 		const context = await this.browser!.newContext({
+			viewport: {
+				width: this.launchOptions.windowWidth,
+				height: this.launchOptions.windowHeight,
+			},
+			userAgent: undefined, // Use default
+			javaScriptEnabled: true,
+			ignoreHTTPSErrors: this.launchOptions.relaxedSecurity,
+			acceptDownloads: true,
+		});
+
+		return context;
+	}
+
+	private async initializeWatchdogs(): Promise<void> {
+		const ctx: GuardContext = {
+			page: this._currentPage!,
+			context: this.context!,
+			eventBus: this.eventBus,
+		};
+
+		// Create default watchdogs
+		this.watchdogs = [
+			new LocalInstanceGuard(),
+			new UrlPolicyGuard(this.options.allowedUrls, this.options.blockedUrls),
+			new DefaultHandlerGuard(),
