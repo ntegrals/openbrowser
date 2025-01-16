@@ -898,3 +898,28 @@ export class Viewport {
 		this.cachedViewport = null;
 
 		// Refresh target list
+		await this.refreshTargets();
+
+		this.eventBus.emit('tab-changed', { tabIndex });
+	}
+
+	async closeTab(tabIndex?: number): Promise<void> {
+		const pages = this.context!.pages();
+		const index = tabIndex ?? pages.indexOf(this.currentPage);
+
+		if (pages.length <= 1) {
+			throw new Error('Cannot close the last tab');
+		}
+
+		const pageToClose = pages[index];
+		await pageToClose.close();
+
+		// Switch to remaining page
+		const remainingPages = this.context!.pages();
+		if (remainingPages.length > 0) {
+			const newIndex = Math.min(index, remainingPages.length - 1);
+			this._currentPage = remainingPages[newIndex];
+			await this._currentPage.bringToFront();
+			this.cdpSession = await this._currentPage.context().newCDPSession(this._currentPage);
+		}
+
