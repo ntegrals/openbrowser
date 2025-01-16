@@ -498,3 +498,28 @@ export class Viewport {
 
 			logger.error(`All ${this.maxReconnectAttempts} reconnect attempts failed`);
 			this.eventBus.emit('crash', { reason: 'Reconnection failed after all attempts' });
+			return false;
+		} finally {
+			this.reconnecting = false;
+		}
+	}
+
+	/**
+	 * Cleans up internal state in preparation for a reconnect attempt,
+	 * without emitting lifecycle events or clearing the event bus.
+	 */
+	private async cleanupForReconnect(): Promise<void> {
+		// Detach watchdogs
+		for (const watchdog of this.watchdogs) {
+			try {
+				await watchdog.detach();
+			} catch {
+				// Ignore detach errors during reconnect
+			}
+		}
+		this.watchdogs = [];
+
+		// Detach CDP session
+		if (this.cdpSession) {
+			try {
+				await this.cdpSession.detach();
