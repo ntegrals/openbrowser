@@ -798,3 +798,28 @@ export class Viewport {
 
 		// Refresh targets (navigation may create/destroy targets)
 		await this.refreshTargets();
+
+		this.eventBus.emit('page-ready', { url: page.url() });
+		this.eventBus.emit('viewport-state', {
+			url: page.url(),
+			title: await page.title(),
+			tabCount: this.context!.pages().length,
+		});
+	}
+
+	async waitForPageReady(): Promise<void> {
+		const page = this.currentPage;
+
+		// Minimum wait
+		await new Promise((resolve) => setTimeout(resolve, this.minWaitPageLoadMs));
+
+		// Wait for network idle
+		try {
+			await page.waitForLoadState('networkidle', {
+				timeout: this.waitForNetworkIdleMs,
+			});
+		} catch {
+			// Timeout is OK
+		}
+	}
+
