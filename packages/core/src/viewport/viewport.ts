@@ -548,3 +548,28 @@ export class Viewport {
 
 	// ── DOM stability ──
 
+	/**
+	 * Waits for the DOM to stop mutating. Uses a MutationObserver injected via
+	 * page.evaluate to detect when no DOM changes occur for a quiet period.
+	 *
+	 * @param timeout - Maximum time to wait in ms (default: 3000)
+	 * @param quietPeriodMs - How long the DOM must be silent to be considered stable (default: 300)
+	 */
+	async waitForStableDOM(timeout = 3000, quietPeriodMs = 300): Promise<void> {
+		const page = this.currentPage;
+
+		const { durationMs } = await timed('waitForStableDOM', async () => {
+			try {
+				await page.evaluate(
+					({ timeoutMs, quietMs }) => {
+						return new Promise<void>((resolve) => {
+							let timer: ReturnType<typeof setTimeout>;
+							let overallTimer: ReturnType<typeof setTimeout>;
+
+							const observer = new MutationObserver(() => {
+								clearTimeout(timer);
+								timer = setTimeout(() => {
+									observer.disconnect();
+									clearTimeout(overallTimer);
+									resolve();
+								}, quietMs);
