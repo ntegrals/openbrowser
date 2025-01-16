@@ -573,3 +573,28 @@ export class Viewport {
 									clearTimeout(overallTimer);
 									resolve();
 								}, quietMs);
+							});
+
+							observer.observe(document.body, {
+								childList: true,
+								subtree: true,
+								attributes: true,
+								characterData: true,
+							});
+
+							// Start the quiet period timer immediately -- if no mutations
+							// happen at all, we resolve after quietMs
+							timer = setTimeout(() => {
+								observer.disconnect();
+								clearTimeout(overallTimer);
+								resolve();
+							}, quietMs);
+
+							// Overall timeout: resolve even if mutations keep happening
+							overallTimer = setTimeout(() => {
+								observer.disconnect();
+								clearTimeout(timer);
+								resolve();
+							}, timeoutMs);
+						});
+					},
