@@ -848,3 +848,28 @@ export class Viewport {
 			base64,
 			width: viewport?.width ?? this.launchOptions.windowWidth,
 			height: viewport?.height ?? this.launchOptions.windowHeight,
+		};
+	}
+
+	async getState(): Promise<ViewportSnapshot> {
+		const page = this.currentPage;
+		const pages = this.context!.pages();
+		const activeIndex = pages.indexOf(page);
+
+		const tabs: TabDescriptor[] = pages.map((p, i) => ({
+			tabId: tabId(i),
+			url: p.url(),
+			title: '', // Will be populated async
+			isActive: i === activeIndex,
+		}));
+
+		// Get titles in parallel
+		await Promise.all(
+			tabs.map(async (tab, i) => {
+				try {
+					tab.title = await pages[i].title();
+				} catch {
+					tab.title = '';
+				}
+			}),
+		);
