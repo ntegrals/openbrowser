@@ -948,3 +948,28 @@ export class Viewport {
 
 	async evaluate<T>(expression: string): Promise<T> {
 		return this.currentPage.evaluate(expression) as Promise<T>;
+	}
+
+	async setPage(page: Page): Promise<void> {
+		this._currentPage = page;
+		this.cdpSession = await page.context().newCDPSession(page);
+		this.cachedViewport = null;
+	}
+
+	// ── Cleanup ──
+
+	async close(): Promise<void> {
+		logger.info('Closing browser session');
+
+		// Detach all watchdogs
+		for (const watchdog of this.watchdogs) {
+			await watchdog.detach();
+		}
+		this.watchdogs = [];
+
+		// Close CDP session
+		if (this.cdpSession) {
+			try {
+				await this.cdpSession.detach();
+			} catch {
+				// Ignore
