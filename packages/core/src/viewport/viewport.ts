@@ -423,3 +423,28 @@ export class Viewport {
 		try {
 			// Clean up current state without emitting close event
 			await this.cleanupForReconnect();
+
+			let delay = this.reconnectDelayMs;
+
+			for (let attempt = 1; attempt <= this.maxReconnectAttempts; attempt++) {
+				logger.info(`Reconnect attempt ${attempt}/${this.maxReconnectAttempts}`);
+
+				try {
+					if (this.options.wsEndpoint) {
+						this.browser = await chromium.connect(this.options.wsEndpoint);
+					} else if (this.options.cdpUrl) {
+						this.browser = await chromium.connectOverCDP(this.options.cdpUrl);
+					} else {
+						// For locally launched browsers, we need to launch a new instance
+						this.browser = await this.launchBrowser();
+					}
+
+					// Re-establish context
+					const contexts = this.browser.contexts();
+					if (contexts.length > 0) {
+						this.context = contexts[0];
+					} else {
+						this.context = await this.createContext();
+					}
+
+					// Re-establish page
