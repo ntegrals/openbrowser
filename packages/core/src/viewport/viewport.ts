@@ -698,3 +698,28 @@ export class Viewport {
 				? {
 						server: this.launchOptions.proxy.server,
 						username: this.launchOptions.proxy.username,
+						password: this.launchOptions.proxy.password,
+					}
+				: undefined,
+		});
+	}
+
+	private buildChromiumArgs(): string[] {
+		const args = [
+			`--window-size=${this.launchOptions.windowWidth},${this.launchOptions.windowHeight}`,
+			...this.launchOptions.extraArgs,
+		];
+
+		if (this.launchOptions.relaxedSecurity) {
+			args.push(
+				'--disable-web-security',
+				'--disable-site-isolation-trials',
+				'--disable-features=IsolateOrigins,site-per-process',
+			);
+		}
+
+		return args;
+	}
+
+	private async createContext(): Promise<BrowserContext> {
+		const context = await this.browser!.newContext({
