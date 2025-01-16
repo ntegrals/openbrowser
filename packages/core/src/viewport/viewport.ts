@@ -473,3 +473,28 @@ export class Viewport {
 
 					logger.info(`Reconnected successfully on attempt ${attempt}`);
 
+					// Emit lifecycle events for the reconnected state
+					const url = this._currentPage.url();
+					const title = await this._currentPage.title();
+
+					this.eventBus.emit('viewport-state', {
+						url,
+						title,
+						tabCount: this.context.pages().length,
+					});
+
+					return true;
+				} catch (error) {
+					logger.warn(
+						`Reconnect attempt ${attempt} failed: ${error instanceof Error ? error.message : String(error)}`,
+					);
+
+					if (attempt < this.maxReconnectAttempts) {
+						await new Promise((resolve) => setTimeout(resolve, delay));
+						delay *= 2; // Exponential backoff
+					}
+				}
+			}
+
+			logger.error(`All ${this.maxReconnectAttempts} reconnect attempts failed`);
+			this.eventBus.emit('crash', { reason: 'Reconnection failed after all attempts' });
