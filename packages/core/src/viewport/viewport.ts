@@ -623,3 +623,28 @@ export class Viewport {
 
 		const { result: html } = await timed('getVisibleHtml', async () => {
 			return page.evaluate(() => {
+				function isInViewport(el: Element): boolean {
+					const rect = el.getBoundingClientRect();
+					// Element is at least partially visible
+					return (
+						rect.bottom > 0 &&
+						rect.right > 0 &&
+						rect.top < window.innerHeight &&
+						rect.left < window.innerWidth &&
+						rect.width > 0 &&
+						rect.height > 0
+					);
+				}
+
+				function isVisible(el: Element): boolean {
+					const style = window.getComputedStyle(el);
+					return (
+						style.display !== 'none' &&
+						style.visibility !== 'hidden' &&
+						style.opacity !== '0' &&
+						isInViewport(el)
+					);
+				}
+
+				// Walk the DOM and collect visible top-level elements
+				const visibleParts: string[] = [];
