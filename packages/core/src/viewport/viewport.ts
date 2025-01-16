@@ -373,3 +373,28 @@ export class Viewport {
 						returnByValue: true,
 					}) as Promise<unknown>
 				) as Promise<{ result: { value: string } }>;
+				return evalResult;
+			});
+
+			const parsed = JSON.parse(viewportResult.result.value) as ViewportInfo;
+			this.cachedViewport = parsed;
+			logger.debug(
+				`Viewport detected: ${parsed.width}x${parsed.height} @${parsed.deviceScaleFactor}x`,
+			);
+			return parsed;
+		} catch (error) {
+			logger.warn(
+				`Viewport detection failed, using defaults: ${error instanceof Error ? error.message : String(error)}`,
+			);
+			const fallback: ViewportInfo = {
+				width: this.launchOptions.windowWidth,
+				height: this.launchOptions.windowHeight,
+				deviceScaleFactor: 1,
+				isMobile: false,
+			};
+			this.cachedViewport = fallback;
+			return fallback;
+		}
+	}
+
+	/** Invalidates the cached viewport, forcing a fresh CDP detection on next access. */
