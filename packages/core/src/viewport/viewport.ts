@@ -398,3 +398,28 @@ export class Viewport {
 	}
 
 	/** Invalidates the cached viewport, forcing a fresh CDP detection on next access. */
+	invalidateViewportCache(): void {
+		this.cachedViewport = null;
+	}
+
+	// ── Reconnection logic ──
+
+	/**
+	 * Attempts to reconnect to the browser after a disconnect. Uses the original
+	 * connection method (wsEndpoint, cdpUrl, or local launch). Retries up to
+	 * maxReconnectAttempts with exponential backoff.
+	 *
+	 * Returns true if reconnection succeeded, false otherwise.
+	 */
+	async reconnect(): Promise<boolean> {
+		if (this.reconnecting) {
+			logger.warn('Reconnection already in progress, skipping');
+			return false;
+		}
+
+		this.reconnecting = true;
+		logger.info('Attempting to reconnect browser session');
+
+		try {
+			// Clean up current state without emitting close event
+			await this.cleanupForReconnect();
