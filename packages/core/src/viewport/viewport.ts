@@ -598,3 +598,28 @@ export class Viewport {
 							}, timeoutMs);
 						});
 					},
+					{ timeoutMs: timeout, quietMs: quietPeriodMs },
+				);
+			} catch (error) {
+				// If the page navigated or was closed, just return
+				logger.debug(
+					`waitForStableDOM interrupted: ${error instanceof Error ? error.message : String(error)}`,
+				);
+			}
+		});
+
+		logger.debug(`DOM stabilized in ${durationMs.toFixed(1)}ms`);
+	}
+
+	// ── Visible HTML extraction ──
+
+	/**
+	 * Returns the HTML of elements currently visible in the viewport.
+	 * Uses IntersectionObserver logic evaluated in-page to collect only
+	 * elements that are within the visible area, then serializes them.
+	 */
+	async getVisibleHtml(): Promise<string> {
+		const page = this.currentPage;
+
+		const { result: html } = await timed('getVisibleHtml', async () => {
+			return page.evaluate(() => {
