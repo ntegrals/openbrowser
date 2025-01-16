@@ -748,3 +748,28 @@ export class Viewport {
 			new LocalInstanceGuard(),
 			new UrlPolicyGuard(this.options.allowedUrls, this.options.blockedUrls),
 			new DefaultHandlerGuard(),
+			new PopupGuard(),
+			new PageReadyGuard(),
+			new DownloadGuard(),
+			new BlankPageGuard(),
+			new CrashGuard(),
+			new ScreenshotGuard(),
+			...(this.options.watchdogs ?? []),
+		];
+
+		if (this.options.storageStatePath) {
+			this.watchdogs.push(new PersistenceGuard(this.options.storageStatePath));
+		}
+
+		// Sort by priority (lower = higher priority)
+		this.watchdogs.sort((a, b) => a.priority - b.priority);
+
+		// Attach all watchdogs
+		for (const watchdog of this.watchdogs) {
+			await watchdog.attach(ctx);
+		}
+
+		logger.debug(`Initialized ${this.watchdogs.length} watchdogs`);
+	}
+
+	// ── Navigation & interaction (existing, enhanced) ──
