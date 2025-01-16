@@ -448,3 +448,28 @@ export class Viewport {
 					}
 
 					// Re-establish page
+					const pages = this.context.pages();
+					if (pages.length > 0) {
+						this._currentPage = pages[0];
+					} else {
+						this._currentPage = await this.context.newPage();
+					}
+
+					// Re-create CDP session
+					this.cdpSession = await this._currentPage.context().newCDPSession(this._currentPage);
+
+					this._isConnected = true;
+					this.cachedViewport = null;
+
+					// Re-wire handlers
+					this.setupDisconnectHandler();
+					this.setupPageLifecycleListeners();
+
+					// Refresh targets after reconnect
+					await this.refreshTargets();
+
+					// Re-initialize watchdogs
+					await this.initializeWatchdogs();
+
+					logger.info(`Reconnected successfully on attempt ${attempt}`);
+
