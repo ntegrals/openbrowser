@@ -673,3 +673,28 @@ export class Viewport {
 				if (visibleParts.length === 0) {
 					// Fallback: return the body's innerHTML truncated
 					return body.innerHTML.slice(0, 50000);
+				}
+
+				return visibleParts.join('\n');
+			});
+		});
+
+		return html;
+	}
+
+	// ── Launch & context setup (existing) ──
+
+	private async launchBrowser(): Promise<Browser> {
+		const args = this.buildChromiumArgs();
+
+		logger.debug(`Launching chromium with ${args.length} args`);
+
+		return chromium.launch({
+			headless: this.launchOptions.headless,
+			args,
+			executablePath: this.launchOptions.browserBinaryPath || undefined,
+			channel: this.launchOptions.channelName || undefined,
+			proxy: this.launchOptions.proxy
+				? {
+						server: this.launchOptions.proxy.server,
+						username: this.launchOptions.proxy.username,
