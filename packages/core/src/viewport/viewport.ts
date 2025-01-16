@@ -823,3 +823,28 @@ export class Viewport {
 		}
 	}
 
+	async click(selector: string): Promise<void> {
+		await this.currentPage.click(selector, { timeout: 5000 });
+	}
+
+	async type(selector: string, text: string): Promise<void> {
+		await this.currentPage.fill(selector, text);
+	}
+
+	async pressKey(key: string): Promise<void> {
+		await this.currentPage.keyboard.press(key);
+	}
+
+	async screenshot(fullPage = false): Promise<{ base64: string; width: number; height: number }> {
+		const page = this.currentPage;
+		const buffer = await page.screenshot({
+			fullPage,
+			type: 'png',
+		});
+		const base64 = buffer.toString('base64');
+		const viewport = page.viewportSize();
+
+		return {
+			base64,
+			width: viewport?.width ?? this.launchOptions.windowWidth,
+			height: viewport?.height ?? this.launchOptions.windowHeight,
