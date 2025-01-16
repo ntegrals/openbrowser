@@ -223,3 +223,48 @@ export class VisualTracer {
 				}, duration);
 			},
 			{
+				x,
+				y,
+				label,
+				color: this.options.actionColors.click,
+				duration: this.options.highlightDuration,
+				fontSize: this.options.annotationFontSize,
+				attr: OVERLAY_ATTR,
+			},
+		);
+	}
+
+	/**
+	 * Shows an arrow animation indicating the scroll direction.
+	 */
+	async highlightScroll(page: Page, direction: 'up' | 'down'): Promise<void> {
+		await page.evaluate(
+			({ direction, color, duration, fontSize, attr }) => {
+				const container = document.createElement('div');
+				container.setAttribute(attr, '');
+				container.style.cssText = `
+					position: fixed;
+					left: 0;
+					top: 0;
+					width: 100%;
+					height: 100%;
+					pointer-events: none;
+					z-index: 999999;
+				`;
+
+				const styleEl = document.createElement('style');
+				const translateY = direction === 'up' ? '-40px' : '40px';
+				styleEl.textContent = `
+					@keyframes demo-scroll-arrow {
+						0% { opacity: 0; transform: translateX(-50%) translateY(0); }
+						30% { opacity: 1; }
+						100% { opacity: 0; transform: translateX(-50%) translateY(${translateY}); }
+					}
+				`;
+				container.appendChild(styleEl);
+
+				const arrowChar = direction === 'up' ? '\u25B2' : '\u25BC';
+
+				// Show three staggered arrows along the right side
+				for (let i = 0; i < 3; i++) {
+					const arrow = document.createElement('div');
