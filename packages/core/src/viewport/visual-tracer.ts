@@ -178,3 +178,48 @@ export class VisualTracer {
 						animation: demo-click-ring ${duration * 0.6}ms ease-out ${i * 120}ms forwards;
 					`;
 					container.appendChild(ring);
+				}
+
+				// Small filled dot at click center
+				const dot = document.createElement('div');
+				dot.style.cssText = `
+					position: fixed;
+					left: ${x}px;
+					top: ${y}px;
+					width: 10px;
+					height: 10px;
+					background: ${color};
+					border-radius: 50%;
+					transform: translate(-50%, -50%);
+					pointer-events: none;
+					transition: opacity 0.3s;
+				`;
+				container.appendChild(dot);
+
+				// Optional label
+				if (label) {
+					const labelEl = document.createElement('div');
+					labelEl.textContent = label;
+					labelEl.style.cssText = `
+						position: fixed;
+						left: ${x + 16}px;
+						top: ${y - 12}px;
+						background: ${color};
+						color: white;
+						padding: 2px 8px;
+						font-size: ${fontSize}px;
+						font-family: monospace;
+						border-radius: 3px;
+						white-space: nowrap;
+						pointer-events: none;
+					`;
+					container.appendChild(labelEl);
+				}
+
+				document.body.appendChild(container);
+				setTimeout(() => {
+					container.style.opacity = '0';
+					setTimeout(() => container.remove(), 300);
+				}, duration);
+			},
+			{
