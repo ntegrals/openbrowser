@@ -133,3 +133,48 @@ export class VisualTracer {
 	// Action-specific visual overlays
 	// ───────────────────────────────────────────
 
+	/**
+	 * Shows an expanding circle animation at the given click coordinates.
+	 * Optionally displays a label next to the click point.
+	 */
+	async highlightClick(page: Page, x: number, y: number, label?: string): Promise<void> {
+		await page.evaluate(
+			({ x, y, label, color, duration, fontSize, attr }) => {
+				const container = document.createElement('div');
+				container.setAttribute(attr, '');
+				container.style.cssText = `
+					position: fixed;
+					left: 0;
+					top: 0;
+					width: 100%;
+					height: 100%;
+					pointer-events: none;
+					z-index: 999999;
+				`;
+
+				// Inject keyframes for the expanding ring
+				const styleEl = document.createElement('style');
+				styleEl.textContent = `
+					@keyframes demo-click-ring {
+						0% { transform: translate(-50%, -50%) scale(0); opacity: 1; }
+						70% { opacity: 0.6; }
+						100% { transform: translate(-50%, -50%) scale(1); opacity: 0; }
+					}
+				`;
+				container.appendChild(styleEl);
+
+				// Create three staggered rings for a ripple effect
+				for (let i = 0; i < 3; i++) {
+					const ring = document.createElement('div');
+					ring.style.cssText = `
+						position: fixed;
+						left: ${x}px;
+						top: ${y}px;
+						width: 60px;
+						height: 60px;
+						border: 3px solid ${color};
+						border-radius: 50%;
+						pointer-events: none;
+						animation: demo-click-ring ${duration * 0.6}ms ease-out ${i * 120}ms forwards;
+					`;
+					container.appendChild(ring);
