@@ -523,3 +523,28 @@ export class Viewport {
 		if (this.cdpSession) {
 			try {
 				await this.cdpSession.detach();
+			} catch {
+				// Ignore
+			}
+			this.cdpSession = null;
+		}
+
+		// Don't close the browser if connecting remotely -- it's already disconnected
+		if (this.browser && !this.options.wsEndpoint && !this.options.cdpUrl) {
+			try {
+				await this.browser.close();
+			} catch {
+				// Ignore
+			}
+		}
+
+		this.browser = null;
+		this.context = null;
+		this._currentPage = null;
+		this._isConnected = false;
+		this.knownTargets.clear();
+		this.cachedViewport = null;
+	}
+
+	// ── DOM stability ──
+
