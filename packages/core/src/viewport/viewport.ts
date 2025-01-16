@@ -773,3 +773,28 @@ export class Viewport {
 	}
 
 	// ── Navigation & interaction (existing, enhanced) ──
+
+	async navigate(url: string): Promise<void> {
+		const page = this.currentPage;
+
+		logger.debug(`Navigating to: ${url}`);
+
+		try {
+			await page.goto(url, {
+				waitUntil: 'domcontentloaded',
+				timeout: this.maxWaitPageLoadMs,
+			});
+		} catch (error) {
+			// Timeout is OK, page might still be loading
+			if (error instanceof Error && !error.message.includes('Timeout')) {
+				throw error;
+			}
+		}
+
+		await this.waitForPageReady();
+
+		// Invalidate viewport cache after navigation (page dimensions may change)
+		this.cachedViewport = null;
+
+		// Refresh targets (navigation may create/destroy targets)
+		await this.refreshTargets();
