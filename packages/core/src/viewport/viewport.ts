@@ -873,3 +873,28 @@ export class Viewport {
 				}
 			}),
 		);
+
+		return {
+			url: page.url(),
+			title: await page.title(),
+			tabs,
+			activeTabIndex: activeIndex,
+		};
+	}
+
+	async switchTab(tabIndex: number): Promise<void> {
+		const pages = this.context!.pages();
+		if (tabIndex < 0 || tabIndex >= pages.length) {
+			throw new Error(`Invalid tab index: ${tabIndex}. Available tabs: ${pages.length}`);
+		}
+
+		this._currentPage = pages[tabIndex];
+		await this._currentPage.bringToFront();
+
+		// Re-create CDP session for new page
+		this.cdpSession = await this._currentPage.context().newCDPSession(this._currentPage);
+
+		// Invalidate viewport cache when switching tabs
+		this.cachedViewport = null;
+
+		// Refresh target list
