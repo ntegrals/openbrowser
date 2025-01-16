@@ -973,3 +973,28 @@ export class Viewport {
 				await this.cdpSession.detach();
 			} catch {
 				// Ignore
+			}
+			this.cdpSession = null;
+		}
+
+		// Close browser
+		if (this.browser && !this.launchOptions.persistAfterClose) {
+			try {
+				await this.browser.close();
+			} catch {
+				// Ignore
+			}
+		}
+
+		this.browser = null;
+		this.context = null;
+		this._currentPage = null;
+		this._isConnected = false;
+		this.knownTargets.clear();
+		this.cachedViewport = null;
+
+		this.eventBus.emit('shutdown', undefined as any);
+		this.eventBus.removeAllListeners();
+
+		logger.info('Browser session closed');
+	}
