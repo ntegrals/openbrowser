@@ -88,3 +88,48 @@ export class VisualTracer {
 				}, duration);
 			},
 			{
+				selector,
+				color: this.options.highlightColor,
+				duration: this.options.highlightDuration,
+				label,
+				fontSize: this.options.annotationFontSize,
+				attr: OVERLAY_ATTR,
+			},
+		);
+	}
+
+	async showAction(page: Page, action: string, details?: string): Promise<void> {
+		await page.evaluate(
+			({ action, details, fontSize, attr }) => {
+				const toast = document.createElement('div');
+				toast.setAttribute(attr, '');
+				toast.style.cssText = `
+					position: fixed;
+					bottom: 20px;
+					right: 20px;
+					background: rgba(0, 0, 0, 0.8);
+					color: white;
+					padding: 12px 20px;
+					border-radius: 8px;
+					font-family: monospace;
+					font-size: ${fontSize}px;
+					z-index: 999999;
+					max-width: 400px;
+					transition: opacity 0.3s;
+				`;
+				toast.innerHTML = `<strong>${action}</strong>${details ? `<br>${details}` : ''}`;
+
+				document.body.appendChild(toast);
+				setTimeout(() => {
+					toast.style.opacity = '0';
+					setTimeout(() => toast.remove(), 300);
+				}, 2000);
+			},
+			{ action, details, fontSize: this.options.annotationFontSize, attr: OVERLAY_ATTR },
+		);
+	}
+
+	// ───────────────────────────────────────────
+	// Action-specific visual overlays
+	// ───────────────────────────────────────────
+
