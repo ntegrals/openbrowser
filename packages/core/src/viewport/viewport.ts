@@ -1023,3 +1023,7 @@ function normalizeTargetType(
 		case 'worker':
 		case 'shared_worker':
 			return 'worker';
+		default:
+			return 'other';
+	}
+}
