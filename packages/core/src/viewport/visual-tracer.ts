@@ -268,3 +268,48 @@ export class VisualTracer {
 				// Show three staggered arrows along the right side
 				for (let i = 0; i < 3; i++) {
 					const arrow = document.createElement('div');
+					const topOffset = direction === 'up' ? 60 + i * 40 : 40 + i * 40;
+					arrow.textContent = arrowChar;
+					arrow.style.cssText = `
+						position: fixed;
+						right: 30px;
+						top: ${topOffset}%;
+						transform: translateX(-50%);
+						color: ${color};
+						font-size: ${fontSize * 2}px;
+						pointer-events: none;
+						animation: demo-scroll-arrow ${duration * 0.5}ms ease-out ${i * 150}ms forwards;
+					`;
+					container.appendChild(arrow);
+				}
+
+				// Direction label
+				const label = document.createElement('div');
+				label.textContent = `Scroll ${direction}`;
+				label.style.cssText = `
+					position: fixed;
+					right: 12px;
+					top: 50%;
+					transform: translateY(-50%);
+					background: ${color};
+					color: white;
+					padding: 4px 12px;
+					font-size: ${fontSize}px;
+					font-family: monospace;
+					border-radius: 4px;
+					pointer-events: none;
+					transition: opacity 0.3s;
+				`;
+				container.appendChild(label);
+
+				document.body.appendChild(container);
+				setTimeout(() => {
+					container.style.opacity = '0';
+					setTimeout(() => container.remove(), 300);
+				}, duration);
+			},
+			{
+				direction,
+				color: this.options.actionColors.scroll,
+				duration: this.options.highlightDuration,
+				fontSize: this.options.annotationFontSize,
