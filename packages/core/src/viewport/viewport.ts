@@ -923,3 +923,28 @@ export class Viewport {
 			this.cdpSession = await this._currentPage.context().newCDPSession(this._currentPage);
 		}
 
+		// Invalidate caches
+		this.cachedViewport = null;
+
+		// Refresh targets after closing a tab
+		await this.refreshTargets();
+
+		this.eventBus.emit('tab-closed', { tabIndex: index });
+	}
+
+	async newTab(url?: string): Promise<void> {
+		const page = await this.context!.newPage();
+		this._currentPage = page;
+
+		if (url) {
+			await this.navigate(url);
+		}
+
+		this.cdpSession = await this._currentPage.context().newCDPSession(this._currentPage);
+
+		// Invalidate caches
+		this.cachedViewport = null;
+	}
+
+	async evaluate<T>(expression: string): Promise<T> {
+		return this.currentPage.evaluate(expression) as Promise<T>;
