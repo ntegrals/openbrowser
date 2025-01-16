@@ -648,3 +648,28 @@ export class Viewport {
 
 				// Walk the DOM and collect visible top-level elements
 				const visibleParts: string[] = [];
+				const body = document.body;
+				if (!body) return '<body></body>';
+
+				// Collect direct children of body that are visible,
+				// or recurse one level for major containers
+				for (const child of Array.from(body.children)) {
+					if (isVisible(child)) {
+						// Clone the element and remove hidden descendants
+						const clone = child.cloneNode(true) as Element;
+						const hiddenDescendants = Array.from(clone.querySelectorAll('*')).filter(
+							(desc) => {
+								const s = window.getComputedStyle(desc);
+								return s.display === 'none' || s.visibility === 'hidden';
+							},
+						);
+						for (const hidden of hiddenDescendants) {
+							hidden.remove();
+						}
+						visibleParts.push(clone.outerHTML);
+					}
+				}
+
+				if (visibleParts.length === 0) {
+					// Fallback: return the body's innerHTML truncated
+					return body.innerHTML.slice(0, 50000);
