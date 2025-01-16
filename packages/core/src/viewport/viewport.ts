@@ -998,3 +998,28 @@ export class Viewport {
 
 		logger.info('Browser session closed');
 	}
+
+	// AsyncDisposable support
+	async [Symbol.asyncDispose](): Promise<void> {
+		await this.close();
+	}
+}
+
+// ── Helpers ──
+
+/**
+ * Normalizes a CDP target type string to our Target type union.
+ */
+function normalizeTargetType(
+	cdpType: string,
+): 'page' | 'iframe' | 'service_worker' | 'worker' | 'other' {
+	switch (cdpType) {
+		case 'page':
+			return 'page';
+		case 'iframe':
+			return 'iframe';
+		case 'service_worker':
+			return 'service_worker';
+		case 'worker':
+		case 'shared_worker':
+			return 'worker';
