@@ -313,3 +313,48 @@ export class VisualTracer {
 				color: this.options.actionColors.scroll,
 				duration: this.options.highlightDuration,
 				fontSize: this.options.annotationFontSize,
+				attr: OVERLAY_ATTR,
+			},
+		);
+	}
+
+	/**
+	 * Shows a keyboard icon animation near the target element with a preview of the text being typed.
+	 */
+	async highlightType(page: Page, selector: string, text: string): Promise<void> {
+		await page.evaluate(
+			({ selector, text, color, duration, fontSize, attr }) => {
+				const element = document.querySelector(selector);
+				if (!element) return;
+
+				const rect = element.getBoundingClientRect();
+
+				const container = document.createElement('div');
+				container.setAttribute(attr, '');
+				container.style.cssText = `
+					position: fixed;
+					left: 0;
+					top: 0;
+					width: 100%;
+					height: 100%;
+					pointer-events: none;
+					z-index: 999999;
+				`;
+
+				const styleEl = document.createElement('style');
+				styleEl.textContent = `
+					@keyframes demo-type-blink {
+						0%, 100% { border-right-color: transparent; }
+						50% { border-right-color: white; }
+					}
+					@keyframes demo-type-fadein {
+						0% { opacity: 0; transform: translateY(4px); }
+						100% { opacity: 1; transform: translateY(0); }
+					}
+				`;
+				container.appendChild(styleEl);
+
+				// Highlight the target element
+				const highlight = document.createElement('div');
+				highlight.style.cssText = `
+					position: fixed;
