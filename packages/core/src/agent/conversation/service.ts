@@ -313,3 +313,38 @@ export class ConversationManager {
 
 		// Split messages: keep the last few messages intact, summarize the rest
 		const keepCount = Math.min(6, Math.floor(this.messages.length / 2));
+		const toSummarize = this.messages.slice(0, this.messages.length - keepCount);
+		const toKeep = this.messages.slice(this.messages.length - keepCount);
+
+		if (toSummarize.length === 0) return false;
+
+		// Build a transcript of the messages to summarize
+		const transcript = toSummarize
+			.map((m) => {
+				const role = m.message.role;
+				const text = extractTextContent(m.message);
+				const stepLabel = m.step !== undefined ? ` (step ${m.step})` : '';
+				return `[${role}${stepLabel}]: ${truncate(text, 500)}`;
+			})
+			.join('\n');
+
+		const prompt = [
+			systemMessage(
+				'You are a conversation summarizer. Summarize the following agent-browser conversation transcript. ' +
+				'Preserve key facts: URLs visited, actions taken, errors encountered, extracted data, and the current task state. ' +
+				'Be concise but complete.',
+			),
+			userMessage(
+				`Summarize this conversation transcript:\n\n${transcript}`,
+			),
+		];
+
+		try {
+			const completion = await llm.invoke({
+				messages: prompt,
+				responseSchema: CompactionSummarySchema,
+				schemaName: 'CompactionSummary',
+				schemaDescription: 'A concise summary of the conversation so far',
+				maxTokens: compactionConfig.maxTokens,
+				temperature: 0,
+			});
