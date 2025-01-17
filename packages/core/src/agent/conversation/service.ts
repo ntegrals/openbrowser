@@ -558,3 +558,21 @@ export class ConversationManager {
 
 	get step(): number {
 		return this.currentStep;
+	}
+
+	clear(): void {
+		this.messages = [];
+		this.historyItems = [];
+		this.currentStep = 0;
+		this.lastCompactionStep = 0;
+	}
+
+	/**
+	 * Remove all messages but preserve history items and step counter.
+	 * Useful when restarting message context without losing the history summary.
+	 */
+	resetMessages(): void {
+		this.messages = [];
+		this.lastCompactionStep = 0;
+	}
+}
