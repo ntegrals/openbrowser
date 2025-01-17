@@ -943,3 +943,39 @@ export class VisualTracer {
 				container.appendChild(label);
 
 				document.body.appendChild(container);
+				setTimeout(() => {
+					container.style.opacity = '0';
+					container.style.transition = 'opacity 0.3s';
+					setTimeout(() => container.remove(), 300);
+				}, duration);
+			},
+			{
+				x,
+				y,
+				color: this.options.actionColors.default,
+				duration: this.options.highlightDuration,
+				fontSize: this.options.annotationFontSize,
+				attr: OVERLAY_ATTR,
+			},
+		);
+	}
+
+	// ───────────────────────────────────────────
+	// Cleanup
+	// ───────────────────────────────────────────
+
+	/**
+	 * Removes all demo-mode overlays currently on the page.
+	 */
+	async clearOverlays(page: Page): Promise<void> {
+		await page.evaluate(
+			({ attr }) => {
+				const overlays = document.querySelectorAll(`[${attr}]`);
+				for (const overlay of overlays) {
+					overlay.remove();
+				}
+			},
+			{ attr: OVERLAY_ATTR },
+		);
+	}
+}
