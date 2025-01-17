@@ -358,3 +358,48 @@ export class VisualTracer {
 				const highlight = document.createElement('div');
 				highlight.style.cssText = `
 					position: fixed;
+					left: ${rect.left - 2}px;
+					top: ${rect.top - 2}px;
+					width: ${rect.width + 4}px;
+					height: ${rect.height + 4}px;
+					border: 2px solid ${color};
+					border-radius: 3px;
+					pointer-events: none;
+					transition: opacity 0.3s;
+				`;
+				container.appendChild(highlight);
+
+				// Keyboard icon (simplified as a unicode symbol + label)
+				const kbIcon = document.createElement('div');
+				kbIcon.style.cssText = `
+					position: fixed;
+					left: ${rect.left}px;
+					top: ${rect.bottom + 6}px;
+					display: flex;
+					align-items: center;
+					gap: 6px;
+					animation: demo-type-fadein 0.2s ease-out forwards;
+					pointer-events: none;
+				`;
+
+				const iconSpan = document.createElement('span');
+				iconSpan.textContent = '\u2328';
+				iconSpan.style.cssText = `
+					font-size: ${fontSize * 1.4}px;
+					color: ${color};
+				`;
+				kbIcon.appendChild(iconSpan);
+
+				// Text preview bubble with blinking cursor
+				const textBubble = document.createElement('div');
+				const truncated = text.length > 40 ? `${text.slice(0, 37)}...` : text;
+				textBubble.textContent = truncated;
+				textBubble.style.cssText = `
+					background: ${color};
+					color: white;
+					padding: 3px 10px;
+					font-size: ${fontSize}px;
+					font-family: monospace;
+					border-radius: 4px;
+					white-space: nowrap;
+					border-right: 2px solid white;
