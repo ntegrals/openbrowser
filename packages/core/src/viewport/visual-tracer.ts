@@ -718,3 +718,48 @@ export class VisualTracer {
 					pointer-events: none;
 					z-index: 999999;
 				`;
+
+				const styleEl = document.createElement('style');
+				styleEl.textContent = `
+					@keyframes demo-timeline-slide {
+						0% { transform: translateY(100%); opacity: 0; }
+						10% { transform: translateY(0); opacity: 1; }
+						90% { transform: translateY(0); opacity: 1; }
+						100% { transform: translateY(100%); opacity: 0; }
+					}
+					@keyframes demo-timeline-dot {
+						0% { transform: scale(0); }
+						60% { transform: scale(1.3); }
+						100% { transform: scale(1); }
+					}
+				`;
+				container.appendChild(styleEl);
+
+				// Timeline panel
+				const panel = document.createElement('div');
+				panel.style.cssText = `
+					position: fixed;
+					bottom: 0;
+					left: 0;
+					right: 0;
+					background: rgba(0, 0, 0, 0.92);
+					padding: 14px 20px 18px;
+					animation: demo-timeline-slide ${duration}ms ease-in-out forwards;
+					border-top: 2px solid rgba(255, 255, 255, 0.15);
+				`;
+
+				// Title
+				const title = document.createElement('div');
+				title.textContent = 'Action Timeline';
+				title.style.cssText = `
+					color: rgba(255, 255, 255, 0.6);
+					font-size: ${fontSize - 2}px;
+					font-family: monospace;
+					margin-bottom: 10px;
+					text-transform: uppercase;
+					letter-spacing: 1px;
+				`;
+				panel.appendChild(title);
+
+				// Timeline track
+				const track = document.createElement('div');
