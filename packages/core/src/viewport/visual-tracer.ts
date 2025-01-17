@@ -763,3 +763,48 @@ export class VisualTracer {
 
 				// Timeline track
 				const track = document.createElement('div');
+				track.style.cssText = `
+					display: flex;
+					align-items: center;
+					gap: 0;
+					overflow-x: auto;
+					padding-bottom: 4px;
+				`;
+
+				steps.forEach((step, index) => {
+					// Step item
+					const item = document.createElement('div');
+					item.style.cssText = `
+						display: flex;
+						align-items: center;
+						flex-shrink: 0;
+					`;
+
+					// Dot
+					const actionKey = step.action.toLowerCase();
+					const dotColor = step.success
+						? (colors[actionKey] || colors.default)
+						: '#ff4444';
+
+					const dot = document.createElement('div');
+					dot.style.cssText = `
+						width: 14px;
+						height: 14px;
+						border-radius: 50%;
+						background: ${dotColor};
+						border: 2px solid ${step.success ? 'transparent' : '#ff0000'};
+						flex-shrink: 0;
+						animation: demo-timeline-dot 0.3s ease-out ${index * 100}ms both;
+					`;
+					item.appendChild(dot);
+
+					// Label below
+					const label = document.createElement('div');
+					const time = new Date(step.timestamp).toLocaleTimeString([], {
+						hour: '2-digit',
+						minute: '2-digit',
+						second: '2-digit',
+					});
+					label.innerHTML = `
+						<div style="color: white; font-size: ${fontSize - 1}px; font-family: monospace; white-space: nowrap;">
+							${step.action}
