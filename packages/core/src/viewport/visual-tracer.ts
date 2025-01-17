@@ -538,3 +538,48 @@ export class VisualTracer {
 				fontSize: this.options.annotationFontSize,
 				attr: OVERLAY_ATTR,
 			},
+		);
+	}
+
+	// ───────────────────────────────────────────
+	// Multi-element and composite overlays
+	// ───────────────────────────────────────────
+
+	/**
+	 * Highlights multiple elements with numbered labels, useful for showing a sequence of targets.
+	 */
+	async showElementSequence(
+		page: Page,
+		elements: Array<{ selector: string; label: string }>,
+	): Promise<void> {
+		await page.evaluate(
+			({ elements, color, duration, fontSize, attr }) => {
+				const container = document.createElement('div');
+				container.setAttribute(attr, '');
+				container.style.cssText = `
+					position: fixed;
+					left: 0;
+					top: 0;
+					width: 100%;
+					height: 100%;
+					pointer-events: none;
+					z-index: 999999;
+				`;
+
+				const styleEl = document.createElement('style');
+				styleEl.textContent = `
+					@keyframes demo-seq-appear {
+						0% { transform: scale(0); opacity: 0; }
+						60% { transform: scale(1.15); }
+						100% { transform: scale(1); opacity: 1; }
+					}
+				`;
+				container.appendChild(styleEl);
+
+				// Draw connecting lines between sequential elements
+				const rects: DOMRect[] = [];
+				for (const { selector } of elements) {
+					const el = document.querySelector(selector);
+					if (el) {
+						rects.push(el.getBoundingClientRect());
+					} else {
