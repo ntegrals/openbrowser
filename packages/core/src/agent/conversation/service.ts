@@ -523,3 +523,38 @@ export class ConversationManager {
 		}));
 
 		this.historyItems = [...state.historyItems];
+		this.currentStep = state.currentStep;
+	}
+
+	/**
+	 * Save the conversation state to a JSON file.
+	 */
+	async saveToFile(filePath: string): Promise<string> {
+		const { writeFile, mkdir } = await import('node:fs/promises');
+		const { dirname } = await import('node:path');
+		await mkdir(dirname(filePath), { recursive: true });
+		const json = JSON.stringify(this.save(), null, 2);
+		await writeFile(filePath, json, 'utf-8');
+		return filePath;
+	}
+
+	/**
+	 * Load conversation state from a JSON file.
+	 */
+	async loadFromFile(filePath: string): Promise<void> {
+		const { readFile } = await import('node:fs/promises');
+		const raw = await readFile(filePath, 'utf-8');
+		const state = JSON.parse(raw) as ConversationManagerState;
+		this.load(state);
+	}
+
+	// ────────────────────────────────────────
+	//  Accessors
+	// ────────────────────────────────────────
+
+	get messageCount(): number {
+		return this.messages.length + (this.systemPromptMessage ? 1 : 0);
+	}
+
+	get step(): number {
+		return this.currentStep;
