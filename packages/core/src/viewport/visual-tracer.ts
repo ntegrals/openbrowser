@@ -403,3 +403,48 @@ export class VisualTracer {
 					border-radius: 4px;
 					white-space: nowrap;
 					border-right: 2px solid white;
+					animation: demo-type-blink 0.7s step-end infinite;
+				`;
+				kbIcon.appendChild(textBubble);
+
+				container.appendChild(kbIcon);
+
+				document.body.appendChild(container);
+				setTimeout(() => {
+					container.style.opacity = '0';
+					setTimeout(() => container.remove(), 300);
+				}, duration);
+			},
+			{
+				selector,
+				text,
+				color: this.options.actionColors.type,
+				duration: this.options.highlightDuration,
+				fontSize: this.options.annotationFontSize,
+				attr: OVERLAY_ATTR,
+			},
+		);
+	}
+
+	/**
+	 * Shows a URL bar-like overlay at the top of the viewport to indicate navigation.
+	 */
+	async highlightNavigation(page: Page, url: string): Promise<void> {
+		await page.evaluate(
+			({ url, color, duration, fontSize, attr }) => {
+				const container = document.createElement('div');
+				container.setAttribute(attr, '');
+				container.style.cssText = `
+					position: fixed;
+					left: 0;
+					top: 0;
+					width: 100%;
+					height: 100%;
+					pointer-events: none;
+					z-index: 999999;
+				`;
+
+				const styleEl = document.createElement('style');
+				styleEl.textContent = `
+					@keyframes demo-nav-slide {
+						0% { transform: translateY(-100%); opacity: 0; }
