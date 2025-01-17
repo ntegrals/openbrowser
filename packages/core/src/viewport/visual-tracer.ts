@@ -628,3 +628,48 @@ export class VisualTracer {
 					box.style.cssText = `
 						position: fixed;
 						left: ${rect.left - 3}px;
+						top: ${rect.top - 3}px;
+						width: ${rect.width + 6}px;
+						height: ${rect.height + 6}px;
+						border: 2px solid ${color};
+						border-radius: 4px;
+						pointer-events: none;
+						animation: demo-seq-appear 0.3s ease-out ${index * 150}ms both;
+					`;
+					container.appendChild(box);
+
+					// Numbered badge
+					const badge = document.createElement('div');
+					badge.style.cssText = `
+						position: fixed;
+						left: ${rect.left - 12}px;
+						top: ${rect.top - 12}px;
+						width: 24px;
+						height: 24px;
+						background: ${color};
+						color: white;
+						border-radius: 50%;
+						display: flex;
+						align-items: center;
+						justify-content: center;
+						font-size: ${fontSize - 2}px;
+						font-family: monospace;
+						font-weight: bold;
+						pointer-events: none;
+						animation: demo-seq-appear 0.3s ease-out ${index * 150}ms both;
+					`;
+					badge.textContent = String(index + 1);
+					container.appendChild(badge);
+
+					// Label text
+					const labelEl = document.createElement('div');
+					labelEl.textContent = label;
+					labelEl.style.cssText = `
+						position: fixed;
+						left: ${rect.left + 16}px;
+						top: ${rect.top - 28}px;
+						background: ${color};
+						color: white;
+						padding: 2px 8px;
+						font-size: ${fontSize}px;
+						font-family: monospace;
