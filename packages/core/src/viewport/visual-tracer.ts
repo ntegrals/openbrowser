@@ -853,3 +853,48 @@ export class VisualTracer {
 
 	/**
 	 * Shows a crosshair and coordinate text at the given position.
+	 */
+	async showCoordinates(page: Page, x: number, y: number): Promise<void> {
+		await page.evaluate(
+			({ x, y, color, duration, fontSize, attr }) => {
+				const container = document.createElement('div');
+				container.setAttribute(attr, '');
+				container.style.cssText = `
+					position: fixed;
+					left: 0;
+					top: 0;
+					width: 100%;
+					height: 100%;
+					pointer-events: none;
+					z-index: 999999;
+				`;
+
+				// Horizontal crosshair line
+				const hLine = document.createElement('div');
+				hLine.style.cssText = `
+					position: fixed;
+					left: 0;
+					top: ${y}px;
+					width: 100%;
+					height: 1px;
+					background: ${color};
+					opacity: 0.4;
+					pointer-events: none;
+				`;
+				container.appendChild(hLine);
+
+				// Vertical crosshair line
+				const vLine = document.createElement('div');
+				vLine.style.cssText = `
+					position: fixed;
+					left: ${x}px;
+					top: 0;
+					width: 1px;
+					height: 100%;
+					background: ${color};
+					opacity: 0.4;
+					pointer-events: none;
+				`;
+				container.appendChild(vLine);
+
+				// Center crosshair marks (thicker, shorter lines)
