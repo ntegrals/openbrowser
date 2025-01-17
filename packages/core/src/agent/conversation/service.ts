@@ -173,3 +173,38 @@ export class ConversationManager {
 		// Apply sensitive data filtering
 		if (this.options.maskedValues && Object.keys(this.options.maskedValues).length > 0) {
 			return redactMessages(result, this.options.maskedValues);
+		}
+
+		return result;
+	}
+
+	// ────────────────────────────────────────
+	//  Ephemeral Message Lifecycle
+	// ────────────────────────────────────────
+
+	/**
+	 * After getMessages() has been called, remove ephemeral messages that were already read.
+	 * Freshly-added ephemeral messages are marked as read (so they survive one getMessages call).
+	 */
+	private consumeEphemeralMessages(): void {
+		// Remove previously-read ephemeral messages
+		this.messages = this.messages.filter(
+			(m) => !(m.ephemeral && m.ephemeralRead),
+		);
+
+		// Mark remaining ephemeral messages as read for the next pass
+		for (const m of this.messages) {
+			if (m.ephemeral && !m.ephemeralRead) {
+				m.ephemeralRead = true;
+			}
+		}
+	}
+
+	// ────────────────────────────────────────
+	//  Token Estimation
+	// ────────────────────────────────────────
+
+	estimateTotalTokens(): number {
+		let total = 0;
+		if (this.systemPromptMessage) {
+			total += estimateTokens(
