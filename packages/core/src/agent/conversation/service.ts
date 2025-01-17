@@ -348,3 +348,38 @@ export class ConversationManager {
 				maxTokens: compactionConfig.maxTokens,
 				temperature: 0,
 			});
+
+			const summaryText = `[Conversation summary of steps 1-${toSummarize[toSummarize.length - 1]?.step ?? '?'}]\n${completion.parsed.summary}`;
+
+			// Replace the summarized messages with a single summary
+			this.messages = [
+				{
+					message: userMessage(summaryText),
+					isCompactable: false, // Don't re-compact the summary
+					tokenEstimate: estimateTokens(summaryText),
+					category: 'compaction_summary',
+					addedAt: Date.now(),
+				},
+				...toKeep,
+			];
+
+			this.lastCompactionStep = this.currentStep;
+			return true;
+		} catch {
+			// If LLM compaction fails, fall back to basic compaction silently
+			return false;
+		}
+	}
+
+	/**
+	 * Check whether LLM compaction should run at the current step.
+	 * This is a convenience check; the caller can use it to decide whether
+	 * to call compactWithLlm().
+	 */
+	shouldCompactWithLlm(): boolean {
+		const config = this.options.compaction;
+		if (!config || config.interval <= 0) return false;
+		return (
+			this.currentStep - this.lastCompactionStep >= config.interval &&
+			this.estimateTotalTokens() > (config.targetTokens ?? this.options.contextWindowSize * 0.6)
+		);
