@@ -103,3 +103,38 @@ export class ConversationManager {
 		if (step !== undefined) this.currentStep = step;
 
 		this.messages.push({
+			message: userMessage(text),
+			isCompactable: true,
+			tokenEstimate: estimateTokens(text),
+			step,
+			category: 'action_result',
+			addedAt: Date.now(),
+		});
+
+		this.recordConversationEntry(step ?? this.currentStep, 'action_result', text);
+	}
+
+	addUserMessage(text: string): void {
+		this.messages.push({
+			message: userMessage(text),
+			isCompactable: false,
+			tokenEstimate: estimateTokens(text),
+			category: 'user',
+			addedAt: Date.now(),
+		});
+
+		this.recordConversationEntry(this.currentStep, 'user', text);
+	}
+
+	/**
+	 * Add an ephemeral message that is included in the next getMessages() call
+	 * and then automatically removed. Useful for one-shot instructions or
+	 * temporary context that should not persist across steps.
+	 */
+	addEphemeralMessage(text: string, role: 'user' | 'assistant' = 'user'): void {
+		const msg =
+			role === 'user' ? userMessage(text) : assistantMessage(text);
+
+		this.messages.push({
+			message: msg,
+			isCompactable: false,
