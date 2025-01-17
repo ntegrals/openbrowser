@@ -383,3 +383,38 @@ export class ConversationManager {
 			this.currentStep - this.lastCompactionStep >= config.interval &&
 			this.estimateTotalTokens() > (config.targetTokens ?? this.options.contextWindowSize * 0.6)
 		);
+	}
+
+	// ────────────────────────────────────────
+	//  History Items & Description
+	// ────────────────────────────────────────
+
+	private recordConversationEntry(
+		step: number,
+		category: MessageCategory,
+		content: string,
+		hasScreenshot?: boolean,
+	): void {
+		this.historyItems.push({
+			step,
+			category,
+			summary: truncate(content, 120),
+			content: truncate(content, 2000),
+			hasScreenshot,
+			timestamp: Date.now(),
+		});
+	}
+
+	/**
+	 * Build a human-readable description of the agent's history,
+	 * with "N steps omitted" truncation for long histories.
+	 *
+	 * @param stepLimitShown Maximum number of steps to show in full detail.
+	 *   If the history is longer, middle steps are replaced with a "N steps omitted" line.
+	 */
+	agentHistoryDescription(stepLimitShown = 10): string {
+		// Group history items by step
+		const byStep = new Map<number, ConversationEntry[]>();
+		for (const item of this.historyItems) {
+			const existing = byStep.get(item.step);
+			if (existing) {
