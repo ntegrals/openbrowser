@@ -138,3 +138,38 @@ export class ConversationManager {
 		this.messages.push({
 			message: msg,
 			isCompactable: false,
+			tokenEstimate: estimateTokens(text),
+			category: role === 'user' ? 'user' : 'assistant',
+			ephemeral: true,
+			ephemeralRead: false,
+			addedAt: Date.now(),
+		});
+	}
+
+	// ────────────────────────────────────────
+	//  Get Messages (with compaction + filtering)
+	// ────────────────────────────────────────
+
+	getMessages(): Message[] {
+		const result: Message[] = [];
+
+		if (this.systemPromptMessage) {
+			result.push(this.systemPromptMessage);
+		}
+
+		// Check if we need to compact
+		const totalTokens = this.estimateTotalTokens();
+		if (totalTokens > this.options.contextWindowSize) {
+			this.compact();
+		}
+
+		for (const managed of this.messages) {
+			result.push(managed.message);
+		}
+
+		// Mark ephemeral messages as read so they can be cleaned up
+		this.consumeEphemeralMessages();
+
+		// Apply sensitive data filtering
+		if (this.options.maskedValues && Object.keys(this.options.maskedValues).length > 0) {
+			return redactMessages(result, this.options.maskedValues);
