@@ -68,3 +68,38 @@ export class ConversationManager {
 
 		if (screenshot && this.options.includeLastScreenshot) {
 			content.push(imageContent(screenshot, 'image/png'));
+		}
+
+		if (step !== undefined) this.currentStep = step;
+
+		this.messages.push({
+			message: userMessage(content),
+			isCompactable: true,
+			tokenEstimate: estimateMessageTokens(content),
+			step,
+			category: 'state',
+			addedAt: Date.now(),
+		});
+
+		this.recordConversationEntry(step ?? this.currentStep, 'state', stateText, !!screenshot);
+	}
+
+	addAssistantMessage(text: string, step?: number): void {
+		if (step !== undefined) this.currentStep = step;
+
+		this.messages.push({
+			message: assistantMessage(text),
+			isCompactable: true,
+			tokenEstimate: estimateTokens(text),
+			step,
+			category: 'assistant',
+			addedAt: Date.now(),
+		});
+
+		this.recordConversationEntry(step ?? this.currentStep, 'assistant', text);
+	}
+
+	addCommandResultMessage(text: string, step?: number): void {
+		if (step !== undefined) this.currentStep = step;
+
+		this.messages.push({
