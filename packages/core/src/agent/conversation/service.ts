@@ -243,3 +243,38 @@ export class ConversationManager {
 								typeof p !== 'object' ||
 								p === null ||
 								(p as ContentPart).type !== 'image',
+						);
+						if (filtered.length > 0) {
+							msg.message = userMessage(filtered as ContentPart[]);
+							msg.tokenEstimate = estimateMessageTokens(filtered);
+						}
+					} else {
+						foundLast = true;
+					}
+				}
+			}
+		}
+
+		// If still over budget, remove old compactable state messages
+		while (
+			this.estimateTotalTokens() > this.options.contextWindowSize &&
+			this.messages.length > 4
+		) {
+			// Find first compactable message
+			const idx = this.messages.findIndex((m) => m.isCompactable);
+			if (idx === -1) break;
+
+			// Replace with a summary
+			const removed = this.messages.splice(idx, 1)[0];
+			const summary = `[Step ${removed.step ?? '?'} state omitted to save tokens]`;
+			this.messages.splice(idx, 0, {
+				message: userMessage(summary),
+				isCompactable: true,
+				tokenEstimate: estimateTokens(summary),
+				step: removed.step,
+				category: 'compaction_summary',
+				addedAt: Date.now(),
+			});
+		}
+	}
+
