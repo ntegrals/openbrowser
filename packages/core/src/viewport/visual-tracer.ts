@@ -583,3 +583,48 @@ export class VisualTracer {
 					if (el) {
 						rects.push(el.getBoundingClientRect());
 					} else {
+						rects.push(new DOMRect(0, 0, 0, 0));
+					}
+				}
+
+				// SVG for connecting lines
+				if (rects.length > 1) {
+					const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+					svg.style.cssText = `
+						position: fixed;
+						left: 0;
+						top: 0;
+						width: 100%;
+						height: 100%;
+						pointer-events: none;
+					`;
+					for (let i = 0; i < rects.length - 1; i++) {
+						const from = rects[i];
+						const to = rects[i + 1];
+						if (from.width === 0 || to.width === 0) continue;
+						const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+						line.setAttribute('x1', String(from.left + from.width / 2));
+						line.setAttribute('y1', String(from.top + from.height / 2));
+						line.setAttribute('x2', String(to.left + to.width / 2));
+						line.setAttribute('y2', String(to.top + to.height / 2));
+						line.setAttribute('stroke', color);
+						line.setAttribute('stroke-width', '2');
+						line.setAttribute('stroke-dasharray', '6,4');
+						line.setAttribute('opacity', '0.5');
+						svg.appendChild(line);
+					}
+					container.appendChild(svg);
+				}
+
+				// Numbered badges and highlight boxes for each element
+				elements.forEach(({ selector, label }, index) => {
+					const el = document.querySelector(selector);
+					if (!el) return;
+
+					const rect = el.getBoundingClientRect();
+
+					// Highlight box
+					const box = document.createElement('div');
+					box.style.cssText = `
+						position: fixed;
+						left: ${rect.left - 3}px;
