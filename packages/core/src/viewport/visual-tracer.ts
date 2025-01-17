@@ -448,3 +448,48 @@ export class VisualTracer {
 				styleEl.textContent = `
 					@keyframes demo-nav-slide {
 						0% { transform: translateY(-100%); opacity: 0; }
+						15% { transform: translateY(0); opacity: 1; }
+						85% { transform: translateY(0); opacity: 1; }
+						100% { transform: translateY(-100%); opacity: 0; }
+					}
+					@keyframes demo-nav-progress {
+						0% { width: 0%; }
+						100% { width: 100%; }
+					}
+				`;
+				container.appendChild(styleEl);
+
+				// URL bar
+				const bar = document.createElement('div');
+				bar.style.cssText = `
+					position: fixed;
+					top: 0;
+					left: 0;
+					right: 0;
+					background: rgba(0, 0, 0, 0.9);
+					padding: 10px 16px;
+					display: flex;
+					align-items: center;
+					gap: 10px;
+					animation: demo-nav-slide ${duration}ms ease-in-out forwards;
+					border-bottom: 2px solid ${color};
+				`;
+
+				// Globe icon
+				const globe = document.createElement('span');
+				globe.textContent = '\uD83C\uDF10';
+				globe.style.cssText = `font-size: ${fontSize * 1.2}px;`;
+				bar.appendChild(globe);
+
+				// URL text in a pill
+				const urlPill = document.createElement('div');
+				urlPill.style.cssText = `
+					flex: 1;
+					background: rgba(255, 255, 255, 0.1);
+					border: 1px solid rgba(255, 255, 255, 0.2);
+					border-radius: 20px;
+					padding: 6px 14px;
+					color: white;
+					font-size: ${fontSize}px;
+					font-family: monospace;
+					white-space: nowrap;
