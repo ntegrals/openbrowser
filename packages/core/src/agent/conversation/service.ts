@@ -418,3 +418,38 @@ export class ConversationManager {
 		for (const item of this.historyItems) {
 			const existing = byStep.get(item.step);
 			if (existing) {
+				existing.push(item);
+			} else {
+				byStep.set(item.step, [item]);
+			}
+		}
+
+		const stepNumbers = [...byStep.keys()].sort((a, b) => a - b);
+		if (stepNumbers.length === 0) return '(no history)';
+
+		const lines: string[] = [];
+
+		if (stepNumbers.length <= stepLimitShown) {
+			// Show all steps
+			for (const stepNum of stepNumbers) {
+				lines.push(this.formatStepDescription(stepNum, byStep.get(stepNum)!));
+			}
+		} else {
+			// Show first few, omitted middle, last few
+			const headCount = Math.ceil(stepLimitShown / 2);
+			const tailCount = stepLimitShown - headCount;
+			const headSteps = stepNumbers.slice(0, headCount);
+			const tailSteps = stepNumbers.slice(stepNumbers.length - tailCount);
+			const omittedCount = stepNumbers.length - headCount - tailCount;
+
+			for (const stepNum of headSteps) {
+				lines.push(this.formatStepDescription(stepNum, byStep.get(stepNum)!));
+			}
+
+			lines.push(`  ... (${omittedCount} steps omitted) ...`);
+
+			for (const stepNum of tailSteps) {
+				lines.push(this.formatStepDescription(stepNum, byStep.get(stepNum)!));
+			}
+		}
+
