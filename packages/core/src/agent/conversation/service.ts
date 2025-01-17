@@ -488,3 +488,38 @@ export class ConversationManager {
 			tokenEstimate: m.tokenEstimate,
 			step: m.step,
 			category: m.category,
+		}));
+
+		return {
+			systemPrompt: this.systemPromptText,
+			messages: serialized,
+			historyItems: [...this.historyItems],
+			currentStep: this.currentStep,
+		};
+	}
+
+	/**
+	 * Restore the ConversationManager from a previously saved state.
+	 * This replaces all current messages and history.
+	 */
+	load(state: ConversationManagerState): void {
+		if (state.systemPrompt) {
+			this.setInstructionBuilder(state.systemPrompt);
+		} else {
+			this.systemPromptMessage = null;
+			this.systemPromptText = null;
+		}
+
+		this.messages = state.messages.map((s) => ({
+			message:
+				s.role === 'assistant'
+					? assistantMessage(s.content)
+					: userMessage(s.content),
+			isCompactable: s.isCompactable,
+			tokenEstimate: s.tokenEstimate,
+			step: s.step,
+			category: s.category,
+			addedAt: Date.now(),
+		}));
+
+		this.historyItems = [...state.historyItems];
