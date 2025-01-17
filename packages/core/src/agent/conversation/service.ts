@@ -208,3 +208,38 @@ export class ConversationManager {
 		let total = 0;
 		if (this.systemPromptMessage) {
 			total += estimateTokens(
+				typeof this.systemPromptMessage.content === 'string'
+					? this.systemPromptMessage.content
+					: '',
+			);
+		}
+		for (const managed of this.messages) {
+			total += managed.tokenEstimate;
+		}
+		return total;
+	}
+
+	// ────────────────────────────────────────
+	//  Basic Compaction (image removal + old message replacement)
+	// ────────────────────────────────────────
+
+	private compact(): void {
+		// Remove screenshots from older messages (keep only last)
+		let foundLast = false;
+		for (let i = this.messages.length - 1; i >= 0; i--) {
+			const msg = this.messages[i];
+			if (!msg.isCompactable) continue;
+
+			const content = msg.message.content;
+			if (Array.isArray(content)) {
+				const hasImage = content.some(
+					(p) => typeof p === 'object' && p !== null && (p as ContentPart).type === 'image',
+				);
+				if (hasImage) {
+					if (foundLast) {
+						// Remove images from this message
+						const filtered = content.filter(
+							(p) =>
+								typeof p !== 'object' ||
+								p === null ||
+								(p as ContentPart).type !== 'image',
