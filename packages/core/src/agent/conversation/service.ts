@@ -278,3 +278,38 @@ export class ConversationManager {
 		}
 	}
 
+	// ────────────────────────────────────────
+	//  LLM-Based Compaction
+	// ────────────────────────────────────────
+
+	/**
+	 * Run LLM-based message compaction: send the older portion of the conversation
+	 * to a summarization model and replace it with a single summary message.
+	 *
+	 * Call this periodically (e.g. every N steps as configured in compaction.interval).
+	 * Returns true if compaction was performed, false if skipped.
+	 */
+	async compactWithLlm(model?: LanguageModel): Promise<boolean> {
+		const compactionConfig = this.options.compaction;
+		if (!compactionConfig) return false;
+
+		const llm = model ?? this.options.compactionModel;
+		if (!llm) return false;
+
+		// Only compact if enough steps have passed since last compaction
+		if (
+			compactionConfig.interval > 0 &&
+			this.currentStep - this.lastCompactionStep < compactionConfig.interval
+		) {
+			return false;
+		}
+
+		const targetTokens =
+			compactionConfig.targetTokens ??
+			Math.floor(this.options.contextWindowSize * 0.6);
+
+		// If we're under the target, no need to compact
+		if (this.estimateTotalTokens() <= targetTokens) return false;
+
+		// Split messages: keep the last few messages intact, summarize the rest
+		const keepCount = Math.min(6, Math.floor(this.messages.length / 2));
