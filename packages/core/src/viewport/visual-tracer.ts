@@ -673,3 +673,48 @@ export class VisualTracer {
 						padding: 2px 8px;
 						font-size: ${fontSize}px;
 						font-family: monospace;
+						border-radius: 3px;
+						white-space: nowrap;
+						pointer-events: none;
+						animation: demo-seq-appear 0.3s ease-out ${index * 150 + 80}ms both;
+					`;
+					container.appendChild(labelEl);
+				});
+
+				document.body.appendChild(container);
+				setTimeout(() => {
+					container.style.opacity = '0';
+					container.style.transition = 'opacity 0.3s';
+					setTimeout(() => container.remove(), 300);
+				}, duration);
+			},
+			{
+				elements,
+				color: this.options.actionColors.default,
+				duration: this.options.highlightDuration,
+				fontSize: this.options.annotationFontSize,
+				attr: OVERLAY_ATTR,
+			},
+		);
+	}
+
+	/**
+	 * Shows a horizontal timeline panel at the bottom of the viewport summarizing actions taken.
+	 */
+	async showTimeline(
+		page: Page,
+		steps: Array<{ action: string; timestamp: number; success: boolean }>,
+	): Promise<void> {
+		await page.evaluate(
+			({ steps, colors, duration, fontSize, attr }) => {
+				const container = document.createElement('div');
+				container.setAttribute(attr, '');
+				container.style.cssText = `
+					position: fixed;
+					left: 0;
+					top: 0;
+					width: 100%;
+					height: 100%;
+					pointer-events: none;
+					z-index: 999999;
+				`;
