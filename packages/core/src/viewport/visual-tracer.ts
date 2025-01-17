@@ -808,3 +808,48 @@ export class VisualTracer {
 					label.innerHTML = `
 						<div style="color: white; font-size: ${fontSize - 1}px; font-family: monospace; white-space: nowrap;">
 							${step.action}
+						</div>
+						<div style="color: rgba(255,255,255,0.4); font-size: ${fontSize - 3}px; font-family: monospace;">
+							${time}
+						</div>
+					`;
+					label.style.cssText = `
+						margin-left: 4px;
+						margin-right: 4px;
+					`;
+					item.appendChild(label);
+
+					track.appendChild(item);
+
+					// Connector line between steps
+					if (index < steps.length - 1) {
+						const connector = document.createElement('div');
+						connector.style.cssText = `
+							width: 30px;
+							height: 2px;
+							background: rgba(255, 255, 255, 0.2);
+							flex-shrink: 0;
+							margin: 0 2px;
+						`;
+						track.appendChild(connector);
+					}
+				});
+
+				panel.appendChild(track);
+				container.appendChild(panel);
+
+				document.body.appendChild(container);
+				setTimeout(() => container.remove(), duration + 100);
+			},
+			{
+				steps,
+				colors: this.options.actionColors,
+				duration: this.options.highlightDuration,
+				fontSize: this.options.annotationFontSize,
+				attr: OVERLAY_ATTR,
+			},
+		);
+	}
+
+	/**
+	 * Shows a crosshair and coordinate text at the given position.
