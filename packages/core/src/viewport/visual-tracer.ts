@@ -493,3 +493,48 @@ export class VisualTracer {
 					font-size: ${fontSize}px;
 					font-family: monospace;
 					white-space: nowrap;
+					overflow: hidden;
+					text-overflow: ellipsis;
+				`;
+				urlPill.textContent = url;
+				bar.appendChild(urlPill);
+
+				// Navigate label
+				const label = document.createElement('div');
+				label.textContent = 'Navigate';
+				label.style.cssText = `
+					background: ${color};
+					color: white;
+					padding: 4px 10px;
+					font-size: ${fontSize - 2}px;
+					font-family: monospace;
+					border-radius: 4px;
+					white-space: nowrap;
+				`;
+				bar.appendChild(label);
+
+				container.appendChild(bar);
+
+				// Progress bar
+				const progress = document.createElement('div');
+				progress.style.cssText = `
+					position: fixed;
+					top: 0;
+					left: 0;
+					height: 3px;
+					background: ${color};
+					animation: demo-nav-progress ${duration * 0.7}ms ease-out forwards;
+					z-index: 1;
+				`;
+				container.appendChild(progress);
+
+				document.body.appendChild(container);
+				setTimeout(() => container.remove(), duration + 100);
+			},
+			{
+				url,
+				color: this.options.actionColors.navigate,
+				duration: this.options.highlightDuration,
+				fontSize: this.options.annotationFontSize,
+				attr: OVERLAY_ATTR,
+			},
