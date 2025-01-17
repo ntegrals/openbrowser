@@ -453,3 +453,38 @@ export class ConversationManager {
 			}
 		}
 
+		return lines.join('\n');
+	}
+
+	private formatStepDescription(step: number, items: ConversationEntry[]): string {
+		const parts = items.map((item) => {
+			const prefix = item.category === 'state' ? 'State' :
+				item.category === 'assistant' ? 'Agent' :
+				item.category === 'action_result' ? 'Result' :
+				item.category === 'user' ? 'User' : item.category;
+			return `${prefix}: ${item.summary}`;
+		});
+		return `Step ${step}:\n  ${parts.join('\n  ')}`;
+	}
+
+	/** Get all recorded history items. */
+	getConversationEntrys(): readonly ConversationEntry[] {
+		return this.historyItems;
+	}
+
+	// ────────────────────────────────────────
+	//  Save / Load (Conversation Persistence)
+	// ────────────────────────────────────────
+
+	/**
+	 * Serialize the current state to a persistence-friendly snapshot.
+	 * Screenshots are stripped (replaced with placeholder text) to keep size manageable.
+	 */
+	save(): ConversationManagerState {
+		const serialized: SerializedTrackedMessage[] = this.messages.map((m) => ({
+			role: m.message.role,
+			content: extractTextContent(m.message),
+			isCompactable: m.isCompactable,
+			tokenEstimate: m.tokenEstimate,
+			step: m.step,
+			category: m.category,
