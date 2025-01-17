@@ -898,3 +898,48 @@ export class VisualTracer {
 				container.appendChild(vLine);
 
 				// Center crosshair marks (thicker, shorter lines)
+				const crossSize = 12;
+				const marks = [
+					// Left mark
+					{ left: x - crossSize, top: y, width: crossSize - 3, height: 2 },
+					// Right mark
+					{ left: x + 3, top: y, width: crossSize - 3, height: 2 },
+					// Top mark
+					{ left: x, top: y - crossSize, width: 2, height: crossSize - 3 },
+					// Bottom mark
+					{ left: x, top: y + 3, width: 2, height: crossSize - 3 },
+				];
+				for (const m of marks) {
+					const mark = document.createElement('div');
+					mark.style.cssText = `
+						position: fixed;
+						left: ${m.left}px;
+						top: ${m.top}px;
+						width: ${m.width}px;
+						height: ${m.height}px;
+						background: ${color};
+						pointer-events: none;
+					`;
+					container.appendChild(mark);
+				}
+
+				// Coordinate label
+				const label = document.createElement('div');
+				label.textContent = `(${Math.round(x)}, ${Math.round(y)})`;
+				label.style.cssText = `
+					position: fixed;
+					left: ${x + 14}px;
+					top: ${y + 14}px;
+					background: rgba(0, 0, 0, 0.8);
+					color: ${color};
+					padding: 3px 8px;
+					font-size: ${fontSize}px;
+					font-family: monospace;
+					border-radius: 3px;
+					border: 1px solid ${color};
+					white-space: nowrap;
+					pointer-events: none;
+				`;
+				container.appendChild(label);
+
+				document.body.appendChild(container);
