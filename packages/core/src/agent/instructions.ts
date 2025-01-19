@@ -103,3 +103,38 @@ function interpolate(template: string, variables: Record<string, string>): strin
 /**
  * Clear the template cache. Useful for testing or hot-reloading.
  */
+export function clearTemplateCache(): void {
+	templateCache.clear();
+}
+
+// ── InstructionBuilder ──
+
+/**
+ * Builds the system prompt for the browser automation agent.
+ *
+ * In the simplest case it loads a `.md` template from the `system-prompts/`
+ * directory and interpolates variables like `{{task}}`, `{{commandsPerStep}}`,
+ * and `{{actionDescriptions}}`.
+ *
+ * The class also exposes static helpers for building per-step state messages,
+ * action results, and other ancillary prompt fragments that are injected as
+ * user messages during the agent loop.
+ */
+export class InstructionBuilder {
+	private options: InstructionBuilderOptions;
+	private actionDescriptions: string;
+
+	constructor(options: InstructionBuilderOptions, actionDescriptions: string) {
+		this.options = options;
+		this.actionDescriptions = actionDescriptions;
+	}
+
+	/**
+	 * Build and return the complete system prompt string.
+	 *
+	 * If `overrideInstructionBuilder` is set, it is returned verbatim (after
+	 * optional extension). Otherwise, the appropriate `.md` template is
+	 * loaded and interpolated with the current settings.
+	 */
+	build(): string {
+		if (this.options.overrideInstructionBuilder) {
