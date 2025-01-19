@@ -98,3 +98,28 @@ export function redactMessages(
 ): Message[] {
 	if (Object.keys(maskedValues).length === 0) return messages;
 	return messages.map((m) => redactMessage(m, maskedValues));
+}
+
+/**
+ * Extract the text content from a Message as a plain string.
+ * For multi-part content, concatenates all text parts.
+ */
+export function extractTextContent(message: Message): string {
+	const content = message.content;
+	if (typeof content === 'string') return content;
+	if (Array.isArray(content)) {
+		return (content as ContentPart[])
+			.filter((p): p is Extract<ContentPart, { type: 'text' }> => p.type === 'text')
+			.map((p) => p.text)
+			.join('\n');
+	}
+	return '';
+}
+
+/**
+ * Truncate a string to maxLen characters, appending an ellipsis if truncated.
+ */
+export function truncate(text: string, maxLen: number): string {
+	if (text.length <= maxLen) return text;
+	return `${text.slice(0, maxLen - 3)}...`;
+}
