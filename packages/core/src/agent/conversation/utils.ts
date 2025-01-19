@@ -48,3 +48,53 @@ export function redactSensitiveValues(
 	}
 	return result;
 }
+
+/**
+ * Deep-filter a Message, masking any sensitive values found in text content.
+ * Returns a new message (does not mutate the original).
+ */
+export function redactMessage(
+	message: Message,
+	maskedValues: Record<string, string>,
+): Message {
+	const entries = Object.entries(maskedValues);
+	if (entries.length === 0) return message;
+
+	const content = message.content;
+
+	if (typeof content === 'string') {
+		return {
+			...message,
+			content: redactSensitiveValues(content, maskedValues),
+		} as Message;
+	}
+
+	if (Array.isArray(content)) {
+		const filtered = (content as ContentPart[]).map((part) => {
+			if (part.type === 'text') {
+				return {
+					...part,
+					text: redactSensitiveValues(part.text, maskedValues),
+				};
+			}
+			// Images are left as-is (binary data)
+			return part;
+		});
+		return {
+			...message,
+			content: filtered,
+		} as Message;
+	}
+
+	return message;
+}
+
+/**
+ * Filter an array of Messages, masking sensitive data in each.
+ */
+export function redactMessages(
+	messages: Message[],
+	maskedValues: Record<string, string>,
+): Message[] {
+	if (Object.keys(maskedValues).length === 0) return messages;
+	return messages.map((m) => redactMessage(m, maskedValues));
