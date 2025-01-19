@@ -158,3 +158,43 @@ export class StallDetector {
 
 		// Check for consecutive stagnant pages (URL + elementCount unchanged)
 		const stagnantCount = this.countConsecutiveStagnantPages();
+		if (stagnantCount >= this.options.maxStagnantPages) {
+			this.totalRepetitions += stagnantCount;
+			return {
+				stuck: true,
+				reason: `Page appears stagnant for ${stagnantCount} consecutive steps (same URL and element structure)`,
+				severity: this.getSeverity(stagnantCount),
+			};
+		}
+
+		return { stuck: false, severity: 0 };
+	}
+
+	getLoopNudgeMessage(): string {
+		const result = this.isStuck();
+		if (!result.stuck) {
+			return '';
+		}
+
+		// Find the appropriate escalating nudge
+		const nudge = this.getEscalatingNudge();
+		return `Warning: ${result.reason ?? 'You appear to be stuck'}.\n${nudge}`;
+	}
+
+	/** Get total number of detected repetitions across the session */
+	getTotalRepetitions(): number {
+		return this.totalRepetitions;
+	}
+
+	reset(): void {
+		this.actionHistory = [];
+		this.fingerprintHistory = [];
+		this.fingerprintHashes = [];
+		this.totalRepetitions = 0;
+	}
+
+	// ── Private helpers ──
+
+	/**
+	 * Normalize action hash for better deduplication:
+	 * - Sort search token strings for order-independent matching
