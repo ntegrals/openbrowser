@@ -138,3 +138,38 @@ export class InstructionBuilder {
 	 */
 	build(): string {
 		if (this.options.overrideInstructionBuilder) {
+			let prompt = this.options.overrideInstructionBuilder;
+			if (this.options.extendInstructionBuilder) {
+				prompt += `\n${this.options.extendInstructionBuilder}`;
+			}
+			return prompt;
+		}
+
+		const variant = this.options.template ?? 'default';
+		const template = loadTemplate(variant);
+
+		const variables: Record<string, string> = {
+			task: '(set per-step in user messages)',
+			commandsPerStep: String(this.options.commandsPerStep),
+			actionDescriptions: this.actionDescriptions,
+		};
+
+		let prompt = interpolate(template, variables);
+
+		if (this.options.extendInstructionBuilder) {
+			prompt += `\n${this.options.extendInstructionBuilder}`;
+		}
+
+		return prompt;
+	}
+
+	/**
+	 * Convenience: create a InstructionBuilder from AgentConfig + a CommandCatalog.
+	 * Pulls action descriptions directly from the registry, optionally
+	 * filtered by the current page URL.
+	 */
+	static fromSettings(settings: AgentConfig, registry: CommandCatalog, pageUrl?: string): InstructionBuilder {
+		const descriptions = registry.getPromptDescription(pageUrl);
+
+		return new InstructionBuilder(
+			{
