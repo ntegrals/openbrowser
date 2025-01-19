@@ -33,3 +33,38 @@ export interface StepInfo {
 
 export interface StepPromptBuilderOptions {
 	browserState: ViewportSnapshot;
+	task: string;
+	stepInfo?: StepInfo;
+	actionDescriptions?: string;
+	pageFilteredActions?: string;
+	agentHistoryDescription?: string;
+	maskedValues?: string;
+	planDescription?: string;
+	screenshots?: string[];
+	enableScreenshots?: boolean;
+	maxElementsLength?: number;
+}
+
+// ── Template loading ──
+
+/**
+ * Directory containing the .md system prompt templates.
+ * Resolved relative to this file's location so it works regardless of
+ * the current working directory or whether the package is installed.
+ */
+const TEMPLATES_DIR = resolve(dirname(fileURLToPath(import.meta.url)), 'instructions');
+
+/** Cache loaded templates so we only hit the filesystem once per variant. */
+const templateCache = new Map<string, string>();
+
+/**
+ * Map from PromptTemplate variant to the corresponding filename.
+ */
+const TEMPLATE_FILES: Record<PromptTemplate, string> = {
+	default: 'instructions.md',
+	flash: 'instructions-compact.md',
+	'no-thinking': 'instructions-direct.md',
+};
+
+/**
+ * Load a system-prompt template from disk. Results are cached.
