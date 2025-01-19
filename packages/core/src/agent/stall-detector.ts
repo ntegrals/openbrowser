@@ -78,3 +78,43 @@ export class StallDetector {
 	constructor(options?: Partial<StallDetectorConfig>) {
 		this.options = { ...DEFAULT_OPTIONS, ...options };
 	}
+
+	recordAction(actions: Command[]): void {
+		const key = this.normalizeActionHash(actions);
+		this.actionHistory.push(key);
+
+		// Keep only the window
+		if (this.actionHistory.length > this.options.windowSize * 2) {
+			this.actionHistory = this.actionHistory.slice(-this.options.windowSize * 2);
+		}
+	}
+
+	recordFingerprint(fingerprint: PageSignature): void {
+		this.fingerprintHistory.push(fingerprint);
+		const hash = this.hashFingerprint(fingerprint);
+		this.fingerprintHashes.push(hash);
+
+		if (this.fingerprintHistory.length > this.options.windowSize * 2) {
+			this.fingerprintHistory = this.fingerprintHistory.slice(-this.options.windowSize * 2);
+			this.fingerprintHashes = this.fingerprintHashes.slice(-this.options.windowSize * 2);
+		}
+	}
+
+	isStuck(): StallCheckResult {
+		// Check for repeated actions
+		const actionRepetitions = this.countTrailingRepetitions(this.actionHistory);
+
+		if (actionRepetitions >= this.options.maxRepeatedActions) {
+			this.totalRepetitions += actionRepetitions;
+			const severity = this.getSeverity(actionRepetitions);
+			return {
+				stuck: true,
+				reason: `Same action repeated ${actionRepetitions} times`,
+				severity,
+			};
+		}
+
+		// Check for action cycle (A -> B -> A -> B)
+		if (this.actionHistory.length >= 4) {
+			const last4 = this.actionHistory.slice(-4);
+			if (last4[0] === last4[2] && last4[1] === last4[3]) {
