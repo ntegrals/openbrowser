@@ -358,3 +358,17 @@ export function hashPageTree(domTree: string): string {
  * More robust than DOM hash for detecting actual content changes.
  */
 export function hashTextContent(text: string): string {
+	// Normalize: lowercase, collapse whitespace, remove punctuation
+	const normalized = text
+		.toLowerCase()
+		.replace(/\s+/g, ' ')
+		.replace(/[^\w\s]/g, '')
+		.trim();
+
+	let hash = 0;
+	for (let i = 0; i < normalized.length; i++) {
+		const char = normalized.charCodeAt(i);
+		hash = ((hash << 5) - hash + char) | 0;
+	}
+	return hash.toString(36);
+}
