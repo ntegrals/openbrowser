@@ -173,3 +173,38 @@ export class InstructionBuilder {
 
 		return new InstructionBuilder(
 			{
+				commandsPerStep: settings.commandsPerStep,
+				overrideInstructionBuilder: settings.overrideInstructionBuilder,
+				extendInstructionBuilder: settings.extendInstructionBuilder,
+				hasSensitiveData: settings.maskedValues !== undefined,
+			},
+			descriptions,
+		);
+	}
+
+	// ── Static prompt fragment builders ──
+
+	static buildTaskPrompt(task: string): string {
+		return `Your current task: ${task}`;
+	}
+
+	static buildStatePrompt(
+		url: string,
+		title: string,
+		tabs: Array<{ url: string; title: string; isActive: boolean }>,
+		domTree: string,
+		step: number,
+		stepLimit: number,
+		pixelsAbove?: number,
+		pixelsBelow?: number,
+	): string {
+		const parts: string[] = [];
+
+		parts.push(`[Step ${step}/${stepLimit}]`);
+		parts.push(`Current URL: ${url}`);
+		parts.push(`Page Title: ${title}`);
+
+		if (tabs.length > 1) {
+			const tabList = tabs
+				.map((t, i) => `  [${i}] ${t.isActive ? '(active) ' : ''}${t.title} - ${t.url}`)
+				.join('\n');
