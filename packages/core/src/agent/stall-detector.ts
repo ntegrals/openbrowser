@@ -198,3 +198,43 @@ export class StallDetector {
 	/**
 	 * Normalize action hash for better deduplication:
 	 * - Sort search token strings for order-independent matching
+	 * - Use element index (not full params) for click actions
+	 * - Use URL (not full params) for navigate actions
+	 */
+	private normalizeActionHash(actions: Command[]): string {
+		const normalized = actions.map((action) => {
+			switch (action.action) {
+				case 'tap':
+					// Normalize click: use index as the primary key, ignore transient params
+					return `click:${action.index}`;
+
+				case 'type_text':
+					return `input_text:${action.index}:${action.text}`;
+
+				case 'navigate':
+					// Normalize: just the URL
+					return `go_to_url:${action.url}`;
+
+				case 'web_search':
+					// Sort search terms for order-independent matching
+					return `search_google:${this.normalizeSearchQuery(action.query)}`;
+
+				case 'search': {
+					const q = 'query' in action ? String((action as Record<string, unknown>).query) : '';
+					return `search_page:${this.normalizeSearchQuery(q)}`;
+				}
+
+				case 'scroll':
+					return `scroll:${action.direction}:${action.index ?? 'page'}`;
+
+				case 'finish':
+					return `done:${action.text.slice(0, 50)}`;
+
+				default:
+					// Generic fallback: action name + stringified params
+					return JSON.stringify(action);
+			}
+		});
+
+		return normalized.join('|');
+	}
