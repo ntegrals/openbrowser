@@ -118,3 +118,43 @@ export class StallDetector {
 		if (this.actionHistory.length >= 4) {
 			const last4 = this.actionHistory.slice(-4);
 			if (last4[0] === last4[2] && last4[1] === last4[3]) {
+				this.totalRepetitions += 2;
+				return {
+					stuck: true,
+					reason: 'Detected action cycle (alternating between two actions)',
+					severity: this.getSeverity(this.totalRepetitions),
+				};
+			}
+		}
+
+		// Check for triple cycle (A -> B -> C -> A -> B -> C)
+		if (this.actionHistory.length >= 6) {
+			const last6 = this.actionHistory.slice(-6);
+			if (
+				last6[0] === last6[3] &&
+				last6[1] === last6[4] &&
+				last6[2] === last6[5]
+			) {
+				this.totalRepetitions += 3;
+				return {
+					stuck: true,
+					reason: 'Detected 3-step action cycle',
+					severity: this.getSeverity(this.totalRepetitions),
+				};
+			}
+		}
+
+		// Check for repeated fingerprints (same page state)
+		const fpRepetitions = this.countTrailingRepetitions(this.fingerprintHashes);
+
+		if (fpRepetitions >= this.options.maxRepeatedFingerprints) {
+			this.totalRepetitions += fpRepetitions;
+			return {
+				stuck: true,
+				reason: `Page state unchanged for ${fpRepetitions} steps`,
+				severity: this.getSeverity(fpRepetitions),
+			};
+		}
+
+		// Check for consecutive stagnant pages (URL + elementCount unchanged)
+		const stagnantCount = this.countConsecutiveStagnantPages();
