@@ -68,3 +68,38 @@ const TEMPLATE_FILES: Record<PromptTemplate, string> = {
 
 /**
  * Load a system-prompt template from disk. Results are cached.
+ *
+ * @param variant - Which prompt template to load.
+ * @returns The raw template string with `{{variable}}` placeholders.
+ * @throws If the template file cannot be read.
+ */
+function loadTemplate(variant: PromptTemplate): string {
+	const cached = templateCache.get(variant);
+	if (cached !== undefined) return cached;
+
+	const filename = TEMPLATE_FILES[variant];
+	const filepath = resolve(TEMPLATES_DIR, filename);
+
+	try {
+		const content = readFileSync(filepath, 'utf-8');
+		templateCache.set(variant, content);
+		return content;
+	} catch (error) {
+		const message = error instanceof Error ? error.message : String(error);
+		throw new Error(`Failed to load system prompt template "${filename}": ${message}`);
+	}
+}
+
+/**
+ * Interpolate `{{key}}` placeholders in a template string.
+ * Unmatched placeholders are left as-is so downstream code can detect them.
+ */
+function interpolate(template: string, variables: Record<string, string>): string {
+	return template.replace(/\{\{(\w+)\}\}/g, (match, key: string) => {
+		return key in variables ? variables[key] : match;
+	});
+}
+
+/**
+ * Clear the template cache. Useful for testing or hot-reloading.
+ */
