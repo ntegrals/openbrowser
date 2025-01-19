@@ -238,3 +238,43 @@ export class StallDetector {
 
 		return normalized.join('|');
 	}
+
+	/**
+	 * Normalize a search query by lowercasing and sorting tokens.
+	 * "best pizza NYC" and "NYC best pizza" produce the same hash.
+	 */
+	private normalizeSearchQuery(query: string): string {
+		return query
+			.toLowerCase()
+			.split(/\s+/)
+			.filter(Boolean)
+			.sort()
+			.join(' ');
+	}
+
+	/**
+	 * Hash a page fingerprint for quick equality checks.
+	 * Includes URL, element count, text hash, and scroll position bucket.
+	 */
+	private hashFingerprint(fp: PageSignature): string {
+		const scrollBucket = Math.floor(fp.scrollY / 200);
+		const parts = [
+			fp.url,
+			fp.domHash,
+			scrollBucket.toString(),
+		];
+		if (fp.elementCount !== undefined) {
+			parts.push(`e:${fp.elementCount}`);
+		}
+		if (fp.textHash) {
+			parts.push(`t:${fp.textHash}`);
+		}
+		return parts.join('|');
+	}
+
+	/**
+	 * Count how many trailing entries in a history array are identical.
+	 */
+	private countTrailingRepetitions(history: string[]): number {
+		if (history.length === 0) return 0;
+		const last = history[history.length - 1];
