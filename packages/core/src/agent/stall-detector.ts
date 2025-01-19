@@ -278,3 +278,43 @@ export class StallDetector {
 	private countTrailingRepetitions(history: string[]): number {
 		if (history.length === 0) return 0;
 		const last = history[history.length - 1];
+		let count = 0;
+		for (let i = history.length - 1; i >= 0; i--) {
+			if (history[i] === last) {
+				count++;
+			} else {
+				break;
+			}
+		}
+		return count;
+	}
+
+	/**
+	 * Count consecutive stagnant pages: same URL and similar element count.
+	 * "Similar" means within 5% or 10 elements of each other.
+	 */
+	private countConsecutiveStagnantPages(): number {
+		if (this.fingerprintHistory.length < 2) return 0;
+
+		const latest = this.fingerprintHistory[this.fingerprintHistory.length - 1];
+		let count = 1;
+
+		for (let i = this.fingerprintHistory.length - 2; i >= 0; i--) {
+			const fp = this.fingerprintHistory[i];
+			if (fp.url !== latest.url) break;
+
+			if (latest.elementCount !== undefined && fp.elementCount !== undefined) {
+				const diff = Math.abs(latest.elementCount - fp.elementCount);
+				const threshold = Math.max(10, Math.floor(latest.elementCount * 0.05));
+				if (diff > threshold) break;
+			}
+
+			count++;
+		}
+
+		return count;
+	}
+
+	/**
+	 * Map repetition count to severity level (0-3).
+	 */
