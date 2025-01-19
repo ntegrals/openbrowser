@@ -318,3 +318,43 @@ export class StallDetector {
 	/**
 	 * Map repetition count to severity level (0-3).
 	 */
+	private getSeverity(repetitions: number): number {
+		if (repetitions >= 12) return 3;
+		if (repetitions >= 8) return 2;
+		if (repetitions >= 5) return 1;
+		return 0;
+	}
+
+	/**
+	 * Get the appropriate escalating nudge message based on total repetitions.
+	 */
+	private getEscalatingNudge(): string {
+		// Pick the highest-threshold nudge that applies
+		let bestNudge = ESCALATING_NUDGES[0];
+		for (const nudge of ESCALATING_NUDGES) {
+			if (this.totalRepetitions >= nudge.threshold) {
+				bestNudge = nudge;
+			}
+		}
+		return bestNudge.message;
+	}
+}
+
+/**
+ * Compute a fast 32-bit hash of a DOM tree string.
+ * Used for quick fingerprint comparison.
+ */
+export function hashPageTree(domTree: string): string {
+	let hash = 0;
+	for (let i = 0; i < domTree.length; i++) {
+		const char = domTree.charCodeAt(i);
+		hash = ((hash << 5) - hash + char) | 0;
+	}
+	return hash.toString(36);
+}
+
+/**
+ * Compute a content-based text hash from visible page text.
+ * More robust than DOM hash for detecting actual content changes.
+ */
+export function hashTextContent(text: string): string {
