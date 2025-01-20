@@ -278,3 +278,38 @@ export class StepPromptBuilder {
 		this.actionDescriptions = options.actionDescriptions;
 		this.pageFilteredActions = options.pageFilteredActions;
 		this.agentHistoryDescription = options.agentHistoryDescription;
+		this.maskedValues = options.maskedValues;
+		this.planDescription = options.planDescription;
+		this.screenshots = options.screenshots ?? [];
+		this.enableScreenshots = options.enableScreenshots ?? false;
+		this.maxElementsLength = options.maxElementsLength ?? 40_000;
+	}
+
+	/**
+	 * Build the user message content.
+	 *
+	 * When vision is disabled (or no screenshots are available), returns a
+	 * single string. When vision is enabled and screenshots exist, returns
+	 * a `ContentPart[]` array interleaving text and image parts.
+	 */
+	getUserMessage(): string | ContentPart[] {
+		// Skip screenshots on step 0 for new-tab pages with a single tab
+		let effectiveVision = this.enableScreenshots;
+		if (
+			isNewTabPage(this.browserState.url) &&
+			this.stepInfo?.step === 0 &&
+			this.browserState.tabs.length <= 1
+		) {
+			effectiveVision = false;
+		}
+
+		const stateDescription = this.buildStateDescription();
+
+		if (effectiveVision && this.screenshots.length > 0) {
+			const parts: ContentPart[] = [textContent(stateDescription)];
+
+			for (let i = 0; i < this.screenshots.length; i++) {
+				const label =
+					i === this.screenshots.length - 1 ? 'Current screenshot:' : 'Previous screenshot:';
+				parts.push(textContent(label));
+				parts.push(imageContent(this.screenshots[i], 'image/png'));
