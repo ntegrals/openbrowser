@@ -243,3 +243,38 @@ export class InstructionBuilder {
 }
 
 // ── StepPromptBuilder ──
+
+/**
+ * Constructs the per-step user message for the agent.
+ *
+ * Each step of the agent loop sends a user message containing:
+ * - The current browser state (URL, tabs, interactive elements)
+ * - Scroll position and page boundaries
+ * - Agent history summary
+ * - Step information (step N of M)
+ * - Optionally: screenshots, sensitive data warnings, plan description
+ * - Optionally: page-specific action descriptions
+ *
+ * The message can be returned as a plain string or as a multipart content
+ * array (text + images) when vision is enabled.
+ */
+export class StepPromptBuilder {
+	private browserState: ViewportSnapshot;
+	private task: string;
+	private stepInfo?: StepInfo;
+	private actionDescriptions?: string;
+	private pageFilteredActions?: string;
+	private agentHistoryDescription?: string;
+	private maskedValues?: string;
+	private planDescription?: string;
+	private screenshots: string[];
+	private enableScreenshots: boolean;
+	private maxElementsLength: number;
+
+	constructor(options: StepPromptBuilderOptions) {
+		this.browserState = options.browserState;
+		this.task = options.task;
+		this.stepInfo = options.stepInfo;
+		this.actionDescriptions = options.actionDescriptions;
+		this.pageFilteredActions = options.pageFilteredActions;
+		this.agentHistoryDescription = options.agentHistoryDescription;
