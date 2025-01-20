@@ -208,3 +208,38 @@ export class InstructionBuilder {
 			const tabList = tabs
 				.map((t, i) => `  [${i}] ${t.isActive ? '(active) ' : ''}${t.title} - ${t.url}`)
 				.join('\n');
+			parts.push(`Open Tabs:\n${tabList}`);
+		}
+
+		if (pixelsAbove !== undefined && pixelsAbove > 0) {
+			parts.push(`Scroll position: ${pixelsAbove}px from top`);
+		}
+		if (pixelsBelow !== undefined && pixelsBelow > 0) {
+			parts.push(`${pixelsBelow}px of content below the visible area`);
+		}
+
+		parts.push(`\nPage content:\n${domTree}`);
+
+		return parts.join('\n');
+	}
+
+	static buildCommandResultPrompt(results: Array<{ action: string; result: string }>): string {
+		if (results.length === 0) return '';
+
+		const formatted = results
+			.map((r) => `Action: ${r.action}\nResult: ${r.result}`)
+			.join('\n---\n');
+
+		return `Previous action results:\n${formatted}`;
+	}
+
+	static buildLoopNudge(message: string): string {
+		return `\nIMPORTANT: ${message}`;
+	}
+
+	static buildPlanPrompt(currentPlan: string): string {
+		return `\nCurrent plan:\n${currentPlan}`;
+	}
+}
+
+// ── StepPromptBuilder ──
