@@ -313,3 +313,38 @@ export class StepPromptBuilder {
 					i === this.screenshots.length - 1 ? 'Current screenshot:' : 'Previous screenshot:';
 				parts.push(textContent(label));
 				parts.push(imageContent(this.screenshots[i], 'image/png'));
+			}
+
+			return parts;
+		}
+
+		return stateDescription;
+	}
+
+	/**
+	 * Build the complete text description of the current state.
+	 * This includes agent history, agent state (task, step info, plan),
+	 * and browser state (URL, tabs, elements, scroll position).
+	 */
+	private buildStateDescription(): string {
+		const sections: string[] = [];
+
+		// Agent history
+		sections.push(this.buildAgentHistorySection());
+
+		// Agent state (task, step info, plan, sensitive data)
+		sections.push(this.buildAgentStateSection());
+
+		// Browser state (URL, tabs, elements)
+		sections.push(this.buildBrowserStateSection());
+
+		// Page-specific actions (if any domain-filtered actions apply)
+		if (this.pageFilteredActions) {
+			sections.push(
+				`<page_specific_actions>\n${this.pageFilteredActions}\n</page_specific_actions>`,
+			);
+		}
+
+		// Sanitize surrogates to prevent JSON serialization issues
+		return sanitizeSurrogates(sections.join('\n\n'));
+	}
