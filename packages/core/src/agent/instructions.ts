@@ -348,3 +348,38 @@ export class StepPromptBuilder {
 		// Sanitize surrogates to prevent JSON serialization issues
 		return sanitizeSurrogates(sections.join('\n\n'));
 	}
+
+	private buildAgentHistorySection(): string {
+		const history = this.agentHistoryDescription?.trim() ?? '';
+		return `<agent_history>\n${history}\n</agent_history>`;
+	}
+
+	private buildAgentStateSection(): string {
+		const parts: string[] = [];
+
+		parts.push(`<user_request>\n${this.task}\n</user_request>`);
+
+		if (this.planDescription) {
+			parts.push(`<plan>\n${this.planDescription}\n</plan>`);
+		}
+
+		if (this.maskedValues) {
+			parts.push(`<sensitive_data>${this.maskedValues}</sensitive_data>`);
+		}
+
+		if (this.stepInfo) {
+			const today = new Date().toISOString().slice(0, 10);
+			parts.push(
+				`<step_info>Step ${this.stepInfo.step + 1} of ${this.stepInfo.stepLimit} | Today: ${today}</step_info>`,
+			);
+		}
+
+		return `<agent_state>\n${parts.join('\n')}\n</agent_state>`;
+	}
+
+	private buildBrowserStateSection(): string {
+		const parts: string[] = [];
+
+		// Tabs
+		const tabsText = this.buildTabsText();
+		if (tabsText) {
