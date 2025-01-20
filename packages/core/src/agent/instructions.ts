@@ -383,3 +383,38 @@ export class StepPromptBuilder {
 		// Tabs
 		const tabsText = this.buildTabsText();
 		if (tabsText) {
+			parts.push(tabsText);
+		}
+
+		// Scroll / page info
+		const pageInfo = this.buildPageInfoText();
+		if (pageInfo) {
+			parts.push(pageInfo);
+		}
+
+		// Interactive elements
+		parts.push(this.buildElementsText());
+
+		return `<browser_state>\n${parts.join('\n')}\n</browser_state>`;
+	}
+
+	private buildTabsText(): string {
+		const { tabs, url, title } = this.browserState;
+		if (tabs.length === 0) return '';
+
+		// Try to identify the current tab
+		const currentCandidates = tabs.filter((t) => t.url === url && t.title === title);
+		const currentTabId =
+			currentCandidates.length === 1 ? currentCandidates[0].tabId : undefined;
+
+		const lines: string[] = [];
+		if (currentTabId) {
+			lines.push(`Current tab: ${String(currentTabId).slice(-4)}`);
+		}
+
+		lines.push('Available tabs:');
+		for (const tab of tabs) {
+			lines.push(`Tab ${String(tab.tabId).slice(-4)}: ${tab.url} - ${tab.title.slice(0, 30)}`);
+		}
+
+		return lines.join('\n');
