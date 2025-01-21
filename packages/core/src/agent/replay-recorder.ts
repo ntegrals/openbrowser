@@ -158,3 +158,43 @@ export class ReplayRecorder {
 			const processed = await img
 				.flatten({ background: { r: 255, g: 255, b: 255 } })
 				.png()
+				.toBuffer();
+
+			processedFrames.push(processed);
+		}
+
+		// Attempt to assemble an animated GIF from the processed frames
+		try {
+			const firstFrame = sharp(processedFrames[0]);
+			const metadata = await firstFrame.metadata();
+			const width = metadata.width ?? this.resizeWidth;
+			const height = metadata.height ?? 600;
+
+			// Convert each frame to raw RGBA
+			const rawFrames: Buffer[] = [];
+			for (const frameBuffer of processedFrames) {
+				const raw = await sharp(frameBuffer)
+					.resize(width, height, {
+						fit: 'contain',
+						background: { r: 255, g: 255, b: 255 },
+					})
+					.raw()
+					.ensureAlpha()
+					.toBuffer();
+				rawFrames.push(raw);
+			}
+
+			// Concatenate all raw frames and encode as animated GIF
+			const combinedRaw = Buffer.concat(rawFrames);
+			await sharp(combinedRaw, {
+				raw: {
+					width,
+					height,
+					channels: 4,
+					pages: rawFrames.length,
+				},
+			})
+				.gif({
+					delay: Array(rawFrames.length).fill(this.frameDelay),
+					loop: 0,
+				})
