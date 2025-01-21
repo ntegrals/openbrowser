@@ -453,3 +453,38 @@ export class StepPromptBuilder {
 		}
 
 		// Add start/end of page markers based on scroll position
+		const hasContentAbove =
+			this.browserState.pixelsAbove !== undefined && this.browserState.pixelsAbove > 0;
+		const hasContentBelow =
+			this.browserState.pixelsBelow !== undefined && this.browserState.pixelsBelow > 0;
+
+		if (!hasContentAbove) {
+			elementsText = `[Start of page]\n${elementsText}`;
+		}
+		if (!hasContentBelow) {
+			elementsText = `${elementsText}\n[End of page]`;
+		}
+
+		return `Interactive elements${truncatedNote}:\n${elementsText}`;
+	}
+}
+
+// ── Dynamic action descriptions ──
+
+/**
+ * Build action descriptions from a registry, optionally filtered by
+ * the current page URL. Returns a formatted string suitable for
+ * injection into the system prompt's `{{actionDescriptions}}` slot.
+ */
+export function buildCommandDescriptions(registry: CommandCatalog, pageUrl?: string): string {
+	return registry.getPromptDescription(pageUrl);
+}
+
+/**
+ * Build a description of actions that are specific to the current page's domain.
+ * Returns `undefined` if there are no domain-specific actions beyond the
+ * universal set.
+ *
+ * This is injected as a `<page_specific_actions>` section in the per-step
+ * user message when the page URL triggers extra actions.
+ */
