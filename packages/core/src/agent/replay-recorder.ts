@@ -78,3 +78,43 @@ export class ReplayRecorder {
 		}
 
 		const effectivePath = typeof generateGif === 'string' ? generateGif : this.outputPath;
+		const dir = path.dirname(effectivePath);
+		if (!fs.existsSync(dir)) {
+			fs.mkdirSync(dir, { recursive: true });
+		}
+
+		// Always save individual frames as fallback / debug
+		await this.saveFrames(effectivePath);
+
+		if (generateGif === false) {
+			return effectivePath;
+		}
+
+		// Try to generate actual GIF using sharp
+		try {
+			const gifPath = await this.encodeGif(effectivePath);
+			logger.info(`GIF saved: ${gifPath} (${this.frames.length} frames)`);
+			return gifPath;
+		} catch (error) {
+			logger.warn(
+				`GIF encoding failed, falling back to individual frames: ${
+					error instanceof Error ? error.message : String(error)
+				}`,
+			);
+			return effectivePath;
+		}
+	}
+
+	/**
+	 * Encode frames into an animated GIF using sharp.
+	 * Sharp must be installed as a peer dependency.
+	 */
+	private async encodeGif(outputPath: string): Promise<string> {
+		// Dynamic import -- sharp is an optional dependency.
+		// Use indirect require to avoid TS module resolution error.
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
+		let sharpModule: any;
+		try {
+			// Indirect dynamic import avoids TS2307 for optional peer deps
+			const moduleName = 'sharp';
+			sharpModule = await import(/* webpackIgnore: true */ moduleName);
