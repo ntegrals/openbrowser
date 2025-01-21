@@ -198,3 +198,43 @@ export function constructEvaluatorMessages(
 	// If screenshots are requested and available, include the last few
 	if (options?.includeScreenshots) {
 		const screenshotEntries = history
+			.filter((e) => e.browserState.screenshot)
+			.slice(-3); // Last 3 screenshots
+
+		if (screenshotEntries.length > 0) {
+			const content: ContentPart[] = [
+				textContent(`${parts.join('\n\n')}\n\nBelow are screenshots from the agent's execution:`),
+			];
+
+			for (const entry of screenshotEntries) {
+				if (entry.browserState.screenshot) {
+					content.push(
+						textContent(`Screenshot from step ${entry.step} (${entry.browserState.url}):`),
+					);
+					content.push(imageContent(entry.browserState.screenshot));
+				}
+			}
+
+			messages.push(userMessage(content));
+			return messages;
+		}
+	}
+
+	messages.push(userMessage(parts.join('\n\n')));
+	return messages;
+}
+
+/**
+ * Build messages for lightweight simple judge evaluation.
+ * Only includes task and result -- no history or screenshots.
+ */
+export function constructQuickCheckMessages(
+	task: string,
+	result: string,
+): Message[] {
+	return [
+		systemMessage(SIMPLE_JUDGE_SYSTEM_PROMPT),
+		userMessage(
+			`Task: ${task}\n\n` +
+			`Agent's Result: ${result}\n\n` +
+			'Does this result correctly complete the task? ' +
