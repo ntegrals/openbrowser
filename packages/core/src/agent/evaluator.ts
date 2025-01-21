@@ -38,3 +38,43 @@ Be concise. Focus on whether the result directly answers/completes the task.`;
 
 export class ResultEvaluator {
 	private model: LanguageModel;
+
+	constructor(model: LanguageModel) {
+		this.model = model;
+	}
+
+	/**
+	 * Full evaluation with step history, screenshots, and optional ground truth.
+	 * Provides detailed verdict with failure analysis.
+	 */
+	async evaluate(
+		task: string,
+		result: string,
+		history: StepRecord[],
+		options?: {
+			expectedOutcome?: string;
+			includeScreenshots?: boolean;
+		},
+	): Promise<EvaluationResult> {
+		const messages = constructEvaluatorMessages(task, result, history, options);
+
+		try {
+			const completion = await this.model.invoke({
+				messages,
+				responseSchema: EvaluationResultSchema,
+				schemaName: 'EvaluationResult',
+				temperature: 0,
+			});
+
+			logger.info(
+				`Judge verdict: complete=${completion.parsed.isComplete}, ` +
+				`confidence=${completion.parsed.confidence}, ` +
+				`verdict=${completion.parsed.verdict ?? 'n/a'}`,
+			);
+
+			return completion.parsed;
+		} catch (error) {
+			logger.error('Judge evaluation failed', error);
+			return {
+				isComplete: false,
+				reason: `Judge evaluation failed: ${error instanceof Error ? error.message : String(error)}`,
