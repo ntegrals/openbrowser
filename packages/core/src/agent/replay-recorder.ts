@@ -118,3 +118,43 @@ export class ReplayRecorder {
 			// Indirect dynamic import avoids TS2307 for optional peer deps
 			const moduleName = 'sharp';
 			sharpModule = await import(/* webpackIgnore: true */ moduleName);
+		} catch {
+			throw new Error(
+				'sharp is not installed. Install it with: npm install sharp',
+			);
+		}
+
+		// Resolve the default export (handles both ESM and CJS)
+		const sharp = sharpModule.default ?? sharpModule;
+
+		const gifPath = outputPath.replace(/\.[^.]+$/, '.gif');
+		const processedFrames: Buffer[] = [];
+
+		for (const frame of this.frames) {
+			let img = sharp(frame.buffer);
+
+			// Resize if configured
+			if (this.resizeWidth > 0) {
+				img = img.resize(this.resizeWidth, undefined, {
+					fit: 'inside',
+					withoutEnlargement: true,
+				});
+			}
+
+			// Composite a step number overlay onto the frame
+			const overlayBuffer = this.createStepOverlaySvg(
+				frame.stepNumber,
+				frame.label,
+			);
+
+			img = img.composite([
+				{
+					input: Buffer.from(overlayBuffer),
+					gravity: 'northwest',
+				},
+			]);
+
+			// Convert to PNG for further processing
+			const processed = await img
+				.flatten({ background: { r: 255, g: 255, b: 255 } })
+				.png()
