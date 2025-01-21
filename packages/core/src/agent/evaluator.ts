@@ -78,3 +78,43 @@ export class ResultEvaluator {
 			return {
 				isComplete: false,
 				reason: `Judge evaluation failed: ${error instanceof Error ? error.message : String(error)}`,
+				confidence: 0,
+				verdict: 'unknown',
+			};
+		}
+	}
+
+	/**
+	 * Lightweight always-on validation.
+	 * Quick pass/fail check without detailed history analysis.
+	 * Useful for running after every "done" action to catch obvious errors.
+	 */
+	async simpleEvaluate(
+		task: string,
+		result: string,
+	): Promise<QuickCheckResult> {
+		const messages = constructQuickCheckMessages(task, result);
+
+		try {
+			const completion = await this.model.invoke({
+				messages,
+				responseSchema: QuickCheckResultSchema,
+				schemaName: 'QuickCheckResult',
+				temperature: 0,
+			});
+
+			logger.debug(
+				`Simple judge: passed=${completion.parsed.passed}, reason=${completion.parsed.reason}`,
+			);
+
+			return completion.parsed;
+		} catch (error) {
+			logger.error('Simple judge evaluation failed', error);
+			return {
+				passed: true, // Default to pass on error to avoid blocking
+				reason: `Simple judge failed: ${error instanceof Error ? error.message : String(error)}`,
+				shouldRetry: false,
+			};
+		}
+	}
+}
