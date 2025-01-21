@@ -238,3 +238,43 @@ export class ReplayRecorder {
 	 */
 	private async saveFrames(outputPath: string): Promise<string> {
 		const framesDir = outputPath.replace(/\.[^.]+$/, '_frames');
+		if (!fs.existsSync(framesDir)) {
+			fs.mkdirSync(framesDir, { recursive: true });
+		}
+
+		for (let i = 0; i < this.frames.length; i++) {
+			const frame = this.frames[i];
+			const framePath = path.join(
+				framesDir,
+				`frame_${frame.stepNumber.toString().padStart(4, '0')}.png`,
+			);
+			fs.writeFileSync(framePath, frame.buffer);
+		}
+
+		// Also save the last frame as the preview image
+		if (this.frames.length > 0) {
+			const lastFrame = this.frames[this.frames.length - 1];
+			const previewPath = outputPath.replace(/\.[^.]+$/, '_preview.png');
+			fs.writeFileSync(previewPath, lastFrame.buffer);
+		}
+
+		logger.debug(`Saved ${this.frames.length} frames to ${framesDir}`);
+		return framesDir;
+	}
+
+	/** Escape XML special characters for SVG text content */
+	private escapeXml(text: string): string {
+		return text
+			.replace(/&/g, '&amp;')
+			.replace(/</g, '&lt;')
+			.replace(/>/g, '&gt;')
+			.replace(/"/g, '&quot;')
+			.replace(/'/g, '&apos;');
+	}
+
+	get frameCount(): number {
+		return this.frames.length;
+	}
+
+	clear(): void {
+		this.frames = [];
