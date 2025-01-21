@@ -118,3 +118,43 @@ export class ResultEvaluator {
 		}
 	}
 }
+
+// ── Message Construction ──
+
+/**
+ * Build the full message array for detailed judge evaluation.
+ * Includes step-by-step history, screenshots (if enabled), and ground truth.
+ */
+export function constructEvaluatorMessages(
+	task: string,
+	result: string,
+	history: StepRecord[],
+	options?: {
+		expectedOutcome?: string;
+		includeScreenshots?: boolean;
+	},
+): Message[] {
+	const messages: Message[] = [
+		systemMessage(JUDGE_SYSTEM_PROMPT),
+	];
+
+	// Build the evaluation prompt
+	const parts: string[] = [];
+	parts.push(`## Task\n${task}`);
+	parts.push(`## Agent's Final Result\n${result}`);
+
+	// Step history summary
+	if (history.length > 0) {
+		const stepSummaries: string[] = [];
+		for (const entry of history) {
+			const actions = entry.agentOutput.actions
+				.map((a) => {
+					const actionObj = a as Record<string, unknown>;
+					return actionObj.action ?? 'unknown';
+				})
+				.join(', ');
+
+			const results = entry.actionResults
+				.map((r) => {
+					if (r.isDone) return `DONE: ${r.extractedContent?.slice(0, 200) ?? ''}`;
+					if (r.error) return `ERROR: ${r.error.slice(0, 150)}`;
