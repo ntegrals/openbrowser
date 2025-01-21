@@ -488,3 +488,38 @@ export function buildCommandDescriptions(registry: CommandCatalog, pageUrl?: str
  * This is injected as a `<page_specific_actions>` section in the per-step
  * user message when the page URL triggers extra actions.
  */
+export function buildContextualCommands(registry: CommandCatalog, pageUrl: string): string | undefined {
+	const allActions = registry.getAll();
+	const domainActions = registry.getActionsForDomain(extractDomain(pageUrl));
+
+	// If all actions are already shown (no domain filtering), nothing extra to show
+	if (domainActions.length === allActions.length) return undefined;
+
+	// Find domain-specific actions (ones that have a domainFilter)
+	const extraActions = domainActions.filter(
+		(a) => a.domainFilter && a.domainFilter.length > 0,
+	);
+
+	if (extraActions.length === 0) return undefined;
+
+	const lines = extraActions.map(
+		(a) => `- ${a.name}: ${a.description}`,
+	);
+
+	return `The following actions are available on this page:\n${lines.join('\n')}`;
+}
+
+// ── Rerun / extraction prompt helpers ──
+
+/**
+ * Build a system prompt for the extraction/AI-step action used during reruns.
+ */
+export function buildExtractionInstructionBuilder(): string {
+	return dedent(`
+		You are an expert at extracting data from webpages.
+
+		You will be given:
+		1. A query describing what to extract
+		2. The markdown of the webpage (filtered to remove noise)
+		3. Optionally, a screenshot of the current page state
+
