@@ -198,3 +198,43 @@ export class ReplayRecorder {
 					delay: Array(rawFrames.length).fill(this.frameDelay),
 					loop: 0,
 				})
+				.toFile(gifPath);
+
+			return gifPath;
+		} catch (animatedError) {
+			// If animated GIF creation fails, save the last frame as a static image
+			logger.debug(
+				`Animated GIF assembly failed, saving static image: ${
+					animatedError instanceof Error
+						? animatedError.message
+						: String(animatedError)
+				}`,
+			);
+			const lastFrame = processedFrames[processedFrames.length - 1];
+			const staticPath = outputPath.replace(/\.[^.]+$/, '.png');
+			await sharp(lastFrame).png().toFile(staticPath);
+			return staticPath;
+		}
+	}
+
+	/**
+	 * Create an SVG overlay with the step number and optional label.
+	 * Returns an SVG string that can be composited onto the frame.
+	 */
+	private createStepOverlaySvg(stepNumber: number, label?: string): string {
+		const labelText = label ? ` - ${label.slice(0, 40)}` : '';
+		const text = `Step ${stepNumber}${labelText}`;
+		const width = Math.max(200, text.length * 10 + 20);
+		const height = 36;
+
+		return `<svg width="${width}" height="${height}" xmlns="http://www.w3.org/2000/svg">
+			<rect x="0" y="0" width="${width}" height="${height}" rx="4" fill="rgba(0,0,0,0.7)"/>
+			<text x="10" y="24" font-family="monospace" font-size="16" fill="white">${this.escapeXml(text)}</text>
+		</svg>`;
+	}
+
+	/**
+	 * Save individual PNG frames to a directory alongside the output path.
+	 */
+	private async saveFrames(outputPath: string): Promise<string> {
+		const framesDir = outputPath.replace(/\.[^.]+$/, '_frames');
