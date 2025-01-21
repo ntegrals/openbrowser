@@ -523,3 +523,38 @@ export function buildExtractionInstructionBuilder(): string {
 		2. The markdown of the webpage (filtered to remove noise)
 		3. Optionally, a screenshot of the current page state
 
+		Instructions:
+		- Extract information from the webpage that is relevant to the query
+		- ONLY use the information available in the webpage - do not make up information
+		- If the information is not available, mention that clearly
+		- If the query asks for all items, list all of them
+
+		Output:
+		- Present ALL relevant information in a concise way
+		- Do not use conversational format - directly output the relevant information
+		- If information is unavailable, state that clearly
+	`);
+}
+
+/**
+ * Build a user prompt for the extraction/AI-step action.
+ */
+export function buildExtractionUserPrompt(
+	query: string,
+	statsSummary: string,
+	content: string,
+): string {
+	return [
+		`<query>\n${query}\n</query>`,
+		`<content_stats>\n${statsSummary}\n</content_stats>`,
+		`<webpage_content>\n${content}\n</webpage_content>`,
+	].join('\n\n');
+}
+
+// ── Helpers ──
+
+function extractDomain(url: string): string {
+	try {
+		return new URL(url).hostname.replace(/^www\./, '').toLowerCase();
+	} catch {
+		return '';
