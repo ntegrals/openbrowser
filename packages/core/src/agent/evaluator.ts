@@ -238,3 +238,7 @@ export function constructQuickCheckMessages(
 			`Task: ${task}\n\n` +
 			`Agent's Result: ${result}\n\n` +
 			'Does this result correctly complete the task? ' +
+			'If not, should the agent retry with a different approach?',
+		),
+	];
+}
