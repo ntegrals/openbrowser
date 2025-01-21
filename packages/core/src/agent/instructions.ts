@@ -418,3 +418,38 @@ export class StepPromptBuilder {
 		}
 
 		return lines.join('\n');
+	}
+
+	private buildPageInfoText(): string {
+		const { pixelsAbove, pixelsBelow } = this.browserState;
+		const parts: string[] = [];
+
+		if (pixelsAbove !== undefined && pixelsAbove > 0) {
+			// Estimate "pages above" assuming ~900px viewport height
+			const pagesAbove = (pixelsAbove / 900).toFixed(1);
+			parts.push(`${pagesAbove} pages above`);
+		}
+		if (pixelsBelow !== undefined && pixelsBelow > 0) {
+			const pagesBelow = (pixelsBelow / 900).toFixed(1);
+			parts.push(`${pagesBelow} pages below`);
+		}
+
+		if (parts.length === 0) return '';
+		return `<page_info>${parts.join(', ')}</page_info>`;
+	}
+
+	private buildElementsText(): string {
+		let elementsText = this.browserState.domTree ?? '';
+
+		if (!elementsText) {
+			return 'Interactive elements:\nempty page';
+		}
+
+		// Truncate if too long
+		let truncatedNote = '';
+		if (elementsText.length > this.maxElementsLength) {
+			elementsText = elementsText.slice(0, this.maxElementsLength);
+			truncatedNote = ` (truncated to ${this.maxElementsLength} characters)`;
+		}
+
+		// Add start/end of page markers based on scroll position
