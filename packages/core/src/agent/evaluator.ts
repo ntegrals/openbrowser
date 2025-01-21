@@ -158,3 +158,43 @@ export function constructEvaluatorMessages(
 				.map((r) => {
 					if (r.isDone) return `DONE: ${r.extractedContent?.slice(0, 200) ?? ''}`;
 					if (r.error) return `ERROR: ${r.error.slice(0, 150)}`;
+					if (r.extractedContent) return `OK: ${r.extractedContent.slice(0, 150)}`;
+					return r.success ? 'OK' : 'FAILED';
+				})
+				.join('; ');
+
+			const evaluation = entry.agentOutput.currentState?.evaluation ?? '';
+			stepSummaries.push(
+				`Step ${entry.step} [${entry.browserState.url}]:\n` +
+				`  Eval: ${evaluation.slice(0, 200)}\n` +
+				`  Actions: ${actions}\n` +
+				`  Results: ${results}`,
+			);
+		}
+
+		parts.push(`## Step History (${history.length} steps)\n${stepSummaries.join('\n\n')}`);
+	}
+
+	// Ground truth
+	if (options?.expectedOutcome) {
+		parts.push(
+			`## Ground Truth (Expected Result)\n${options.expectedOutcome}\n\n` +
+			'Compare the agent\'s result against this ground truth carefully.',
+		);
+	}
+
+	parts.push(
+		'## Instructions\n' +
+		'Evaluate the task completion. Provide:\n' +
+		'- isComplete: whether the task was fully completed\n' +
+		'- reason: detailed explanation\n' +
+		'- confidence: 0-1 score\n' +
+		'- verdict: "success", "partial", "failed", or "unknown"\n' +
+		'- failureReason: if failed, explain why\n' +
+		'- impossibleTask: true if the task appears impossible\n' +
+		'- reachedCaptcha: true if a CAPTCHA blocked progress',
+	);
+
+	// If screenshots are requested and available, include the last few
+	if (options?.includeScreenshots) {
+		const screenshotEntries = history
