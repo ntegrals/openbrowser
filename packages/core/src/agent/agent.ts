@@ -73,3 +73,28 @@ export interface AgentOptions {
 // ── Agent ──
 
 export class Agent {
+	private model: LanguageModel;
+	private browser: Viewport;
+	private tools: CommandExecutor;
+	private domService: PageAnalyzer;
+	private messageManager: ConversationManager;
+	private loopDetector: StallDetector;
+	private gifRecorder?: ReplayRecorder;
+	private judge?: ResultEvaluator;
+	private settings: AgentConfig;
+	private extractionModel?: LanguageModel;
+	private fileSystem?: FileAccess;
+
+	private state: AgentState;
+	private historyList: ExecutionLog;
+	private startTime = 0;
+	private followUpTasks: string[] = [];
+
+	private onStepStart?: (step: number) => void;
+	private onStepEnd?: (step: number, result: CommandResult[]) => void;
+	private onDone?: (result: RunOutcome) => void;
+
+	constructor(options: AgentOptions) {
+		this.model = options.model;
+		this.browser = options.browser;
+		this.settings = { ...DEFAULT_AGENT_CONFIG, ...options.settings, task: options.task };
