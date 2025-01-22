@@ -298,3 +298,28 @@ export class Agent {
 						logger.warn(`Rate limited, waiting ${waitMs}ms before retry`);
 						await sleep(waitMs);
 						this.state.consecutiveFailures++;
+						// Don't count rate limits toward max failures
+						continue;
+					}
+
+					const message = error instanceof Error ? error.message : String(error);
+					errors.push(`Step ${step}: ${message}`);
+
+					this.state.failureCount++;
+					this.state.consecutiveFailures++;
+
+					if (this.state.consecutiveFailures >= this.settings.failureThreshold) {
+						// Failure recovery: make one final LLM call to diagnose
+						const failureSummary = await this.makeFailureRecoveryCall(errors);
+						if (failureSummary) {
+							finalResult = failureSummary;
+						}
+
+						throw new AgentError(
+							`Too many consecutive failures (${this.state.consecutiveFailures})`,
+						);
+					}
+
+					// Add error message to conversation
+					this.messageManager.addCommandResultMessage(
+						`Error: ${truncateText(message, 400)}`,
