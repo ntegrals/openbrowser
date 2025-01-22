@@ -148,3 +148,28 @@ export class Agent {
 			failureCount: 0,
 			consecutiveFailures: 0,
 			isRunning: false,
+			isPaused: false,
+			isDone: false,
+			totalInputTokens: 0,
+			totalOutputTokens: 0,
+			cumulativeCost: {
+				totalInputTokens: 0,
+				totalOutputTokens: 0,
+				totalInputCost: 0,
+				totalOutputCost: 0,
+				totalCost: 0,
+			},
+		};
+
+		this.historyList = new ExecutionLog({
+			task: this.settings.task,
+		});
+
+		this.onStepStart = options.onStepStart;
+		this.onStepEnd = options.onStepEnd;
+		this.onDone = options.onDone;
+	}
+
+	// ────────────────────────────────────────
+	//  Main run loop
+	// ────────────────────────────────────────
