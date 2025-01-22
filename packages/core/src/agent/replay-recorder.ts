@@ -278,3 +278,5 @@ export class ReplayRecorder {
 
 	clear(): void {
 		this.frames = [];
+	}
+}
