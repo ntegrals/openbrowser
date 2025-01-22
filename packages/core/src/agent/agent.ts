@@ -173,3 +173,28 @@ export class Agent {
 	// ────────────────────────────────────────
 	//  Main run loop
 	// ────────────────────────────────────────
+
+	async run(stepLimit?: number): Promise<RunOutcome> {
+		const effectiveMaxSteps = stepLimit ?? this.settings.stepLimit;
+		this.state.stepLimit = effectiveMaxSteps;
+		this.state.isRunning = true;
+		this.startTime = Date.now();
+
+		// Ensure browser is started
+		if (!this.browser.isConnected) {
+			await this.browser.start();
+		}
+
+		// Build system prompt (may be rebuilt per step if dynamicCommandSchema is on)
+		this.rebuildInstructionBuilder();
+
+		// URL extraction: auto-navigate to first URL found in task text
+		if (this.settings.autoNavigateToUrls) {
+			await this.autoNavigateFromTask();
+		}
+
+		// Execute initial actions before the main loop
+		if (this.settings.preflightCommands.length > 0) {
+			await this.executeInitialActions();
+		}
+
