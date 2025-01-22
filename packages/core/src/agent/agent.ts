@@ -23,3 +23,28 @@ import {
 	type QuickCheckResult,
 	ReasoningSchema,
 	AgentDecisionCompactSchema,
+	AgentDecisionDirectSchema,
+	PlanRevisionSchema,
+	DEFAULT_AGENT_CONFIG,
+	calculateStepCost,
+	supportsDeepReasoning,
+	supportsCoordinateMode,
+	isCompactModel,
+} from './types.js';
+import {
+	AgentError,
+	StepLimitExceededError,
+	AgentStalledError,
+	ModelThrottledError,
+} from '../errors.js';
+import {
+	Timer,
+	sleep,
+	truncateText,
+	withDeadline,
+	extractUrls,
+	escapeRegExp,
+} from '../utils.js';
+import { createLogger } from '../logging.js';
+
+const logger = createLogger('agent');
