@@ -198,3 +198,28 @@ export class Agent {
 			await this.executeInitialActions();
 		}
 
+		const errors: string[] = [];
+		let finalResult: string | undefined;
+		let success = false;
+		let judgement: EvaluationResult | undefined;
+		let simpleJudgement: QuickCheckResult | undefined;
+
+		try {
+			for (let step = 1; step <= effectiveMaxSteps; step++) {
+				if (!this.state.isRunning || this.state.isDone) break;
+
+				// Pause support
+				while (this.state.isPaused) {
+					await sleep(100);
+				}
+
+				this.state.step = step;
+				this.onStepStart?.(step);
+
+				try {
+					// Wrap step execution in optional timeout
+					const stepPromise = this.executeStep(step, effectiveMaxSteps);
+					const result = this.settings.stepDeadlineMs > 0
+						? await withDeadline(
+								stepPromise,
+								this.settings.stepDeadlineMs,
