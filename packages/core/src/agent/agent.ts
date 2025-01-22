@@ -273,3 +273,28 @@ export class Agent {
 						if (loopCheck.stuck && loopCheck.severity >= 2) {
 							logger.info('Agent stalled, triggering replan');
 							await this.updatePlan(step);
+						}
+					}
+
+					// Message compaction: every N steps (LLM-based)
+					if (this.messageManager.shouldCompactWithLlm()) {
+						const compacted = await this.messageManager.compactWithLlm(this.model);
+						if (compacted) {
+							logger.debug(`Messages compacted at step ${step}`);
+						}
+					}
+
+					// Save conversation per step if configured
+					if (this.settings.conversationOutputPath) {
+						await this.saveConversation(step);
+					}
+				} catch (error) {
+					// Rate limit retry with exponential backoff
+					if (error instanceof ModelThrottledError) {
+						const waitMs = error.retryAfterMs ?? Math.min(
+							60_000,
+							this.settings.retryDelay * 1000 * 2 ** this.state.consecutiveFailures,
+						);
+						logger.warn(`Rate limited, waiting ${waitMs}ms before retry`);
+						await sleep(waitMs);
+						this.state.consecutiveFailures++;
