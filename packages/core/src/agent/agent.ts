@@ -123,3 +123,28 @@ export class Agent {
 
 		if (this.settings.replayOutputPath) {
 			this.gifRecorder = new ReplayRecorder({
+				outputPath: this.settings.replayOutputPath,
+			});
+		}
+
+		// Judge setup
+		if (this.settings.enableEvaluation || this.settings.enableSimpleJudge) {
+			const judgeModel = options.judgeModel ?? this.model;
+			this.judge = new ResultEvaluator(judgeModel);
+		}
+
+		// Auto-enable coordinate clicking for supported models
+		if (this.settings.autoEnableCoordinateClicking) {
+			if (supportsCoordinateMode(this.model.modelId)) {
+				this.tools.setCoordinateClicking(true);
+				logger.info(`Coordinate clicking auto-enabled for model ${this.model.modelId}`);
+			}
+		}
+
+		// Initialize state
+		this.state = {
+			step: 0,
+			stepLimit: this.settings.stepLimit,
+			failureCount: 0,
+			consecutiveFailures: 0,
+			isRunning: false,
