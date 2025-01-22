@@ -48,3 +48,28 @@ import {
 import { createLogger } from '../logging.js';
 
 const logger = createLogger('agent');
+
+// ── Agent Options ──
+
+export interface AgentOptions {
+	task: string;
+	model: LanguageModel;
+	browser: Viewport;
+	tools?: CommandExecutor;
+	/** Pre-configured PageAnalyzer instance (defaults to a new PageAnalyzer) */
+	domService?: PageAnalyzer;
+	settings?: Partial<AgentConfig>;
+	/** Separate model for the judge (defaults to main model) */
+	judgeModel?: LanguageModel;
+	/** Separate model for extraction actions (defaults to main model) */
+	extractionModel?: LanguageModel;
+	/** File system access for sandbox operations */
+	fileSystem?: FileAccess;
+	onStepStart?: (step: number) => void;
+	onStepEnd?: (step: number, result: CommandResult[]) => void;
+	onDone?: (result: RunOutcome) => void;
+}
+
+// ── Agent ──
+
+export class Agent {
