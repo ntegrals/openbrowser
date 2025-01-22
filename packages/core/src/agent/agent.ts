@@ -223,3 +223,28 @@ export class Agent {
 						? await withDeadline(
 								stepPromise,
 								this.settings.stepDeadlineMs,
+								`Step ${step} timed out after ${this.settings.stepDeadlineMs}ms`,
+						  )
+						: await stepPromise;
+
+					this.state.consecutiveFailures = 0;
+
+					// Check if done
+					const doneResult = result.find((r) => r.isDone);
+					if (doneResult) {
+						finalResult = doneResult.extractedContent;
+						success = doneResult.success;
+
+						// Simple judge: quick validation before accepting the result
+						if (this.settings.enableSimpleJudge && this.judge && finalResult) {
+							simpleJudgement = await this.judge.simpleEvaluate(
+								this.settings.task,
+								finalResult,
+							);
+
+							if (simpleJudgement.shouldRetry && step < effectiveMaxSteps) {
+								logger.info(
+									`Simple judge suggests retry: ${simpleJudgement.reason}`,
+								);
+								this.messageManager.addCommandResultMessage(
+									`The result was reviewed and found lacking: ${simpleJudgement.reason}. ` +
