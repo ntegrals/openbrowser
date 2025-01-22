@@ -323,3 +323,28 @@ export class Agent {
 					// Add error message to conversation
 					this.messageManager.addCommandResultMessage(
 						`Error: ${truncateText(message, 400)}`,
+						step,
+					);
+
+					// Wait before retry
+					await sleep(this.settings.retryDelay * 1000);
+				}
+			}
+
+			if (!this.state.isDone && this.state.step >= effectiveMaxSteps) {
+				throw new StepLimitExceededError(this.state.step, effectiveMaxSteps);
+			}
+		} catch (error) {
+			if (
+				error instanceof StepLimitExceededError ||
+				error instanceof AgentStalledError ||
+				error instanceof AgentError
+			) {
+				errors.push(error.message);
+			} else {
+				throw error;
+			}
+		} finally {
+			this.state.isRunning = false;
+
+			// Save recording
