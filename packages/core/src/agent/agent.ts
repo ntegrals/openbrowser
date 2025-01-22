@@ -98,3 +98,28 @@ export class Agent {
 		this.model = options.model;
 		this.browser = options.browser;
 		this.settings = { ...DEFAULT_AGENT_CONFIG, ...options.settings, task: options.task };
+		this.extractionModel = options.extractionModel;
+		this.fileSystem = options.fileSystem;
+
+		this.tools = options.tools ?? new CommandExecutor({
+			model: this.extractionModel ?? this.model,
+			allowedUrls: this.settings.allowedUrls,
+			blockedUrls: this.settings.blockedUrls,
+			commandsPerStep: this.settings.commandsPerStep,
+		});
+
+		this.domService = options.domService ?? new PageAnalyzer({
+			capturedAttributes: this.settings.capturedAttributes,
+		});
+
+		this.messageManager = new ConversationManager({
+			contextWindowSize: this.settings.contextWindowSize,
+			includeLastScreenshot: this.settings.enableScreenshots,
+			maskedValues: this.settings.maskedValues,
+			compaction: this.settings.conversationCompaction,
+		});
+
+		this.loopDetector = new StallDetector();
+
+		if (this.settings.replayOutputPath) {
+			this.gifRecorder = new ReplayRecorder({
