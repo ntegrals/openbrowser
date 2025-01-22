@@ -248,3 +248,28 @@ export class Agent {
 								);
 								this.messageManager.addCommandResultMessage(
 									`The result was reviewed and found lacking: ${simpleJudgement.reason}. ` +
+									'Please try a different approach to complete the task.',
+									step,
+								);
+								// Don't mark as done -- continue the loop
+								continue;
+							}
+						}
+
+						this.state.isDone = true;
+						break;
+					}
+
+					this.onStepEnd?.(step, result);
+
+					// Planning: periodically update the plan
+					if (this.settings.enableStrategy && this.shouldUpdatePlan(step)) {
+						await this.updatePlan(step);
+					}
+
+					// Replan on stall: if loop detector shows stuck + planning enabled
+					if (this.settings.restrategizeOnStall && this.settings.enableStrategy) {
+						const loopCheck = this.loopDetector.isStuck();
+						if (loopCheck.stuck && loopCheck.severity >= 2) {
+							logger.info('Agent stalled, triggering replan');
+							await this.updatePlan(step);
