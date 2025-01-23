@@ -848,3 +848,28 @@ export class Agent {
 	//  Failure Recovery
 	// ────────────────────────────────────────
 
+	/**
+	 * On max failures, make one final LLM call to produce a diagnostic
+	 * summary. Returns a description of what went wrong, or undefined
+	 * if the recovery call itself fails.
+	 */
+	private async makeFailureRecoveryCall(
+		errors: string[],
+	): Promise<string | undefined> {
+		try {
+			const errorSummary = errors.slice(-5).join('\n');
+
+			const recoverySchema = z.object({
+				diagnosis: z.string().describe('What went wrong'),
+				suggestion: z.string().describe('What could be tried differently'),
+			});
+
+			const completion = await this.model.invoke({
+				messages: [
+					{
+						role: 'system' as const,
+						content:
+							'You are a diagnostic assistant. Analyze the errors that occurred during ' +
+							'a web browsing automation task and provide a brief diagnosis.',
+					},
+					{
