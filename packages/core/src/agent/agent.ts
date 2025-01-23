@@ -398,3 +398,28 @@ export class Agent {
 		if (this.settings.dynamicCommandSchema) {
 			this.rebuildInstructionBuilder(browserState.url);
 		}
+
+		// Extract DOM
+		const domState = await this.domService.extractState(
+			this.browser.currentPage,
+			this.browser.cdp!,
+		);
+
+		// Take screenshot if using vision
+		let screenshot: string | undefined;
+		if (this.settings.enableScreenshots) {
+			const screenshotResult = await this.browser.screenshot();
+			screenshot = screenshotResult.base64;
+
+			if (this.gifRecorder) {
+				const actionLabel = browserState.url;
+				this.gifRecorder.addFrame(screenshot, step, actionLabel);
+			}
+		}
+
+		// Build state message
+		const stateText = InstructionBuilder.buildStatePrompt(
+			browserState.url,
+			browserState.title,
+			browserState.tabs,
+			domState.tree,
