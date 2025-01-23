@@ -548,3 +548,28 @@ export class Agent {
 			},
 			agentOutput: normalizedOutput as AgentDecision,
 			actionResults: filteredResults,
+			usage: completion.usage,
+			duration: timer.elapsed(),
+			metadata: {
+				stepNumber: step,
+				durationMs: timer.elapsed(),
+				inputTokens: completion.usage.inputTokens,
+				outputTokens: completion.usage.outputTokens,
+				actionCount: actions.length,
+				url: browserState.url,
+				startedAt: Date.now() - timer.elapsed(),
+				completedAt: Date.now(),
+			},
+		};
+
+		this.historyList.addEntry(entry);
+
+		return results;
+	}
+
+	// ────────────────────────────────────────
+	//  LLM Invocation with Zod Recovery
+	// ────────────────────────────────────────
+
+	private async invokeLlmWithRecovery(
+		outputSchema: z.ZodType<unknown>,
