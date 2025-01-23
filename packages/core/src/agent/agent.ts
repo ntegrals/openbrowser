@@ -448,3 +448,28 @@ export class Agent {
 		// Add plan context if planning is enabled
 		if (this.settings.enableStrategy && this.state.currentPlan) {
 			additionalContext += InstructionBuilder.buildPlanPrompt(this.state.currentPlan);
+		}
+
+		// Add messages
+		this.messageManager.addStateMessage(
+			stateText + additionalContext,
+			screenshot,
+			step,
+		);
+
+		// Determine output schema based on mode
+		const outputSchema = this.getOutputSchema();
+
+		// Invoke LLM with optional timeout and Zod recovery
+		const completion = await this.invokeLlmWithRecovery(outputSchema, step);
+
+		// Update token tracking
+		this.state.totalInputTokens += completion.usage.inputTokens;
+		this.state.totalOutputTokens += completion.usage.outputTokens;
+
+		// Cost tracking
+		this.updateCostTracking(completion.usage.inputTokens, completion.usage.outputTokens, step);
+
+		const output = completion.parsed;
+
+		// Normalize output to standard AgentDecision shape
