@@ -723,3 +723,28 @@ export class Agent {
 			this.settings.strategyInterval > 0 ? this.settings.strategyInterval : 5;
 		const lastPlan = this.state.lastPlanStep ?? 0;
 		return step - lastPlan >= interval;
+	}
+
+	private async updatePlan(step: number): Promise<void> {
+		try {
+			const recentHistory = this.historyList.entries
+				.slice(-5)
+				.map(
+					(e) =>
+						`Step ${e.step}: ${e.agentOutput.currentState?.evaluation ?? '(no eval)'}`,
+				)
+				.join('\n');
+
+			const planPrompt =
+				`Task: ${this.settings.task}\n\n` +
+				`Current step: ${step}/${this.state.stepLimit}\n` +
+				(this.state.currentPlan
+					? `Current plan:\n${this.state.currentPlan}\n\n`
+					: '') +
+				`Recent progress:\n${recentHistory}\n\n` +
+				'Based on the current progress, provide an updated plan. ' +
+				'Include what has been accomplished and what remains.';
+
+			// Use ephemeral message so the plan prompt doesn't persist
+			this.messageManager.addEphemeralMessage(planPrompt);
+
