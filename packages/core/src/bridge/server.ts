@@ -383,3 +383,38 @@ export class BridgeServer {
 				id: request.id,
 				error: { code: -32602, message: 'Missing required parameter: uri' },
 			};
+		}
+
+		const validUris = new Set(this.getResourceDefinitions().map((r) => r.uri));
+		if (!validUris.has(uri)) {
+			return {
+				jsonrpc: '2.0',
+				id: request.id,
+				error: { code: -32602, message: `Unknown resource URI: ${uri}` },
+			};
+		}
+
+		// The subscription is tracked; actual notification delivery happens
+		// via emitNotification which writes to all connected transports
+		if (!this.subscriptions.has(uri)) {
+			this.subscriptions.set(uri, new Set());
+		}
+
+		logger.debug(`Client subscribed to resource: ${uri}`);
+		return { jsonrpc: '2.0', id: request.id, result: {} };
+	}
+
+	private handleResourcesUnsubscribe(request: MCPRequest & { id: string | number }): MCPResponse {
+		const uri = request.params?.uri as string;
+		if (!uri) {
+			return {
+				jsonrpc: '2.0',
+				id: request.id,
+				error: { code: -32602, message: 'Missing required parameter: uri' },
+			};
+		}
+
+		this.subscriptions.delete(uri);
+		logger.debug(`Client unsubscribed from resource: ${uri}`);
+		return { jsonrpc: '2.0', id: request.id, result: {} };
+	}
