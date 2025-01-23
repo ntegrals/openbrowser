@@ -473,3 +473,28 @@ export class Agent {
 		const output = completion.parsed;
 
 		// Normalize output to standard AgentDecision shape
+		const normalizedOutput = this.normalizeOutput(output);
+
+		// Add assistant response
+		this.messageManager.addAssistantMessage(
+			JSON.stringify(normalizedOutput.currentState),
+			step,
+		);
+
+		// Execute actions
+		const context: ExecutionContext = {
+			page: this.browser.currentPage,
+			cdpSession: this.browser.cdp!,
+			domService: this.domService,
+			browserSession: this.browser,
+			extractionLlm: this.extractionModel,
+			fileSystem: this.fileSystem,
+			maskedValues: this.settings.maskedValues,
+		};
+
+		const actions = normalizedOutput.actions as Command[];
+		const results = await this.tools.executeActions(actions, context);
+
+		// Record for loop detection (with enhanced fingerprint)
+		this.loopDetector.recordAction(actions);
+		this.loopDetector.recordFingerprint({
