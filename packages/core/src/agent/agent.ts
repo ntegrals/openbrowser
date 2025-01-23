@@ -973,3 +973,28 @@ export class Agent {
 	// ────────────────────────────────────────
 	//  Follow-up Tasks
 	// ────────────────────────────────────────
+
+	/**
+	 * Add a follow-up task to be executed after the current task completes.
+	 * Tasks are stored and can be retrieved via getFollowUpTasks().
+	 */
+	addNewTask(task: string): void {
+		this.followUpTasks.push(task);
+		logger.info(`Follow-up task added: ${truncateText(task, 100)}`);
+	}
+
+	getFollowUpTasks(): string[] {
+		return [...this.followUpTasks];
+	}
+
+	// ────────────────────────────────────────
+	//  Control Methods
+	// ────────────────────────────────────────
+
+	pause(): void {
+		this.state.isPaused = true;
+	}
+
+	resume(): void {
+		this.state.isPaused = false;
+	}
