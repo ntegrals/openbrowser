@@ -243,3 +243,38 @@ export class BridgeServer {
 
 	private async handleToolsCall(request: MCPRequest & { id: string | number }): Promise<MCPResponse> {
 		const params = request.params ?? {};
+		const toolName = params.name as string;
+		const args = (params.arguments ?? {}) as Record<string, unknown>;
+
+		const actionName = this.controller.parseToolName(toolName);
+		if (!actionName) {
+			return {
+				jsonrpc: '2.0',
+				id: request.id,
+				error: { code: -32602, message: `Unknown tool: ${toolName}` },
+			};
+		}
+
+		// Emit progress notification at start
+		this.emitProgress(request.id, 0, `Executing ${toolName}...`);
+
+		const context: ExecutionContext = {
+			page: this.browser.currentPage,
+			cdpSession: this.browser.cdp!,
+			domService: this.domService,
+			browserSession: this.browser,
+		};
+
+		const result = await this.tools.registry.execute(actionName, args, context);
+
+		// Emit progress notification at completion
+		this.emitProgress(request.id, 1, 'Complete');
+
+		// Notify subscribers that browser state may have changed
+		this.notifyResourceChanged('browser://state');
+		this.notifyResourceChanged('browser://dom');
+
+		return {
+			jsonrpc: '2.0',
+			id: request.id,
+			result: {
