@@ -948,3 +948,28 @@ export class Agent {
 		});
 	}
 
+	// ────────────────────────────────────────
+	//  Save Conversation
+	// ────────────────────────────────────────
+
+	private async saveConversation(step: number): Promise<void> {
+		if (!this.settings.conversationOutputPath) return;
+
+		try {
+			const filePath = this.settings.conversationOutputPath.replace(
+				/\{step\}/g,
+				step.toString(),
+			);
+			await this.messageManager.saveToFile(filePath);
+		} catch (error) {
+			logger.debug(
+				`Failed to save conversation at step ${step}: ${
+					error instanceof Error ? error.message : String(error)
+				}`,
+			);
+		}
+	}
+
+	// ────────────────────────────────────────
+	//  Follow-up Tasks
+	// ────────────────────────────────────────
