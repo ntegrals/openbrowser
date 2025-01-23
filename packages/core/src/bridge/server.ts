@@ -33,3 +33,38 @@ export interface MCPResponse {
 	result?: unknown;
 	error?: { code: number; message: string; data?: unknown };
 }
+
+export interface MCPNotification {
+	jsonrpc: '2.0';
+	method: string;
+	params?: Record<string, unknown>;
+}
+
+// ── Resource types ──
+
+export interface MCPResource {
+	uri: string;
+	name: string;
+	description: string;
+	mimeType: string;
+}
+
+export interface MCPResourceContent {
+	uri: string;
+	mimeType: string;
+	text?: string;
+	blob?: string;
+}
+
+// ── Subscription tracking ──
+
+interface ResourceSubscription {
+	uri: string;
+	/** Callback that receives the notification to send to the client */
+	notify: (notification: MCPNotification) => void;
+}
+
+/**
+ * MCP (Model Context Protocol) server that exposes browser actions as tools
+ * and browser state as resources. Supports stdio and SSE transports.
+ *
