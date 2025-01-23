@@ -698,3 +698,28 @@ export class Agent {
 		}
 
 		// No-thinking schema: { actions } only
+		if (!('currentState' in output) && 'actions' in output) {
+			return {
+				currentState: {
+					evaluation: '',
+					memory: '',
+					nextGoal: '',
+				},
+				actions: (output.actions ?? []) as Record<string, unknown>[],
+			};
+		}
+
+		// Standard schema passthrough
+		return output as AgentDecision;
+	}
+
+	// ────────────────────────────────────────
+	//  Planning System
+	// ────────────────────────────────────────
+
+	private shouldUpdatePlan(step: number): boolean {
+		if (!this.settings.enableStrategy) return false;
+		const interval =
+			this.settings.strategyInterval > 0 ? this.settings.strategyInterval : 5;
+		const lastPlan = this.state.lastPlanStep ?? 0;
+		return step - lastPlan >= interval;
