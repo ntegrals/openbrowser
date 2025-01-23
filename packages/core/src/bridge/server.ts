@@ -313,3 +313,38 @@ export class BridgeServer {
 
 		try {
 			const content = await this.readResource(uri);
+			return {
+				jsonrpc: '2.0',
+				id: request.id,
+				result: {
+					contents: [content],
+				},
+			};
+		} catch (error) {
+			return {
+				jsonrpc: '2.0',
+				id: request.id,
+				error: {
+					code: -32602,
+					message: error instanceof Error ? error.message : String(error),
+				},
+			};
+		}
+	}
+
+	private async readResource(uri: string): Promise<MCPResourceContent> {
+		switch (uri) {
+			case 'browser://state': {
+				const state = await this.browser.getState();
+				return {
+					uri,
+					mimeType: 'application/json',
+					text: JSON.stringify(state, null, 2),
+				};
+			}
+			case 'browser://dom': {
+				const domState = await this.domService.extractState(
+					this.browser.currentPage,
+					this.browser.cdp!,
+				);
+				return {
