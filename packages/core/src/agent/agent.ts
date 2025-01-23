@@ -748,3 +748,28 @@ export class Agent {
 			// Use ephemeral message so the plan prompt doesn't persist
 			this.messageManager.addEphemeralMessage(planPrompt);
 
+			const completion = await this.model.invoke({
+				messages: this.messageManager.getMessages(),
+				responseSchema: PlanRevisionSchema,
+				schemaName: 'PlanRevision',
+				temperature: 0.3,
+			});
+
+			this.state.currentPlan = completion.parsed.plan;
+			this.state.lastPlanStep = step;
+
+			logger.info(`Plan updated at step ${step}: ${completion.parsed.reasoning}`);
+		} catch (error) {
+			logger.warn(
+				`Plan update failed at step ${step}: ${
+					error instanceof Error ? error.message : String(error)
+				}`,
+			);
+		}
+	}
+
+	// ────────────────────────────────────────
+	//  System Prompt Management
+	// ────────────────────────────────────────
+
+	/**
