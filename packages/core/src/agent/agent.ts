@@ -798,3 +798,28 @@ export class Agent {
 
 		try {
 			await this.browser.navigate(firstUrl);
+			// Give the page a moment to load
+			await sleep(1000);
+		} catch (error) {
+			logger.warn(
+				`Auto-navigation to ${firstUrl} failed: ${
+					error instanceof Error ? error.message : String(error)
+				}`,
+			);
+		}
+	}
+
+	// ────────────────────────────────────────
+	//  Initial Actions
+	// ────────────────────────────────────────
+
+	private async executeInitialActions(): Promise<void> {
+		logger.info(
+			`Executing ${this.settings.preflightCommands.length} initial action(s)`,
+		);
+
+		const context: ExecutionContext = {
+			page: this.browser.currentPage,
+			cdpSession: this.browser.cdp!,
+			domService: this.domService,
+			browserSession: this.browser,
