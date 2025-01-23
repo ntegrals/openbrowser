@@ -898,3 +898,28 @@ export class Agent {
 
 	// ────────────────────────────────────────
 	//  Cost Tracking
+	// ────────────────────────────────────────
+
+	private updateCostTracking(
+		inputTokens: number,
+		outputTokens: number,
+		step: number,
+	): void {
+		const stepCost = calculateStepCost(
+			inputTokens,
+			outputTokens,
+			this.model.modelId,
+		);
+
+		this.state.cumulativeCost.totalInputTokens += inputTokens;
+		this.state.cumulativeCost.totalOutputTokens += outputTokens;
+
+		if (stepCost) {
+			this.state.cumulativeCost.totalInputCost += stepCost.inputCost;
+			this.state.cumulativeCost.totalOutputCost += stepCost.outputCost;
+			this.state.cumulativeCost.totalCost += stepCost.totalCost;
+
+			logger.debug(
+				`Step ${step} cost: $${stepCost.totalCost.toFixed(4)} ` +
+				`(cumulative: $${this.state.cumulativeCost.totalCost.toFixed(4)})`,
+			);
