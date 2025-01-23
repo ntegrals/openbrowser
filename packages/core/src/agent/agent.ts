@@ -623,3 +623,28 @@ export class Agent {
 					.map((issue) => `- ${issue.path.join('.')}: ${issue.message}`)
 					.join('\n');
 
+				this.messageManager.addCommandResultMessage(
+					'Your previous response had a validation error. ' +
+					'Please fix the following issues and respond again:\n' +
+					`${issues}\n\n` +
+					'Make sure your response matches the expected JSON schema exactly.',
+					step,
+				);
+
+				return this.invokeLlmWithRecovery(outputSchema, step, retryCount + 1);
+			}
+
+			// Re-throw rate limit errors for special handling in the main loop
+			if (error instanceof ModelThrottledError) {
+				throw error;
+			}
+
+			throw error;
+		}
+	}
+
+	// ────────────────────────────────────────
+	//  Output Schema Selection
+	// ────────────────────────────────────────
+
+	private getOutputSchema(): z.ZodType<unknown> {
