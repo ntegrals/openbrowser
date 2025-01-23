@@ -348,3 +348,28 @@ export class Agent {
 			this.state.isRunning = false;
 
 			// Save recording
+			if (this.gifRecorder) {
+				await this.gifRecorder.save();
+			}
+		}
+
+		// Full judge evaluation after completion
+		if (this.settings.enableEvaluation && this.judge && finalResult) {
+			judgement = await this.judge.evaluate(
+				this.settings.task,
+				finalResult,
+				this.historyList.entries,
+				{
+					expectedOutcome: this.settings.expectedOutcome,
+					includeScreenshots: this.settings.enableScreenshots,
+				},
+			);
+		}
+
+		// Finalize history
+		this.historyList.finish();
+
+		const runResult: RunOutcome = {
+			finalResult,
+			success,
+			history: this.historyList,
