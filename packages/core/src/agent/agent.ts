@@ -573,3 +573,28 @@ export class Agent {
 
 	private async invokeLlmWithRecovery(
 		outputSchema: z.ZodType<unknown>,
+		step: number,
+		retryCount = 0,
+	): Promise<{
+		parsed: Record<string, unknown>;
+		usage: { inputTokens: number; outputTokens: number; totalTokens: number };
+	}> {
+		const messages = this.messageManager.getMessages();
+
+		const invokeOptions: InferenceOptions<unknown> = {
+			messages,
+			responseSchema: outputSchema,
+			schemaName: this.getSchemaName(),
+			schemaDescription: 'Agent decision with current state assessment and actions to take',
+		};
+
+		// Extended thinking: pass thinking budget as maxTokens
+		if (
+			this.settings.enableDeepReasoning &&
+			supportsDeepReasoning(this.model.modelId)
+		) {
+			invokeOptions.maxTokens = this.settings.reasoningBudget;
+		}
+
+		try {
+			// Wrap LLM call in optional timeout
