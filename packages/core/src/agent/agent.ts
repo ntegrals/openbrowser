@@ -498,3 +498,28 @@ export class Agent {
 		// Record for loop detection (with enhanced fingerprint)
 		this.loopDetector.recordAction(actions);
 		this.loopDetector.recordFingerprint({
+			url: browserState.url,
+			domHash: hashPageTree(domState.tree),
+			scrollY: domState.scrollPosition.y,
+			elementCount: domState.elementCount,
+			textHash: hashTextContent(domState.tree.slice(0, 2000)),
+		});
+
+		// Filter sensitive data from results
+		const filteredResults = this.filterSensitiveData(results);
+
+		// Add action results to conversation
+		const resultText = filteredResults
+			.map((r, i) => {
+				const actionName = actions[i]?.action ?? 'unknown';
+				const status = r.success ? 'success' : `error: ${r.error}`;
+				const content = r.extractedContent
+					? `\nContent: ${r.extractedContent}`
+					: '';
+				return `${actionName}: ${status}${content}`;
+			})
+			.join('\n');
+
+		if (resultText) {
+			this.messageManager.addCommandResultMessage(resultText, step);
+		}
