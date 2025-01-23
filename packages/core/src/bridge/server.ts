@@ -208,3 +208,38 @@ export class BridgeServer {
 	private handleInitialize(request: MCPRequest & { id: string | number }): MCPResponse {
 		return {
 			jsonrpc: '2.0',
+			id: request.id,
+			result: {
+				protocolVersion: '2024-11-05',
+				capabilities: {
+					tools: {},
+					resources: {
+						subscribe: true,
+						listChanged: true,
+					},
+				},
+				serverInfo: {
+					name: this.name,
+					version: this.version,
+				},
+			},
+		};
+	}
+
+	private handleToolsList(request: MCPRequest & { id: string | number }): MCPResponse {
+		const tools = this.controller.getToolDefinitions();
+		return {
+			jsonrpc: '2.0',
+			id: request.id,
+			result: {
+				tools: tools.map((t) => ({
+					name: t.name,
+					description: t.description,
+					inputSchema: t.inputSchema,
+				})),
+			},
+		};
+	}
+
+	private async handleToolsCall(request: MCPRequest & { id: string | number }): Promise<MCPResponse> {
+		const params = request.params ?? {};
