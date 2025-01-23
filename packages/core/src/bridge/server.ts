@@ -348,3 +348,38 @@ export class BridgeServer {
 					this.browser.cdp!,
 				);
 				return {
+					uri,
+					mimeType: 'text/plain',
+					text: domState.tree,
+				};
+			}
+			case 'browser://screenshot': {
+				const screenshot = await this.browser.screenshot();
+				this.lastScreenshotBase64 = screenshot.base64;
+				return {
+					uri,
+					mimeType: 'image/png',
+					blob: screenshot.base64,
+				};
+			}
+			case 'browser://tabs': {
+				const state = await this.browser.getState();
+				return {
+					uri,
+					mimeType: 'application/json',
+					text: JSON.stringify(state.tabs, null, 2),
+				};
+			}
+			default:
+				throw new Error(`Unknown resource URI: ${uri}`);
+		}
+	}
+
+	private handleResourcesSubscribe(request: MCPRequest & { id: string | number }): MCPResponse {
+		const uri = request.params?.uri as string;
+		if (!uri) {
+			return {
+				jsonrpc: '2.0',
+				id: request.id,
+				error: { code: -32602, message: 'Missing required parameter: uri' },
+			};
