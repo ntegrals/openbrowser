@@ -673,3 +673,28 @@ export class Agent {
 			return 'AgentDecisionCompact';
 		}
 		if (
+			this.settings.enableDeepReasoning &&
+			supportsDeepReasoning(this.model.modelId)
+		) {
+			return 'AgentDecisionDirect';
+		}
+		return 'AgentDecision';
+	}
+
+	/**
+	 * Normalize the various output schema shapes into the standard AgentDecision.
+	 */
+	private normalizeOutput(output: Record<string, unknown>): AgentDecision {
+		// Flash schema: { goal, actions }
+		if ('goal' in output && !('currentState' in output)) {
+			return {
+				currentState: {
+					evaluation: String(output.goal ?? ''),
+					memory: '',
+					nextGoal: String(output.goal ?? ''),
+				},
+				actions: (output.actions ?? []) as Record<string, unknown>[],
+			};
+		}
+
+		// No-thinking schema: { actions } only
