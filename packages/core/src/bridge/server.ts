@@ -103,3 +103,38 @@ export class BridgeServer {
 		this.controller = new BridgeAdapter(options.tools);
 		this.name = options.name ?? 'open-browser';
 		this.version = options.version ?? '0.1.0';
+		this.ssePort = options.ssePort ?? 3100;
+	}
+
+	// ── Static resource definitions ──
+
+	private getResourceDefinitions(): MCPResource[] {
+		return [
+			{
+				uri: 'browser://state',
+				name: 'Browser State',
+				description: 'Current browser state summary including URL, title, and active tab',
+				mimeType: 'application/json',
+			},
+			{
+				uri: 'browser://dom',
+				name: 'DOM Tree',
+				description: 'Current page DOM tree serialized for LLM consumption',
+				mimeType: 'text/plain',
+			},
+			{
+				uri: 'browser://screenshot',
+				name: 'Screenshot',
+				description: 'Last screenshot of the current page as base64 PNG',
+				mimeType: 'image/png',
+			},
+			{
+				uri: 'browser://tabs',
+				name: 'Open Tabs',
+				description: 'List of all open browser tabs with URLs and titles',
+				mimeType: 'application/json',
+			},
+		];
+	}
+
+	// ── Request dispatcher ──
