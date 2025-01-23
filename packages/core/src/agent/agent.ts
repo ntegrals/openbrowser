@@ -773,3 +773,28 @@ export class Agent {
 	// ────────────────────────────────────────
 
 	/**
+	 * (Re)build the system prompt. When `pageUrl` is provided, the registry
+	 * can filter action descriptions to show only domain-relevant actions.
+	 */
+	private rebuildInstructionBuilder(pageUrl?: string): void {
+		const systemPrompt = InstructionBuilder.fromSettings(
+			this.settings,
+			this.tools.registry,
+			pageUrl,
+		);
+		this.messageManager.setInstructionBuilder(systemPrompt.build());
+	}
+
+	// ────────────────────────────────────────
+	//  URL Extraction from Task Text
+	// ────────────────────────────────────────
+
+	private async autoNavigateFromTask(): Promise<void> {
+		const urls = extractUrls(this.settings.task);
+		if (urls.length === 0) return;
+
+		const firstUrl = urls[0];
+		logger.info(`Auto-navigating to URL found in task: ${firstUrl}`);
+
+		try {
+			await this.browser.navigate(firstUrl);
