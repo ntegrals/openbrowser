@@ -598,3 +598,28 @@ export class Agent {
 
 		try {
 			// Wrap LLM call in optional timeout
+			const invokePromise = this.model.invoke(invokeOptions);
+			const completion =
+				this.settings.modelDeadlineMs > 0
+					? await withDeadline(
+							invokePromise,
+							this.settings.modelDeadlineMs,
+							`LLM call timed out after ${this.settings.modelDeadlineMs}ms`,
+					  )
+					: await invokePromise;
+
+			return {
+				parsed: completion.parsed as Record<string, unknown>,
+				usage: completion.usage,
+			};
+		} catch (error) {
+			// Zod validation error recovery: re-prompt with the error details
+			if (error instanceof ZodError && retryCount < 2) {
+				logger.warn(
+					`Zod validation failed (attempt ${retryCount + 1}), re-prompting LLM`,
+				);
+
+				const issues = error.issues
+					.map((issue) => `- ${issue.path.join('.')}: ${issue.message}`)
+					.join('\n');
+
