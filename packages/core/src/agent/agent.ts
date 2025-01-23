@@ -823,3 +823,28 @@ export class Agent {
 			cdpSession: this.browser.cdp!,
 			domService: this.domService,
 			browserSession: this.browser,
+			extractionLlm: this.extractionModel,
+			fileSystem: this.fileSystem,
+			maskedValues: this.settings.maskedValues,
+		};
+
+		for (const action of this.settings.preflightCommands) {
+			try {
+				await this.tools.executeAction(action, context);
+				logger.debug(`Initial action ${action.action} completed`);
+			} catch (error) {
+				logger.warn(
+					`Initial action ${action.action} failed: ${
+						error instanceof Error ? error.message : String(error)
+					}`,
+				);
+			}
+		}
+
+		await sleep(500);
+	}
+
+	// ────────────────────────────────────────
+	//  Failure Recovery
+	// ────────────────────────────────────────
+
