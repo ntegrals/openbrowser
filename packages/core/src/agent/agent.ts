@@ -423,3 +423,28 @@ export class Agent {
 			browserState.title,
 			browserState.tabs,
 			domState.tree,
+			step,
+			stepLimit,
+			domState.pixelsAbove,
+			domState.pixelsBelow,
+		);
+
+		// Check for loop
+		const loopCheck = this.loopDetector.isStuck();
+		let additionalContext = '';
+		if (loopCheck.stuck) {
+			additionalContext = InstructionBuilder.buildLoopNudge(
+				this.loopDetector.getLoopNudgeMessage(),
+			);
+
+			// Severe loop: throw stuck error
+			if (loopCheck.severity >= 3) {
+				throw new AgentStalledError(
+					`Agent stuck: ${loopCheck.reason} (severity ${loopCheck.severity})`,
+				);
+			}
+		}
+
+		// Add plan context if planning is enabled
+		if (this.settings.enableStrategy && this.state.currentPlan) {
+			additionalContext += InstructionBuilder.buildPlanPrompt(this.state.currentPlan);
