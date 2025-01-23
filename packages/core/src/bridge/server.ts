@@ -173,3 +173,38 @@ export class BridgeServer {
 						jsonrpc: '2.0',
 						id: request.id,
 						error: { code: -32601, message: `Method not found: ${request.method}` },
+					};
+			}
+		} catch (error) {
+			return {
+				jsonrpc: '2.0',
+				id: request.id,
+				error: {
+					code: -32603,
+					message: error instanceof Error ? error.message : String(error),
+				},
+			};
+		}
+	}
+
+	/** Handle incoming JSON-RPC notifications (no response expected). */
+	private async handleNotification(message: MCPRequest): Promise<void> {
+		switch (message.method) {
+			case 'notifications/initialized':
+				logger.debug('Client confirmed initialization');
+				break;
+			case 'notifications/cancelled': {
+				const requestId = message.params?.requestId;
+				logger.debug(`Client cancelled request ${requestId}`);
+				break;
+			}
+			default:
+				logger.debug(`Received unknown notification: ${message.method}`);
+		}
+	}
+
+	// ── Protocol handlers ──
+
+	private handleInitialize(request: MCPRequest & { id: string | number }): MCPResponse {
+		return {
+			jsonrpc: '2.0',
