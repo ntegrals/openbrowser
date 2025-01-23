@@ -523,3 +523,28 @@ export class Agent {
 		if (resultText) {
 			this.messageManager.addCommandResultMessage(resultText, step);
 		}
+
+		// Wait between actions
+		if (this.settings.commandDelayMs > 0) {
+			await sleep(this.settings.commandDelayMs * 1000);
+		}
+
+		// Record history entry
+		const entry: StepRecord = {
+			step,
+			timestamp: Date.now(),
+			browserState: {
+				url: browserState.url,
+				title: browserState.title,
+				tabs: browserState.tabs,
+				interactedElements: actions
+					.filter((a): a is Command & { index: number } => 'index' in a)
+					.map((a) => ({
+						index: a.index,
+						description: '',
+						action: a.action,
+					})),
+				screenshot,
+			},
+			agentOutput: normalizedOutput as AgentDecision,
+			actionResults: filteredResults,
