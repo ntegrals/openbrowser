@@ -373,3 +373,28 @@ export class Agent {
 			finalResult,
 			success,
 			history: this.historyList,
+			errors,
+			judgement,
+			simpleJudgement,
+			totalCost: { ...this.state.cumulativeCost },
+		};
+
+		this.onDone?.(runResult);
+		return runResult;
+	}
+
+	// ────────────────────────────────────────
+	//  Step Execution
+	// ────────────────────────────────────────
+
+	private async executeStep(step: number, stepLimit: number): Promise<CommandResult[]> {
+		const timer = new Timer();
+
+		// Get browser state
+		const browserState = await this.browser.getState();
+		this.state.currentUrl = browserState.url;
+
+		// Dynamic action schema: rebuild system prompt per step based on current URL
+		if (this.settings.dynamicCommandSchema) {
+			this.rebuildInstructionBuilder(browserState.url);
+		}
