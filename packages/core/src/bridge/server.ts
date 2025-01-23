@@ -278,3 +278,38 @@ export class BridgeServer {
 			jsonrpc: '2.0',
 			id: request.id,
 			result: {
+				content: [
+					{
+						type: 'text',
+						text: result.extractedContent ?? (result.success ? 'Success' : `Error: ${result.error}`),
+					},
+				],
+				isError: !result.success,
+			},
+		};
+	}
+
+	// ── Resource handlers ──
+
+	private handleResourcesList(request: MCPRequest & { id: string | number }): MCPResponse {
+		return {
+			jsonrpc: '2.0',
+			id: request.id,
+			result: {
+				resources: this.getResourceDefinitions(),
+			},
+		};
+	}
+
+	private async handleResourcesRead(request: MCPRequest & { id: string | number }): Promise<MCPResponse> {
+		const uri = request.params?.uri as string;
+		if (!uri) {
+			return {
+				jsonrpc: '2.0',
+				id: request.id,
+				error: { code: -32602, message: 'Missing required parameter: uri' },
+			};
+		}
+
+		try {
+			const content = await this.readResource(uri);
