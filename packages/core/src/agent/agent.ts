@@ -998,3 +998,20 @@ export class Agent {
 	resume(): void {
 		this.state.isPaused = false;
 	}
+
+	stop(): void {
+		this.state.isRunning = false;
+	}
+
+	getState(): AgentState {
+		return { ...this.state };
+	}
+
+	getHistory(): ExecutionLog {
+		return this.historyList;
+	}
+
+	getAccumulatedCost(): AccumulatedCost {
+		return { ...this.state.cumulativeCost };
+	}
+}
