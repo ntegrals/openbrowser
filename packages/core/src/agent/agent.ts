@@ -873,3 +873,28 @@ export class Agent {
 							'a web browsing automation task and provide a brief diagnosis.',
 					},
 					{
+						role: 'user' as const,
+						content:
+							`Task: ${this.settings.task}\n\n` +
+							`Errors encountered:\n${errorSummary}\n\n` +
+							'Provide a brief diagnosis of what went wrong and what could be tried differently.',
+					},
+				],
+				responseSchema: recoverySchema,
+				schemaName: 'FailureRecovery',
+				temperature: 0,
+			});
+
+			const result =
+				`Task failed. Diagnosis: ${completion.parsed.diagnosis}. ` +
+				`Suggestion: ${completion.parsed.suggestion}`;
+			logger.info(`Failure recovery: ${result}`);
+			return result;
+		} catch {
+			logger.debug('Failure recovery call itself failed');
+			return undefined;
+		}
+	}
+
+	// ────────────────────────────────────────
+	//  Cost Tracking
