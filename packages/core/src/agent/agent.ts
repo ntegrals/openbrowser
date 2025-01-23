@@ -648,3 +648,28 @@ export class Agent {
 	// ────────────────────────────────────────
 
 	private getOutputSchema(): z.ZodType<unknown> {
+		// Flash mode: simpler schema for cheaper / faster models
+		if (this.settings.compactMode || isCompactModel(this.model.modelId)) {
+			return AgentDecisionCompactSchema as z.ZodType<unknown>;
+		}
+
+		// Extended thinking: model reasons internally, skip brain schema
+		if (
+			this.settings.enableDeepReasoning &&
+			supportsDeepReasoning(this.model.modelId)
+		) {
+			return AgentDecisionDirectSchema as z.ZodType<unknown>;
+		}
+
+		// Default full schema with brain + typed action union
+		return z.object({
+			currentState: ReasoningSchema,
+			actions: z.array(CommandSchema),
+		}) as z.ZodType<unknown>;
+	}
+
+	private getSchemaName(): string {
+		if (this.settings.compactMode || isCompactModel(this.model.modelId)) {
+			return 'AgentDecisionCompact';
+		}
+		if (
