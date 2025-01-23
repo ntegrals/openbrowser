@@ -1,0 +1,82 @@
+export { Agent, type AgentOptions } from '../agent/agent.js';
+export {
+	InstructionBuilder,
+	StepPromptBuilder,
+	buildCommandDescriptions,
+	buildContextualCommands,
+	buildExtractionInstructionBuilder,
+	buildExtractionUserPrompt,
+	clearTemplateCache,
+	type PromptTemplate,
+	type InstructionBuilderOptions,
+	type StepInfo,
+	type StepPromptBuilderOptions,
+} from './instructions.js';
+export { ConversationManager } from './conversation/service.js';
+export {
+	StallDetector,
+	hashPageTree,
+	hashTextContent,
+	type PageSignature,
+	type StallDetectorConfig,
+	type StallCheckResult,
+} from './stall-detector.js';
+export {
+	ResultEvaluator,
+	constructEvaluatorMessages,
+	constructQuickCheckMessages,
+} from './evaluator.js';
+export { ReplayRecorder, type ReplayRecorderOptions } from './replay-recorder.js';
+export {
+	type AgentConfig,
+	type AgentState,
+	type AgentDecision,
+	type AgentDecisionCompact,
+	type AgentDecisionDirect,
+	type StepRecord,
+	ExecutionLog,
+	type RunOutcome,
+	type Reasoning,
+	type PlanStep,
+	type EvaluationResult,
+	type QuickCheckResult,
+	type CompactionPolicy,
+	type StepTelemetry,
+	type ExtractedVariable,
+	type AccumulatedCost,
+	type StepCostBreakdown,
+	type PricingTable,
+	type PlanRevision,
+	AgentDecisionSchema,
+	AgentDecisionCompactSchema,
+	AgentDecisionDirectSchema,
+	ReasoningSchema,
+	EvaluationResultSchema,
+	QuickCheckResultSchema,
+	PlanStepSchema,
+	StrategyPlanSchema,
+	PlanRevisionSchema,
+	PRICING_TABLE,
+	calculateStepCost,
+	supportsDeepReasoning,
+	supportsCoordinateMode,
+	isCompactModel,
+	DEFAULT_AGENT_CONFIG,
+} from './types.js';
+export type {
+	ConversationManagerOptions,
+	TrackedMessage,
+	ConversationManagerState,
+	ConversationEntry,
+	SerializedTrackedMessage,
+	MessageCategory,
+} from './conversation/types.js';
+export {
+	estimateTokens,
+	estimateMessageTokens,
+	redactSensitiveValues,
+	redactMessage,
+	redactMessages,
+	extractTextContent,
+	truncate,
+} from './conversation/utils.js';
