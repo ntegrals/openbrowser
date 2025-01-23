@@ -68,3 +68,38 @@ interface ResourceSubscription {
  * MCP (Model Context Protocol) server that exposes browser actions as tools
  * and browser state as resources. Supports stdio and SSE transports.
  *
+ * Implements:
+ * - initialize / tools/list / tools/call (existing)
+ * - resources/list / resources/read (browser state as resources)
+ * - resources/subscribe / resources/unsubscribe (live updates)
+ * - notifications/progress (step progress notifications)
+ * - SSE transport via HTTP
+ */
+export class BridgeServer {
+	private controller: BridgeAdapter;
+	private browser: Viewport;
+	private domService: PageAnalyzer;
+	private tools: CommandExecutor;
+	private name: string;
+	private version: string;
+	private ssePort: number;
+
+	/** Active SSE connections that receive notifications */
+	private sseClients = new Set<ServerResponse>();
+
+	/** Resource subscriptions keyed by URI */
+	private subscriptions = new Map<string, Set<ResourceSubscription>>();
+
+	/** Last screenshot base64 cache for resource reads */
+	private lastScreenshotBase64: string | null = null;
+
+	/** HTTP server reference for SSE transport */
+	private httpServer: import('node:http').Server | null = null;
+
+	constructor(options: BridgeServerOptions) {
+		this.browser = options.browser;
+		this.domService = options.domService;
+		this.tools = options.tools;
+		this.controller = new BridgeAdapter(options.tools);
+		this.name = options.name ?? 'open-browser';
+		this.version = options.version ?? '0.1.0';
