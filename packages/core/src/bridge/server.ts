@@ -138,3 +138,38 @@ export class BridgeServer {
 	}
 
 	// ── Request dispatcher ──
+
+	async handleMessage(message: MCPRequest): Promise<MCPResponse | null> {
+		// JSON-RPC notifications have no `id` field -- they are fire-and-forget
+		if (message.id === undefined || message.id === null) {
+			await this.handleNotification(message);
+			return null;
+		}
+
+		return this.handleRequest(message as MCPRequest & { id: string | number });
+	}
+
+	async handleRequest(request: MCPRequest & { id: string | number }): Promise<MCPResponse> {
+		try {
+			switch (request.method) {
+				case 'initialize':
+					return this.handleInitialize(request);
+				case 'tools/list':
+					return this.handleToolsList(request);
+				case 'tools/call':
+					return this.handleToolsCall(request);
+				case 'resources/list':
+					return this.handleResourcesList(request);
+				case 'resources/read':
+					return this.handleResourcesRead(request);
+				case 'resources/subscribe':
+					return this.handleResourcesSubscribe(request);
+				case 'resources/unsubscribe':
+					return this.handleResourcesUnsubscribe(request);
+				case 'ping':
+					return { jsonrpc: '2.0', id: request.id, result: {} };
+				default:
+					return {
+						jsonrpc: '2.0',
+						id: request.id,
+						error: { code: -32601, message: `Method not found: ${request.method}` },
