@@ -923,3 +923,28 @@ export class Agent {
 				`Step ${step} cost: $${stepCost.totalCost.toFixed(4)} ` +
 				`(cumulative: $${this.state.cumulativeCost.totalCost.toFixed(4)})`,
 			);
+		}
+	}
+
+	// ────────────────────────────────────────
+	//  Sensitive Data Filtering
+	// ────────────────────────────────────────
+
+	private filterSensitiveData(results: CommandResult[]): CommandResult[] {
+		if (!this.settings.maskedValues) return results;
+
+		return results.map((r) => {
+			if (!r.extractedContent) return r;
+
+			let content = r.extractedContent;
+			for (const [key, value] of Object.entries(this.settings.maskedValues!)) {
+				content = content.replace(
+					new RegExp(escapeRegExp(value), 'g'),
+					`<${key}>`,
+				);
+			}
+
+			return { ...r, extractedContent: content };
+		});
+	}
+
