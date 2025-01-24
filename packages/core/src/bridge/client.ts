@@ -438,3 +438,43 @@ export class BridgeClient extends EventEmitter<BridgeClientEvents> {
 			await Promise.race([
 				this.waitForPendingDrain(),
 				new Promise<void>((resolve) => setTimeout(resolve, drainTimeoutMs)),
+			]);
+		}
+
+		// Reject any still-pending requests
+		for (const [id, pending] of this.pendingRequests) {
+			clearTimeout(pending.timer);
+			pending.reject(new Error('MCP client shutting down'));
+		}
+		this.pendingRequests.clear();
+
+		// Kill the process
+		if (this.process) {
+			this.process.removeAllListeners();
+			this.process.kill();
+			this.process = null;
+		}
+
+		this.buffer = '';
+		this.setState('disconnected');
+		logger.info('MCP client disconnected');
+	}
+
+	private waitForPendingDrain(): Promise<void> {
+		return new Promise<void>((resolve) => {
+			const check = () => {
+				if (this.pendingRequests.size === 0) {
+					resolve();
+				} else {
+					setTimeout(check, 50);
+				}
+			};
+			check();
+		});
+	}
+
+	/** Get the number of in-flight requests. */
+	get pendingRequestCount(): number {
+		return this.pendingRequests.size;
+	}
+}
