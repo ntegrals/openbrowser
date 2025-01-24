@@ -238,3 +238,43 @@ export class BridgeClient extends EventEmitter<BridgeClientEvents> {
 
 	async listTools(): Promise<MCPTool[]> {
 		if (this.cachedTools) {
+			return this.cachedTools;
+		}
+
+		const result = (await this.send('tools/list', {})) as { tools: MCPTool[] };
+		this.cachedTools = result.tools ?? [];
+		this.toolsCacheTimestamp = Date.now();
+
+		logger.debug(`Cached ${this.cachedTools.length} tools from MCP server`);
+		return this.cachedTools;
+	}
+
+	/** Get cached tools synchronously. Returns empty array if cache is cold. */
+	getTools(): MCPTool[] {
+		return this.cachedTools ?? [];
+	}
+
+	/** Force-invalidate the tool cache. Next listTools() call will re-fetch. */
+	invalidateToolCache(): void {
+		this.cachedTools = null;
+		this.toolsCacheTimestamp = 0;
+	}
+
+	/** Returns when the tool cache was last populated (epoch ms), or 0 if empty. */
+	get toolsCacheAge(): number {
+		return this.toolsCacheTimestamp > 0 ? Date.now() - this.toolsCacheTimestamp : 0;
+	}
+
+	// ── Tool invocation ──
+
+	toCustomActions(): CustomCommandSpec[] {
+		const { z } = require('zod');
+		const tools = this.getTools();
+
+		return tools.map((tool) => ({
+			name: `mcp_${tool.name}`,
+			description: `[MCP] ${tool.description}`,
+			schema: z.object({}),
+			handler: async (params: Record<string, unknown>) => {
+				const result = await this.callTool(tool.name, params);
+				return {
