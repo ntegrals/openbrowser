@@ -418,3 +418,38 @@ export class BridgeServer {
 		logger.debug(`Client unsubscribed from resource: ${uri}`);
 		return { jsonrpc: '2.0', id: request.id, result: {} };
 	}
+
+	// ── Notification emission ──
+
+	/** Emit a progress notification for an in-flight request. */
+	emitProgress(requestId: string | number, progress: number, message?: string): void {
+		const notification: MCPNotification = {
+			jsonrpc: '2.0',
+			method: 'notifications/progress',
+			params: {
+				progressToken: requestId,
+				progress,
+				total: 1,
+				...(message ? { message } : {}),
+			},
+		};
+		this.broadcastNotification(notification);
+	}
+
+	/** Notify subscribers that a resource has changed. */
+	private notifyResourceChanged(uri: string): void {
+		if (!this.subscriptions.has(uri)) return;
+
+		const notification: MCPNotification = {
+			jsonrpc: '2.0',
+			method: 'notifications/resources/updated',
+			params: { uri },
+		};
+		this.broadcastNotification(notification);
+	}
+
+	/** Send a notification to all connected transports (SSE clients + stdio). */
+	private broadcastNotification(notification: MCPNotification): void {
+		const serialized = JSON.stringify(notification);
+
+		// SSE clients
