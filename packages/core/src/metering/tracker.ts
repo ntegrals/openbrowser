@@ -268,3 +268,48 @@ export class CompositeUsageMeter {
 			const pct = ((budget.fractionUsed ?? 0) * 100).toFixed(1);
 			lines.push(
 				'',
+				`Budget: $${budget.currentCostUsd.toFixed(4)} / $${budget.maxCostUsd.toFixed(4)} (${pct}%)`,
+			);
+		}
+
+		return lines.join('\n');
+	}
+
+	/** Reset all tracking data. */
+	reset(): void {
+		for (const tracker of this.trackers.values()) {
+			tracker.reset();
+		}
+		this.trackers.clear();
+		this.actionTrace.length = 0;
+		this.crossedThresholds.clear();
+		this.startTime = undefined;
+	}
+
+	// ── Private helpers ──
+
+	private getOrCreateTracker(modelId: string): UsageMeter {
+		let tracker = this.trackers.get(modelId);
+		if (!tracker) {
+			tracker = new UsageMeter(modelId, this.pricing);
+			this.trackers.set(modelId, tracker);
+		}
+		return tracker;
+	}
+
+	private checkBudget(): void {
+		if (!this.budgetConfig) return;
+
+		const currentCost = this.getTotalCost();
+		const { maxCostUsd, thresholds, onThresholdCrossed, onBudgetExhausted } = this.budgetConfig;
+
+		// Check each threshold
+		for (const threshold of thresholds ?? []) {
+			if (this.crossedThresholds.has(threshold)) continue;
+
+			const thresholdCost = maxCostUsd * threshold;
+			if (currentCost >= thresholdCost) {
+				this.crossedThresholds.add(threshold);
+				onThresholdCrossed(currentCost, threshold, maxCostUsd);
+			}
+		}
