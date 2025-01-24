@@ -198,3 +198,45 @@ export class FileAccess {
 				extension: path.extname(entry.name).toLowerCase(),
 			});
 		}
+
+		this.state.operationCount++;
+		return result;
+	}
+
+	async delete(relativePath: string): Promise<void> {
+		if (this.readOnly) {
+			throw new Error('File system is read-only');
+		}
+
+		const fullPath = this.resolvePath(relativePath);
+
+		if (!fs.existsSync(fullPath)) {
+			throw new Error(`File not found: ${relativePath}`);
+		}
+
+		const stat = fs.statSync(fullPath);
+		fs.unlinkSync(fullPath);
+
+		this.state.files.delete(relativePath);
+		this.state.totalSize -= stat.size;
+		this.state.operationCount++;
+		logger.debug(`Deleted file: ${relativePath}`);
+	}
+
+	async exists(relativePath: string): Promise<boolean> {
+		const fullPath = this.resolvePath(relativePath);
+		return fs.existsSync(fullPath);
+	}
+
+	getState(): FileAccessState {
+		return {
+			files: new Map(this.state.files),
+			totalSize: this.state.totalSize,
+			operationCount: this.state.operationCount,
+		};
+	}
+
+	getSandboxDir(): string {
+		return this.sandboxDir;
+	}
+}
