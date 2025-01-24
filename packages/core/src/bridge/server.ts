@@ -488,3 +488,38 @@ export class BridgeServer {
 					if (response) {
 						stdout.write(`${JSON.stringify(response)}\n`);
 					}
+				} catch {
+					const errorResponse: MCPResponse = {
+						jsonrpc: '2.0',
+						id: 0,
+						error: { code: -32700, message: 'Parse error' },
+					};
+					stdout.write(`${JSON.stringify(errorResponse)}\n`);
+				}
+			}
+		});
+
+		stdin.on('end', () => {
+			process.exit(0);
+		});
+	}
+
+	// ── SSE transport ──
+
+	/**
+	 * Start an HTTP server that exposes the MCP protocol over Server-Sent Events.
+	 *
+	 * Endpoints:
+	 * - GET  /sse       -- SSE event stream for notifications and responses
+	 * - POST /message   -- Send JSON-RPC requests
+	 * - GET  /health    -- Health check
+	 */
+	async startSSE(port?: number): Promise<void> {
+		const http = await import('node:http');
+		const listenPort = port ?? this.ssePort;
+
+		this.httpServer = http.createServer(async (req: IncomingMessage, res: ServerResponse) => {
+			// CORS headers for browser clients
+			res.setHeader('Access-Control-Allow-Origin', '*');
+			res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+			res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
