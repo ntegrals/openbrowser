@@ -133,3 +133,48 @@ export class CompositeUsageMeter {
 	record(opts: {
 		modelId: string;
 		role: ModelRole;
+		inputTokens: number;
+		outputTokens: number;
+		stepIndex?: number;
+		actionName?: string;
+	}): number {
+		if (!this.startTime) this.start();
+
+		// Get or create per-model tracker
+		const tracker = this.getOrCreateTracker(opts.modelId);
+		tracker.record(opts.inputTokens, opts.outputTokens);
+
+		// Compute cost for this call
+		const cost = computeCost(opts.inputTokens, opts.outputTokens, opts.modelId, this.pricing);
+
+		// Append to action trace
+		const entry: ActionUsageRecord = {
+			stepIndex: opts.stepIndex ?? this.actionTrace.length,
+			actionName: opts.actionName ?? 'unknown',
+			role: opts.role,
+			modelId: opts.modelId,
+			usage: {
+				inputTokens: opts.inputTokens,
+				outputTokens: opts.outputTokens,
+				totalTokens: opts.inputTokens + opts.outputTokens,
+			},
+			cost,
+			timestamp: Date.now(),
+		};
+		this.actionTrace.push(entry);
+
+		// Check budget thresholds
+		this.checkBudget();
+
+		return cost;
+	}
+
+	/** Get the per-model UsageMeter (creates one if missing). */
+	getTracker(modelId: string): UsageMeter {
+		return this.getOrCreateTracker(modelId);
+	}
+
+	/** Total estimated cost across all models. */
+	getTotalCost(): number {
+		let total = 0;
+		for (const tracker of this.trackers.values()) {
