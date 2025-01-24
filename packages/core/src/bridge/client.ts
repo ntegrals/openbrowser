@@ -358,3 +358,43 @@ export class BridgeClient extends EventEmitter<BridgeClientEvents> {
 	}
 
 	/** Send a JSON-RPC notification (no id, no response expected). */
+	private sendNotification(method: string, params?: Record<string, unknown>): void {
+		if (!this.process?.stdin?.writable) return;
+
+		const notification = JSON.stringify({
+			jsonrpc: '2.0',
+			method,
+			...(params ? { params } : {}),
+		});
+
+		this.process.stdin.write(`${notification}\n`);
+	}
+
+	private processBuffer(): void {
+		const lines = this.buffer.split('\n');
+		this.buffer = lines.pop() ?? '';
+
+		for (const line of lines) {
+			if (!line.trim()) continue;
+			try {
+				const message = JSON.parse(line);
+
+				// JSON-RPC notification from server (no id field)
+				if (message.id === undefined || message.id === null) {
+					this.handleServerNotification(message);
+					continue;
+				}
+
+				// Response to a pending request
+				const pending = this.pendingRequests.get(message.id);
+				if (pending) {
+					clearTimeout(pending.timer);
+					this.pendingRequests.delete(message.id);
+					if (message.error) {
+						pending.reject(new Error(message.error.message));
+					} else {
+						pending.resolve(message.result);
+					}
+				}
+			} catch {
+				// Ignore malformed responses
