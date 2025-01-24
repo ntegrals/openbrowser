@@ -398,3 +398,43 @@ export class BridgeClient extends EventEmitter<BridgeClientEvents> {
 				}
 			} catch {
 				// Ignore malformed responses
+			}
+		}
+	}
+
+	private handleServerNotification(message: {
+		method: string;
+		params?: Record<string, unknown>;
+	}): void {
+		logger.debug(`Server notification: ${message.method}`);
+		this.emit('notification', message.method, message.params);
+
+		// If server signals tool list changed, invalidate cache
+		if (message.method === 'notifications/tools/list_changed') {
+			this.invalidateToolCache();
+		}
+	}
+
+	// ── Graceful shutdown ──
+
+	/**
+	 * Disconnect gracefully: wait for pending requests to drain (up to a timeout),
+	 * then kill the server process.
+	 */
+	async disconnect(drainTimeoutMs = 5000): Promise<void> {
+		this.stopHealthChecks();
+
+		if (this.reconnectTimer) {
+			clearTimeout(this.reconnectTimer);
+			this.reconnectTimer = null;
+		}
+
+		// Wait for pending requests to drain
+		if (this.pendingRequests.size > 0) {
+			logger.debug(
+				`Waiting for ${this.pendingRequests.size} pending request(s) to drain...`,
+			);
+
+			await Promise.race([
+				this.waitForPendingDrain(),
+				new Promise<void>((resolve) => setTimeout(resolve, drainTimeoutMs)),
