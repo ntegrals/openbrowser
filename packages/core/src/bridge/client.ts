@@ -38,3 +38,43 @@ interface PendingRequest {
 
 export interface BridgeClientEvents {
 	stateChange: [state: MCPConnectionState, previousState: MCPConnectionState];
+	error: [error: Error];
+	notification: [method: string, params: Record<string, unknown> | undefined];
+}
+
+/**
+ * MCP client that connects to external MCP servers and converts their tools
+ * into custom browser actions.
+ *
+ * Features:
+ * - Reconnection with exponential backoff
+ * - Per-call request timeout
+ * - Concurrent request multiplexing (multiple in-flight requests)
+ * - Tool list caching with invalidation
+ * - Health check / ping
+ * - Event emitter for connection state changes
+ * - Graceful shutdown with pending request drain
+ */
+export class BridgeClient extends EventEmitter<BridgeClientEvents> {
+	private process: ChildProcess | null = null;
+	private requestId = 0;
+	private pendingRequests = new Map<string | number, PendingRequest>();
+	private options: BridgeClientOptions;
+	private buffer = '';
+
+	// ── Connection state ──
+	private _state: MCPConnectionState = 'disconnected';
+	private reconnectAttempts = 0;
+	private reconnectTimer: ReturnType<typeof setTimeout> | null = null;
+
+	// ── Tool caching ──
+	private cachedTools: MCPTool[] | null = null;
+	private toolsCacheTimestamp = 0;
+
+	// ── Health check ──
+	private healthCheckTimer: ReturnType<typeof setInterval> | null = null;
+
+	// ── Config ──
+	private readonly requestTimeoutMs: number;
+	private readonly maxReconnectAttempts: number;
+	private readonly reconnectDelayMs: number;
