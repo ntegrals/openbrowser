@@ -313,3 +313,48 @@ export class CompositeUsageMeter {
 				onThresholdCrossed(currentCost, threshold, maxCostUsd);
 			}
 		}
+
+		// Check full exhaustion
+		if (currentCost >= maxCostUsd) {
+			if (onBudgetExhausted) {
+				const allow = onBudgetExhausted(currentCost, maxCostUsd);
+				if (!allow) {
+					throw new BudgetDepletedError(currentCost, maxCostUsd);
+				}
+			}
+		}
+	}
+
+	private buildModelBreakdown(): ModelUsageBreakdown[] {
+		const map = new Map<string, ModelUsageBreakdown>();
+
+		for (const entry of this.actionTrace) {
+			let mb = map.get(entry.modelId);
+			if (!mb) {
+				mb = {
+					modelId: entry.modelId,
+					inputTokens: 0,
+					outputTokens: 0,
+					totalTokens: 0,
+					estimatedCost: 0,
+					callCount: 0,
+				};
+				map.set(entry.modelId, mb);
+			}
+			mb.inputTokens += entry.usage.inputTokens;
+			mb.outputTokens += entry.usage.outputTokens;
+			mb.totalTokens += entry.usage.totalTokens;
+			mb.estimatedCost += entry.cost;
+			mb.callCount++;
+		}
+
+		return [...map.values()].sort((a, b) => b.estimatedCost - a.estimatedCost);
+	}
+
+	private buildRoleBreakdown(): RoleUsageBreakdown[] {
+		const map = new Map<ModelRole, RoleUsageBreakdown>();
+
+		for (const entry of this.actionTrace) {
+			let rb = map.get(entry.role);
+			if (!rb) {
+				rb = {
