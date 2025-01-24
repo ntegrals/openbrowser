@@ -178,3 +178,48 @@ export class CompositeUsageMeter {
 	getTotalCost(): number {
 		let total = 0;
 		for (const tracker of this.trackers.values()) {
+			total += tracker.getEstimatedCost();
+		}
+		return total;
+	}
+
+	/** Formatted total cost string. */
+	getTotalCostFormatted(): string {
+		return `$${this.getTotalCost().toFixed(4)}`;
+	}
+
+	/** Aggregate token usage across all models. */
+	getTotalUsage(): UsageRecord {
+		let inputTokens = 0;
+		let outputTokens = 0;
+		for (const tracker of this.trackers.values()) {
+			const u = tracker.getTotalUsage();
+			inputTokens += u.inputTokens;
+			outputTokens += u.outputTokens;
+		}
+		return { inputTokens, outputTokens, totalTokens: inputTokens + outputTokens };
+	}
+
+	/** Get the current budget status. */
+	getBudgetState(): BudgetState {
+		const currentCost = this.getTotalCost();
+		const maxCost = this.budgetConfig?.maxCostUsd;
+
+		return {
+			currentCostUsd: currentCost,
+			maxCostUsd: maxCost,
+			fractionUsed: maxCost != null ? currentCost / maxCost : undefined,
+			isExhausted: maxCost != null ? currentCost >= maxCost : false,
+			crossedThresholds: [...this.crossedThresholds].sort((a, b) => a - b),
+		};
+	}
+
+	/** Build a full MeteringSummary with per-model and per-role breakdowns. */
+	getSummary(): MeteringSummary {
+		const totalUsage = this.getTotalUsage();
+
+		return {
+			totalInputTokens: totalUsage.inputTokens,
+			totalOutputTokens: totalUsage.outputTokens,
+			totalTokens: totalUsage.totalTokens,
+			totalEstimatedCost: this.getTotalCost(),
