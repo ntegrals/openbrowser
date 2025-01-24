@@ -88,3 +88,48 @@ export class UsageMeter {
 /**
  * Tracks token usage across multiple LLM roles (main, extraction, judge, compaction)
  * with per-action cost breakdown, budget alerts, and comprehensive summaries.
+ */
+export class CompositeUsageMeter {
+	private readonly pricing: PricingTable;
+	private readonly trackers = new Map<string, UsageMeter>();
+	private readonly actionTrace: ActionUsageRecord[] = [];
+	private budgetConfig: BudgetPolicy | undefined;
+	private crossedThresholds = new Set<number>();
+	private startTime: number | undefined;
+
+	constructor(customPricing?: PricingTable) {
+		this.pricing = customPricing ?? DEFAULT_COST_RATES;
+	}
+
+	/** Start the session timer. Called automatically on first record if not called explicitly. */
+	start(): void {
+		this.startTime = Date.now();
+	}
+
+	/**
+	 * Configure budget alerts. Thresholds default to [0.5, 0.8, 1.0].
+	 * Returns this for chaining.
+	 */
+	setBudget(config: BudgetPolicy): this {
+		this.budgetConfig = {
+			...config,
+			thresholds: config.thresholds ?? [0.5, 0.8, 1.0],
+		};
+		this.crossedThresholds.clear();
+		return this;
+	}
+
+	/** Clear the budget configuration. */
+	clearBudget(): void {
+		this.budgetConfig = undefined;
+		this.crossedThresholds.clear();
+	}
+
+	/**
+	 * Record token usage for a specific model and role.
+	 * Returns the estimated cost for this single call.
+	 * Throws if budget is exhausted and onBudgetExhausted returns false.
+	 */
+	record(opts: {
+		modelId: string;
+		role: ModelRole;
