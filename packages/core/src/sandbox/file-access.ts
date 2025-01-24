@@ -148,3 +148,53 @@ export class FileAccess {
 		const fullPath = this.resolvePath(relativePath);
 		this.validateExtension(fullPath);
 
+		const contentSize = Buffer.byteLength(content, 'utf-8');
+		if (contentSize > this.maxFileSize) {
+			throw new Error(`Content too large: ${(contentSize / 1024 / 1024).toFixed(1)}MB`);
+		}
+
+		// Ensure parent directory exists
+		const dir = path.dirname(fullPath);
+		if (!fs.existsSync(dir)) {
+			fs.mkdirSync(dir, { recursive: true });
+		}
+
+		fs.writeFileSync(fullPath, content, 'utf-8');
+
+		const info: FileInfo = {
+			name: path.basename(relativePath),
+			path: fullPath,
+			size: contentSize,
+			isDirectory: false,
+			modifiedAt: new Date(),
+			extension: path.extname(relativePath).toLowerCase(),
+		};
+
+		this.state.files.set(relativePath, info);
+		this.state.totalSize += contentSize;
+		this.state.operationCount++;
+		logger.debug(`Wrote file: ${relativePath} (${contentSize} bytes)`);
+	}
+
+	async list(relativeDir = '.'): Promise<FileInfo[]> {
+		const fullPath = this.resolvePath(relativeDir);
+
+		if (!fs.existsSync(fullPath)) {
+			return [];
+		}
+
+		const entries = fs.readdirSync(fullPath, { withFileTypes: true });
+		const result: FileInfo[] = [];
+
+		for (const entry of entries) {
+			const entryPath = path.join(fullPath, entry.name);
+			const stat = fs.statSync(entryPath);
+			result.push({
+				name: entry.name,
+				path: entryPath,
+				size: stat.size,
+				isDirectory: entry.isDirectory(),
+				modifiedAt: stat.mtime,
+				extension: path.extname(entry.name).toLowerCase(),
+			});
+		}
