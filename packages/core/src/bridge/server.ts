@@ -628,3 +628,24 @@ export class BridgeServer {
 				client.end();
 			} catch {
 				// Ignore
+			}
+		}
+		this.sseClients.clear();
+
+		if (this.httpServer) {
+			return new Promise<void>((resolve) => {
+				this.httpServer!.close(() => {
+					this.httpServer = null;
+					logger.info('MCP SSE server stopped');
+					resolve();
+				});
+			});
+		}
+	}
+
+	/** Stop all transports and clean up. */
+	async stop(): Promise<void> {
+		await this.stopSSE();
+		this.subscriptions.clear();
+	}
+}
