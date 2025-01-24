@@ -593,3 +593,38 @@ export class BridgeServer {
 		}
 
 		try {
+			const message = JSON.parse(body) as MCPRequest;
+			const response = await this.handleMessage(message);
+
+			if (response) {
+				// Send response both as HTTP response and as SSE event
+				res.writeHead(200, { 'Content-Type': 'application/json' });
+				res.end(JSON.stringify(response));
+
+				// Also push to SSE stream for clients that expect it there
+				const serialized = JSON.stringify(response);
+				for (const client of this.sseClients) {
+					try {
+						client.write(`event: message\ndata: ${serialized}\n\n`);
+					} catch {
+						this.sseClients.delete(client);
+					}
+				}
+			} else {
+				// Notification -- no response body
+				res.writeHead(202);
+				res.end();
+			}
+		} catch {
+			res.writeHead(400, { 'Content-Type': 'application/json' });
+			res.end(JSON.stringify({ jsonrpc: '2.0', id: 0, error: { code: -32700, message: 'Parse error' } }));
+		}
+	}
+
+	/** Stop the SSE HTTP server and disconnect all clients. */
+	async stopSSE(): Promise<void> {
+		for (const client of this.sseClients) {
+			try {
+				client.end();
+			} catch {
+				// Ignore
