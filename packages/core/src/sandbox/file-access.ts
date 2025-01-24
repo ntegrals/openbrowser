@@ -98,3 +98,53 @@ export class FileAccess {
 	private validateExtension(filePath: string): void {
 		const ext = path.extname(filePath).toLowerCase();
 		if (!this.allowedExtensions.has(ext)) {
+			throw new Error(
+				`File extension "${ext}" is not allowed. Allowed: ${[...this.allowedExtensions].join(', ')}`,
+			);
+		}
+	}
+
+	private isBinaryFile(filePath: string): boolean {
+		const ext = path.extname(filePath).toLowerCase();
+		const binaryExts = new Set([
+			'.png', '.jpg', '.jpeg', '.gif', '.bmp', '.ico', '.webp',
+			'.pdf', '.doc', '.docx', '.xls', '.xlsx', '.ppt', '.pptx',
+			'.zip', '.tar', '.gz', '.7z', '.rar',
+			'.exe', '.dll', '.so', '.dylib',
+			'.mp3', '.mp4', '.avi', '.mkv', '.wav',
+			'.woff', '.woff2', '.ttf', '.eot',
+		]);
+		return binaryExts.has(ext);
+	}
+
+	async read(relativePath: string): Promise<string> {
+		const fullPath = this.resolvePath(relativePath);
+
+		if (!fs.existsSync(fullPath)) {
+			throw new Error(`File not found: ${relativePath}`);
+		}
+
+		if (this.isBinaryFile(fullPath)) {
+			throw new Error(`Cannot read binary file: ${relativePath}`);
+		}
+
+		const stat = fs.statSync(fullPath);
+		if (stat.size > this.maxFileSize) {
+			throw new Error(
+				`File too large: ${(stat.size / 1024 / 1024).toFixed(1)}MB (max: ${(this.maxFileSize / 1024 / 1024).toFixed(1)}MB)`,
+			);
+		}
+
+		this.state.operationCount++;
+		logger.debug(`Read file: ${relativePath} (${stat.size} bytes)`);
+		return fs.readFileSync(fullPath, 'utf-8');
+	}
+
+	async write(relativePath: string, content: string): Promise<void> {
+		if (this.readOnly) {
+			throw new Error('File system is read-only');
+		}
+
+		const fullPath = this.resolvePath(relativePath);
+		this.validateExtension(fullPath);
+
