@@ -223,3 +223,48 @@ export class CompositeUsageMeter {
 			totalOutputTokens: totalUsage.outputTokens,
 			totalTokens: totalUsage.totalTokens,
 			totalEstimatedCost: this.getTotalCost(),
+			totalCalls: this.actionTrace.length,
+			byModel: this.buildModelBreakdown(),
+			byRole: this.buildRoleBreakdown(),
+			actionTrace: [...this.actionTrace],
+			durationMs: this.startTime ? Date.now() - this.startTime : undefined,
+		};
+	}
+
+	/** Human-readable summary string. */
+	getSummaryText(): string {
+		const s = this.getSummary();
+		const lines: string[] = [
+			'=== Token Usage Summary ===',
+			`Total: ${s.totalTokens.toLocaleString()} tokens (${s.totalInputTokens.toLocaleString()} in / ${s.totalOutputTokens.toLocaleString()} out)`,
+			`Cost: $${s.totalEstimatedCost.toFixed(4)}`,
+			`Calls: ${s.totalCalls}`,
+		];
+
+		if (s.durationMs != null) {
+			lines.push(`Duration: ${(s.durationMs / 1000).toFixed(1)}s`);
+		}
+
+		if (s.byRole.length > 0) {
+			lines.push('', '--- By Role ---');
+			for (const r of s.byRole) {
+				lines.push(
+					`  ${r.role}: ${r.totalTokens.toLocaleString()} tokens, $${r.estimatedCost.toFixed(4)} (${r.callCount} calls)`,
+				);
+			}
+		}
+
+		if (s.byModel.length > 0) {
+			lines.push('', '--- By Model ---');
+			for (const m of s.byModel) {
+				lines.push(
+					`  ${m.modelId}: ${m.totalTokens.toLocaleString()} tokens, $${m.estimatedCost.toFixed(4)} (${m.callCount} calls)`,
+				);
+			}
+		}
+
+		const budget = this.getBudgetState();
+		if (budget.maxCostUsd != null) {
+			const pct = ((budget.fractionUsed ?? 0) * 100).toFixed(1);
+			lines.push(
+				'',
