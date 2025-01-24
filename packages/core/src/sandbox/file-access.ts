@@ -48,3 +48,53 @@ export class FileAccess {
 		this.maxFileSize = options.maxFileSize ?? MAX_FILE_SIZE;
 		this.readOnly = options.readOnly ?? false;
 
+		this.state = {
+			files: new Map(),
+			totalSize: 0,
+			operationCount: 0,
+		};
+
+		// Ensure sandbox directory exists
+		if (!fs.existsSync(this.sandboxDir)) {
+			fs.mkdirSync(this.sandboxDir, { recursive: true });
+		}
+
+		// Index existing files
+		this.indexDirectory();
+	}
+
+	private indexDirectory(): void {
+		try {
+			const entries = fs.readdirSync(this.sandboxDir, { withFileTypes: true });
+			for (const entry of entries) {
+				const fullPath = path.join(this.sandboxDir, entry.name);
+				if (entry.isFile()) {
+					const stat = fs.statSync(fullPath);
+					this.state.files.set(entry.name, {
+						name: entry.name,
+						path: fullPath,
+						size: stat.size,
+						isDirectory: false,
+						modifiedAt: stat.mtime,
+						extension: path.extname(entry.name).toLowerCase(),
+					});
+					this.state.totalSize += stat.size;
+				}
+			}
+		} catch {
+			logger.debug('Failed to index sandbox directory');
+		}
+	}
+
+	private resolvePath(relativePath: string): string {
+		const resolved = path.resolve(this.sandboxDir, relativePath);
+		// Prevent path traversal
+		if (!resolved.startsWith(this.sandboxDir)) {
+			throw new Error(`Path traversal detected: ${relativePath}`);
+		}
+		return resolved;
+	}
+
+	private validateExtension(filePath: string): void {
+		const ext = path.extname(filePath).toLowerCase();
+		if (!this.allowedExtensions.has(ext)) {
