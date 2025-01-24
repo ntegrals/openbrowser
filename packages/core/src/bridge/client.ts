@@ -198,3 +198,43 @@ export class BridgeClient extends EventEmitter<BridgeClientEvents> {
 			logger.error(`Max reconnection attempts (${this.maxReconnectAttempts}) reached`);
 			this.setState('disconnected');
 			this.emit('error', new Error('MCP server reconnection failed after all attempts'));
+			return;
+		}
+
+		this.setState('reconnecting');
+		this.reconnectAttempts++;
+
+		const delay = this.reconnectDelayMs * 2 ** (this.reconnectAttempts - 1);
+		logger.info(
+			`Reconnecting in ${delay}ms (attempt ${this.reconnectAttempts}/${this.maxReconnectAttempts})`,
+		);
+
+		this.reconnectTimer = setTimeout(async () => {
+			this.reconnectTimer = null;
+			try {
+				await this.spawnProcess();
+				await this.initialize();
+				this.setState('connected');
+				this.reconnectAttempts = 0;
+
+				// Invalidate tool cache on reconnect -- server may have changed
+				this.invalidateToolCache();
+				await this.listTools();
+
+				this.startHealthChecks();
+				logger.info('Reconnected to MCP server');
+			} catch (error) {
+				logger.warn(
+					`Reconnect attempt ${this.reconnectAttempts} failed: ${
+						error instanceof Error ? error.message : String(error)
+					}`,
+				);
+				this.attemptReconnect();
+			}
+		}, delay);
+	}
+
+	// ── Tool caching ──
+
+	async listTools(): Promise<MCPTool[]> {
+		if (this.cachedTools) {
