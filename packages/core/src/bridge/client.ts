@@ -278,3 +278,43 @@ export class BridgeClient extends EventEmitter<BridgeClientEvents> {
 			handler: async (params: Record<string, unknown>) => {
 				const result = await this.callTool(tool.name, params);
 				return {
+					success: true,
+					extractedContent: typeof result === 'string' ? result : JSON.stringify(result),
+				};
+			},
+		}));
+	}
+
+	async callTool(name: string, args: Record<string, unknown>): Promise<unknown> {
+		const result = (await this.send('tools/call', { name, arguments: args })) as {
+			content: Array<{ type: string; text?: string }>;
+			isError?: boolean;
+		};
+
+		if (result.isError) {
+			const errorText = result.content?.find((c) => c.type === 'text')?.text;
+			throw new Error(errorText ?? 'MCP tool call failed');
+		}
+
+		const textContent = result.content?.find((c) => c.type === 'text');
+		return textContent?.text ?? result;
+	}
+
+	// ── Health check ──
+
+	/** Send a ping to verify the server is responsive. Rejects if no pong within timeout. */
+	async ping(): Promise<void> {
+		await this.send('ping', {});
+	}
+
+	private startHealthChecks(): void {
+		this.stopHealthChecks();
+
+		if (this.healthCheckIntervalMs <= 0) return;
+
+		this.healthCheckTimer = setInterval(async () => {
+			try {
+				await this.ping();
+			} catch {
+				logger.warn('Health check failed');
+			}
