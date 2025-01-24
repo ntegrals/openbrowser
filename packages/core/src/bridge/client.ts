@@ -158,3 +158,43 @@ export class BridgeClient extends EventEmitter<BridgeClientEvents> {
 		});
 
 		// Send initialized notification (no id, no response expected)
+		this.sendNotification('notifications/initialized');
+	}
+
+	// ── State management ──
+
+	private setState(newState: MCPConnectionState): void {
+		const previousState = this._state;
+		if (previousState === newState) return;
+
+		this._state = newState;
+		logger.debug(`Connection state: ${previousState} -> ${newState}`);
+		this.emit('stateChange', newState, previousState);
+	}
+
+	// ── Reconnection ──
+
+	private handleProcessClose(): void {
+		const wasPreviouslyConnected = this._state === 'connected';
+
+		// Reject all pending requests
+		for (const [id, pending] of this.pendingRequests) {
+			clearTimeout(pending.timer);
+			pending.reject(new Error('MCP server disconnected'));
+		}
+		this.pendingRequests.clear();
+		this.process = null;
+		this.buffer = '';
+
+		if (wasPreviouslyConnected) {
+			this.attemptReconnect();
+		} else {
+			this.setState('disconnected');
+		}
+	}
+
+	private attemptReconnect(): void {
+		if (this.reconnectAttempts >= this.maxReconnectAttempts) {
+			logger.error(`Max reconnection attempts (${this.maxReconnectAttempts}) reached`);
+			this.setState('disconnected');
+			this.emit('error', new Error('MCP server reconnection failed after all attempts'));
