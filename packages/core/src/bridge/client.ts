@@ -318,3 +318,43 @@ export class BridgeClient extends EventEmitter<BridgeClientEvents> {
 			} catch {
 				logger.warn('Health check failed');
 			}
+		}, this.healthCheckIntervalMs);
+	}
+
+	private stopHealthChecks(): void {
+		if (this.healthCheckTimer) {
+			clearInterval(this.healthCheckTimer);
+			this.healthCheckTimer = null;
+		}
+	}
+
+	// ── JSON-RPC transport ──
+
+	private send(method: string, params?: Record<string, unknown>): Promise<unknown> {
+		if (!this.process?.stdin?.writable) {
+			return Promise.reject(new Error('MCP client is not connected'));
+		}
+
+		const id = ++this.requestId;
+
+		return new Promise((resolve, reject) => {
+			// Per-call timeout
+			const timer = setTimeout(() => {
+				this.pendingRequests.delete(id);
+				reject(new Error(`MCP request timed out after ${this.requestTimeoutMs}ms: ${method}`));
+			}, this.requestTimeoutMs);
+
+			this.pendingRequests.set(id, { resolve, reject, timer, method });
+
+			const request = JSON.stringify({
+				jsonrpc: '2.0',
+				id,
+				method,
+				params,
+			});
+
+			this.process?.stdin?.write(`${request}\n`);
+		});
+	}
+
+	/** Send a JSON-RPC notification (no id, no response expected). */
