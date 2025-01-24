@@ -453,3 +453,38 @@ export class BridgeServer {
 		const serialized = JSON.stringify(notification);
 
 		// SSE clients
+		for (const client of this.sseClients) {
+			try {
+				client.write(`data: ${serialized}\n\n`);
+			} catch {
+				// Client may have disconnected; will be cleaned up
+				this.sseClients.delete(client);
+			}
+		}
+	}
+
+	// ── Stdio transport ──
+
+	async startStdio(): Promise<void> {
+		const stdin = process.stdin;
+		const stdout = process.stdout;
+
+		stdin.setEncoding('utf-8');
+
+		let buffer = '';
+
+		stdin.on('data', async (data: string) => {
+			buffer += data;
+
+			const lines = buffer.split('\n');
+			buffer = lines.pop() ?? '';
+
+			for (const line of lines) {
+				if (!line.trim()) continue;
+
+				try {
+					const message = JSON.parse(line) as MCPRequest;
+					const response = await this.handleMessage(message);
+					if (response) {
+						stdout.write(`${JSON.stringify(response)}\n`);
+					}
