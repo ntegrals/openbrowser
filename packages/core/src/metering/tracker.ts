@@ -358,3 +358,48 @@ export class CompositeUsageMeter {
 			let rb = map.get(entry.role);
 			if (!rb) {
 				rb = {
+					role: entry.role,
+					inputTokens: 0,
+					outputTokens: 0,
+					totalTokens: 0,
+					estimatedCost: 0,
+					callCount: 0,
+				};
+				map.set(entry.role, rb);
+			}
+			rb.inputTokens += entry.usage.inputTokens;
+			rb.outputTokens += entry.usage.outputTokens;
+			rb.totalTokens += entry.usage.totalTokens;
+			rb.estimatedCost += entry.cost;
+			rb.callCount++;
+		}
+
+		return [...map.values()].sort((a, b) => b.estimatedCost - a.estimatedCost);
+	}
+}
+
+// ── Budget error ──
+
+export class BudgetDepletedError extends Error {
+	readonly currentCost: number;
+	readonly maxCost: number;
+
+	constructor(currentCost: number, maxCost: number) {
+		super(
+			`Token budget exhausted: $${currentCost.toFixed(4)} spent, limit is $${maxCost.toFixed(4)}`,
+		);
+		this.name = 'BudgetDepletedError';
+		this.currentCost = currentCost;
+		this.maxCost = maxCost;
+	}
+}
+
+// ── Shared utilities ──
+
+export function estimateTokenCount(text: string): number {
+	return Math.ceil(text.length / 4);
+}
+
+/** Resolve pricing for a model ID with exact-match then partial-match fallback. */
+function resolveModelCost(modelId: string, pricing: PricingTable): CostRates | undefined {
+	if (pricing[modelId]) return pricing[modelId];
