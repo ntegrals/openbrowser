@@ -78,3 +78,43 @@ export class BridgeClient extends EventEmitter<BridgeClientEvents> {
 	private readonly requestTimeoutMs: number;
 	private readonly maxReconnectAttempts: number;
 	private readonly reconnectDelayMs: number;
+	private readonly healthCheckIntervalMs: number;
+
+	constructor(options: BridgeClientOptions) {
+		super();
+		this.options = options;
+		this.requestTimeoutMs = options.requestTimeoutMs ?? 30_000;
+		this.maxReconnectAttempts = options.maxReconnectAttempts ?? 5;
+		this.reconnectDelayMs = options.reconnectDelayMs ?? 1000;
+		this.healthCheckIntervalMs = options.healthCheckIntervalMs ?? 0;
+	}
+
+	// ── Public accessors ──
+
+	get state(): MCPConnectionState {
+		return this._state;
+	}
+
+	get isConnected(): boolean {
+		return this._state === 'connected';
+	}
+
+	// ── Connection lifecycle ──
+
+	async connect(): Promise<void> {
+		if (this._state === 'connected') {
+			logger.debug('Already connected, skipping connect()');
+			return;
+		}
+
+		this.setState('connecting');
+		await this.spawnProcess();
+		await this.initialize();
+		this.setState('connected');
+		this.reconnectAttempts = 0;
+
+		// Warm the tool cache
+		await this.listTools();
+
+		// Start health checks if configured
+		this.startHealthChecks();
