@@ -523,3 +523,38 @@ export class BridgeServer {
 			res.setHeader('Access-Control-Allow-Origin', '*');
 			res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
 			res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+
+			if (req.method === 'OPTIONS') {
+				res.writeHead(204);
+				res.end();
+				return;
+			}
+
+			const url = req.url ?? '/';
+
+			if (req.method === 'GET' && url === '/sse') {
+				this.handleSSEConnection(res);
+				return;
+			}
+
+			if (req.method === 'POST' && url === '/message') {
+				await this.handleSSEMessage(req, res);
+				return;
+			}
+
+			if (req.method === 'GET' && url === '/health') {
+				res.writeHead(200, { 'Content-Type': 'application/json' });
+				res.end(JSON.stringify({
+					status: 'ok',
+					server: this.name,
+					version: this.version,
+					browserConnected: this.browser.isConnected,
+				}));
+				return;
+			}
+
+			res.writeHead(404, { 'Content-Type': 'application/json' });
+			res.end(JSON.stringify({ error: 'Not found' }));
+		});
+
+		return new Promise<void>((resolve) => {
