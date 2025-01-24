@@ -558,3 +558,38 @@ export class BridgeServer {
 		});
 
 		return new Promise<void>((resolve) => {
+			this.httpServer!.listen(listenPort, () => {
+				logger.info(`MCP SSE server listening on port ${listenPort}`);
+				resolve();
+			});
+		});
+	}
+
+	private handleSSEConnection(res: ServerResponse): void {
+		res.writeHead(200, {
+			'Content-Type': 'text/event-stream',
+			'Cache-Control': 'no-cache',
+			Connection: 'keep-alive',
+		});
+
+		// Send endpoint info as the first event so the client knows where to POST
+		const endpointEvent = JSON.stringify({ endpoint: '/message' });
+		res.write(`event: endpoint\ndata: ${endpointEvent}\n\n`);
+
+		this.sseClients.add(res);
+		logger.debug(`SSE client connected (total: ${this.sseClients.size})`);
+
+		res.on('close', () => {
+			this.sseClients.delete(res);
+			logger.debug(`SSE client disconnected (total: ${this.sseClients.size})`);
+		});
+	}
+
+	private async handleSSEMessage(req: IncomingMessage, res: ServerResponse): Promise<void> {
+		let body = '';
+
+		for await (const chunk of req) {
+			body += chunk;
+		}
+
+		try {
