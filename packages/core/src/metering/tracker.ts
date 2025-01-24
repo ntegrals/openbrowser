@@ -403,3 +403,26 @@ export function estimateTokenCount(text: string): number {
 /** Resolve pricing for a model ID with exact-match then partial-match fallback. */
 function resolveModelCost(modelId: string, pricing: PricingTable): CostRates | undefined {
 	if (pricing[modelId]) return pricing[modelId];
+
+	for (const [key, value] of Object.entries(pricing)) {
+		if (modelId.includes(key) || key.includes(modelId)) {
+			return value;
+		}
+	}
+	return undefined;
+}
+
+/** Compute cost in USD for a single call. */
+function computeCost(
+	inputTokens: number,
+	outputTokens: number,
+	modelId: string,
+	pricing: PricingTable,
+): number {
+	const cost = resolveModelCost(modelId, pricing);
+	if (!cost) return 0;
+	return (
+		(inputTokens / 1_000_000) * cost.inputCostPerMillion +
+		(outputTokens / 1_000_000) * cost.outputCostPerMillion
+	);
+}
