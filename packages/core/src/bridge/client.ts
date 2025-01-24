@@ -118,3 +118,43 @@ export class BridgeClient extends EventEmitter<BridgeClientEvents> {
 
 		// Start health checks if configured
 		this.startHealthChecks();
+
+		logger.info(`Connected to MCP server: ${this.options.command}`);
+	}
+
+	private async spawnProcess(): Promise<void> {
+		this.process = spawn(this.options.command, this.options.args ?? [], {
+			stdio: ['pipe', 'pipe', 'pipe'],
+			env: { ...process.env, ...this.options.env },
+		});
+
+		this.process.stdout?.setEncoding('utf-8');
+		this.process.stdout?.on('data', (data: string) => {
+			this.buffer += data;
+			this.processBuffer();
+		});
+
+		this.process.stderr?.on('data', (data: Buffer) => {
+			logger.warn(`[MCP stderr] ${data.toString().trimEnd()}`);
+		});
+
+		this.process.on('close', (code: number | null) => {
+			logger.info(`MCP server process exited with code ${code}`);
+			this.handleProcessClose();
+		});
+
+		this.process.on('error', (error: Error) => {
+			logger.error(`MCP server process error: ${error.message}`);
+			this.emit('error', error);
+			this.handleProcessClose();
+		});
+	}
+
+	private async initialize(): Promise<void> {
+		await this.send('initialize', {
+			protocolVersion: '2024-11-05',
+			capabilities: {},
+			clientInfo: { name: 'open-browser', version: '0.1.0' },
+		});
+
+		// Send initialized notification (no id, no response expected)
