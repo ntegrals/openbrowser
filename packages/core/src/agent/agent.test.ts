@@ -158,3 +158,43 @@ function createMockBrowser(overrides?: {
 		getState: mock(async () => state),
 		screenshot: mock(async () => ({ base64: 'fake_screenshot', width: 1280, height: 1100 })),
 		navigate: mock(async () => {}),
+		currentPage: {
+			viewportSize: () => ({ width: 1280, height: 1100 }),
+			evaluate: mock(async () => ({})),
+		} as any,
+		cdp: {
+			send: mock(async () => ({})),
+		} as any,
+	} as unknown as Viewport;
+}
+
+function createDefaultAgentOptions(overrides?: Partial<AgentOptions>): AgentOptions {
+	return {
+		task: 'Find the price of the product',
+		model: createDoneOnStepModel(2),
+		browser: createMockBrowser(),
+		tools: createMockTools([{ success: true, isDone: false }]),
+		domService: createMockPageAnalyzer(),
+		settings: {
+			stepLimit: 5,
+			enableScreenshots: false,
+			commandDelayMs: 0,
+			retryDelay: 0,
+			autoNavigateToUrls: false,
+			contextWindowSize: 50000,
+		},
+		...overrides,
+	};
+}
+
+// ── Tests ──
+
+describe('Agent', () => {
+	describe('constructor', () => {
+		test('creates agent with default settings merged', () => {
+			const agent = new Agent(createDefaultAgentOptions());
+			const state = agent.getState();
+			expect(state.step).toBe(0);
+			expect(state.isRunning).toBe(false);
+			expect(state.isDone).toBe(false);
+			expect(state.failureCount).toBe(0);
