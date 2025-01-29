@@ -358,3 +358,43 @@ describe('Agent', () => {
 		test('invokes PageAnalyzer.extractState on each step', async () => {
 			const doneModel = createDoneOnStepModel(1, 'Done');
 			const tools = createMockTools([
+				{ success: true, isDone: true, extractedContent: 'Done' },
+			]);
+
+			mockExtractState.mockClear();
+			const agent = new Agent(
+				createDefaultAgentOptions({ model: doneModel, tools }),
+			);
+			await agent.run();
+
+			expect(mockExtractState).toHaveBeenCalled();
+		});
+
+		test('records history entries for each step', async () => {
+			let callCount = 0;
+			const tools = createMockTools();
+			(tools.executeActions as any) = mock(async () => {
+				callCount++;
+				if (callCount >= 3) {
+					return [{ success: true, isDone: true, extractedContent: 'Done' }];
+				}
+				return [{ success: true }];
+			});
+
+			const model = createDoneOnStepModel(3, 'Done');
+			const agent = new Agent(
+				createDefaultAgentOptions({ model, tools }),
+			);
+			await agent.run();
+
+			const history = agent.getHistory();
+			expect(history.entries.length).toBeGreaterThanOrEqual(1);
+		});
+
+		test('token usage is tracked across steps', async () => {
+			let callCount = 0;
+			const tools = createMockTools();
+			(tools.executeActions as any) = mock(async () => {
+				callCount++;
+				if (callCount >= 2) {
+					return [{ success: true, isDone: true, extractedContent: 'Done' }];
