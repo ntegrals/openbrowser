@@ -438,3 +438,43 @@ describe('Agent', () => {
 						autoNavigateToUrls: false,
 						contextWindowSize: 50000,
 					},
+				}),
+			);
+
+			const result = await agent.run();
+			expect(result.errors.length).toBeGreaterThan(0);
+		});
+
+		test('agent records error about consecutive failures after failureThreshold', async () => {
+			let callCount = 0;
+			const errorModel: LanguageModel = {
+				modelId: 'test-model',
+				provider: 'custom',
+				invoke: async <T>(): Promise<InferenceResult<T>> => {
+					callCount++;
+					throw new Error(`Error ${callCount}`);
+				},
+			};
+
+			const agent = new Agent(
+				createDefaultAgentOptions({
+					model: errorModel,
+					settings: {
+						stepLimit: 20,
+						failureThreshold: 3,
+						retryDelay: 0,
+						enableScreenshots: false,
+						commandDelayMs: 0,
+						autoNavigateToUrls: false,
+						contextWindowSize: 50000,
+					},
+				}),
+			);
+
+			const result = await agent.run();
+			const hasFailureError = result.errors.some(
+				(e) => e.includes('consecutive failures'),
+			);
+			expect(hasFailureError).toBe(true);
+		});
+
