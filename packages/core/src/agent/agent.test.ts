@@ -118,3 +118,43 @@ function createMockBrowserState(): ViewportSnapshot {
 			{ tabId: 0 as any, url: 'https://example.com', title: 'Example Page', isActive: true },
 		],
 		activeTabIndex: 0,
+	};
+}
+
+function createMockRegistry(): CommandCatalog{
+	return {
+		register: mock(() => {}),
+		get: mock(() => undefined),
+		getAll: mock(() => []),
+		getActionDescriptions: mock(() => 'click: Click on an element'),
+		getPromptDescription: mock(() => 'click: Click on an element by its index\ngo_to_url: Navigate to a URL'),
+		has: mock(() => false),
+	} as unknown as CommandCatalog;
+}
+
+function createMockTools(actionResults?: CommandResult[]): CommandExecutor {
+	const defaultResults: CommandResult[] = [{ success: true }];
+	return {
+		registry: createMockRegistry(),
+		commandsPerStep: 10,
+		setCoordinateClicking: mock(() => {}),
+		executeActions: mock(async (_actions: Command[], _ctx: ExecutionContext) => {
+			return actionResults ?? defaultResults;
+		}),
+		executeAction: mock(async (_action: Command, _ctx: ExecutionContext) => {
+			return (actionResults ?? defaultResults)[0];
+		}),
+	} as unknown as CommandExecutor;
+}
+
+function createMockBrowser(overrides?: {
+	browserState?: ViewportSnapshot;
+	isConnected?: boolean;
+}): Viewport {
+	const state = overrides?.browserState ?? createMockBrowserState();
+	return {
+		isConnected: overrides?.isConnected ?? true,
+		start: mock(async () => {}),
+		getState: mock(async () => state),
+		screenshot: mock(async () => ({ base64: 'fake_screenshot', width: 1280, height: 1100 })),
+		navigate: mock(async () => {}),
