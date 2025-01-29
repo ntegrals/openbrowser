@@ -78,3 +78,43 @@ function createMockModel(options?: {
 				finishReason: 'stop',
 			};
 		},
+	};
+}
+
+function createDoneOnStepModel(doneOnStep: number, result = 'Task completed'): LanguageModel {
+	const responses: Array<{
+		currentState: { evaluation: string; memory: string; nextGoal: string };
+		actions: Command[];
+	}> = [];
+
+	for (let i = 1; i < doneOnStep; i++) {
+		responses.push({
+			currentState: {
+				evaluation: `Step ${i} assessment`,
+				memory: '',
+				nextGoal: `Goal for step ${i + 1}`,
+			},
+			actions: [{ action: 'tap', index: i, clickCount: 1 } as Command],
+		});
+	}
+
+	responses.push({
+		currentState: {
+			evaluation: 'Task done',
+			memory: '',
+			nextGoal: 'Report result',
+		},
+		actions: [{ action: 'finish', text: result, success: true } as Command],
+	});
+
+	return createMockModel({ responses });
+}
+
+function createMockBrowserState(): ViewportSnapshot {
+	return {
+		url: 'https://example.com',
+		title: 'Example Page',
+		tabs: [
+			{ tabId: 0 as any, url: 'https://example.com', title: 'Example Page', isActive: true },
+		],
+		activeTabIndex: 0,
