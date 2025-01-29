@@ -518,3 +518,43 @@ describe('Agent', () => {
 					},
 				}),
 			);
+
+			const result = await agent.run();
+			expect(result.finalResult).toBe('Success');
+		});
+	});
+
+	describe('done action detection and result extraction', () => {
+		test('detects done action and extracts result text', async () => {
+			const tools = createMockTools([
+				{ success: true, isDone: true, extractedContent: 'Product costs $99' },
+			]);
+
+			const model = createDoneOnStepModel(1, 'Product costs $99');
+			const agent = new Agent(
+				createDefaultAgentOptions({ model, tools }),
+			);
+			const result = await agent.run();
+
+			expect(result.finalResult).toBe('Product costs $99');
+			expect(result.success).toBe(true);
+		});
+
+		test('handles done action with success=false', async () => {
+			const model = createMockModel({
+				responses: [{
+					currentState: { evaluation: 'Cannot find', memory: '', nextGoal: '' },
+					actions: [{ action: 'finish', text: 'Could not find', success: false } as Command],
+				}],
+			});
+
+			const tools = createMockTools([
+				{ success: false, isDone: true, extractedContent: 'Could not find' },
+			]);
+
+			const agent = new Agent(
+				createDefaultAgentOptions({ model, tools }),
+			);
+			const result = await agent.run();
+
+			expect(result.finalResult).toBe('Could not find');
