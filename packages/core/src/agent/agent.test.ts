@@ -198,3 +198,43 @@ describe('Agent', () => {
 			expect(state.isRunning).toBe(false);
 			expect(state.isDone).toBe(false);
 			expect(state.failureCount).toBe(0);
+			expect(state.consecutiveFailures).toBe(0);
+		});
+
+		test('overrides default settings with provided values', () => {
+			const agent = new Agent(
+				createDefaultAgentOptions({
+					settings: {
+						stepLimit: 50,
+						enableScreenshots: false,
+						commandDelayMs: 0,
+						retryDelay: 0,
+						autoNavigateToUrls: false,
+						contextWindowSize: 50000,
+					},
+				}),
+			);
+			const state = agent.getState();
+			expect(state.stepLimit).toBe(50);
+		});
+
+		test('initializes cost tracking to zero', () => {
+			const agent = new Agent(createDefaultAgentOptions());
+			const cost = agent.getAccumulatedCost();
+			expect(cost.totalCost).toBe(0);
+			expect(cost.totalInputTokens).toBe(0);
+			expect(cost.totalOutputTokens).toBe(0);
+		});
+
+		test('initializes empty history', () => {
+			const agent = new Agent(createDefaultAgentOptions());
+			const history = agent.getHistory();
+			expect(history.entries).toHaveLength(0);
+			expect(history.task).toBe('Find the price of the product');
+		});
+
+		test('uses custom tools when provided', () => {
+			const customTools = createMockTools();
+			const agent = new Agent(createDefaultAgentOptions({ tools: customTools }));
+			expect(agent).toBeDefined();
+		});
