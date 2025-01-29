@@ -38,3 +38,43 @@ import type { InferenceResult, InferenceUsage } from '../model/types.js';
 import type { Viewport } from '../viewport/viewport.js';
 import type { ViewportSnapshot } from '../viewport/types.js';
 import type { CommandExecutor } from '../commands/executor.js';
+import type { Command, CommandResult, ExecutionContext } from '../commands/types.js';
+import type { CommandCatalog } from '../commands/catalog/catalog.js';
+
+// ── Mock Factories ──
+
+function createMockUsage(input = 100, output = 50): InferenceUsage {
+	return { inputTokens: input, outputTokens: output, totalTokens: input + output };
+}
+
+function createMockModel(options?: {
+	responses?: Array<{
+		currentState: { evaluation: string; memory: string; nextGoal: string };
+		actions: Command[];
+	}>;
+	modelId?: string;
+}): LanguageModel {
+	let callCount = 0;
+	const responses = options?.responses ?? [
+		{
+			currentState: {
+				evaluation: 'Page loaded',
+				memory: '',
+				nextGoal: 'Click element',
+			},
+			actions: [{ action: 'tap', index: 1, clickCount: 1 } as Command],
+		},
+	];
+
+	return {
+		modelId: options?.modelId ?? 'test-model',
+		provider: 'custom',
+		invoke: async <T>(_options: InferenceOptions<T>): Promise<InferenceResult<T>> => {
+			const responseIndex = Math.min(callCount, responses.length - 1);
+			callCount++;
+			return {
+				parsed: responses[responseIndex] as unknown as T,
+				usage: createMockUsage(),
+				finishReason: 'stop',
+			};
+		},
