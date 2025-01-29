@@ -318,3 +318,43 @@ describe('Agent', () => {
 			);
 
 			await agent.run();
+
+			expect(doneResult).toBeDefined();
+			expect(doneResult!.finalResult).toBe('Final answer');
+		});
+
+		test('starts browser if not connected', async () => {
+			const browser = createMockBrowser({ isConnected: false });
+			const doneModel = createDoneOnStepModel(1, 'Result');
+			const tools = createMockTools([
+				{ success: true, isDone: true, extractedContent: 'Result' },
+			]);
+
+			const agent = new Agent(
+				createDefaultAgentOptions({ browser, model: doneModel, tools }),
+			);
+			await agent.run();
+
+			expect(browser.start).toHaveBeenCalled();
+		});
+	});
+
+	describe('step execution', () => {
+		test('invokes browser.getState() on each step', async () => {
+			const browser = createMockBrowser();
+			const doneModel = createDoneOnStepModel(1, 'Done');
+			const tools = createMockTools([
+				{ success: true, isDone: true, extractedContent: 'Done' },
+			]);
+
+			const agent = new Agent(
+				createDefaultAgentOptions({ browser, model: doneModel, tools }),
+			);
+			await agent.run();
+
+			expect(browser.getState).toHaveBeenCalled();
+		});
+
+		test('invokes PageAnalyzer.extractState on each step', async () => {
+			const doneModel = createDoneOnStepModel(1, 'Done');
+			const tools = createMockTools([
