@@ -238,3 +238,43 @@ describe('Agent', () => {
 			const agent = new Agent(createDefaultAgentOptions({ tools: customTools }));
 			expect(agent).toBeDefined();
 		});
+	});
+
+	describe('run() basic flow', () => {
+		test('completes when done action is returned', async () => {
+			const doneModel = createDoneOnStepModel(1, 'The price is $42');
+			const tools = createMockTools([
+				{ success: true, isDone: true, extractedContent: 'The price is $42' },
+			]);
+
+			const agent = new Agent(
+				createDefaultAgentOptions({ model: doneModel, tools }),
+			);
+
+			const result = await agent.run();
+
+			expect(result.finalResult).toBe('The price is $42');
+			expect(result.success).toBe(true);
+			expect(result.errors).toHaveLength(0);
+		});
+
+		test('sets isRunning to false after completion', async () => {
+			const doneModel = createDoneOnStepModel(1, 'Done');
+			const tools = createMockTools([
+				{ success: true, isDone: true, extractedContent: 'Done' },
+			]);
+
+			const agent = new Agent(
+				createDefaultAgentOptions({ model: doneModel, tools }),
+			);
+			await agent.run();
+
+			const state = agent.getState();
+			expect(state.isRunning).toBe(false);
+		});
+
+		test('calls onStepStart callback', async () => {
+			const stepStarts: number[] = [];
+
+			const doneModel = createDoneOnStepModel(2, 'Result');
+			let callCount = 0;
