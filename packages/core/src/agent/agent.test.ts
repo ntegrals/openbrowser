@@ -478,3 +478,43 @@ describe('Agent', () => {
 			expect(hasFailureError).toBe(true);
 		});
 
+		test('successful step resets consecutive failure count', async () => {
+			let callCount = 0;
+			const model: LanguageModel = {
+				modelId: 'test-model',
+				provider: 'custom',
+				invoke: async <T>(): Promise<InferenceResult<T>> => {
+					callCount++;
+					if (callCount === 1) {
+						throw new Error('Transient error');
+					}
+					return {
+						parsed: {
+							currentState: { evaluation: 'Done', memory: '', nextGoal: '' },
+							actions: [{ action: 'finish', text: 'Success', success: true }],
+						} as unknown as T,
+						usage: createMockUsage(),
+						finishReason: 'stop',
+					};
+				},
+			};
+
+			const tools = createMockTools([
+				{ success: true, isDone: true, extractedContent: 'Success' },
+			]);
+
+			const agent = new Agent(
+				createDefaultAgentOptions({
+					model,
+					tools,
+					settings: {
+						stepLimit: 10,
+						failureThreshold: 5,
+						retryDelay: 0,
+						enableScreenshots: false,
+						commandDelayMs: 0,
+						autoNavigateToUrls: false,
+						contextWindowSize: 50000,
+					},
+				}),
+			);
