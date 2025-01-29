@@ -278,3 +278,43 @@ describe('Agent', () => {
 
 			const doneModel = createDoneOnStepModel(2, 'Result');
 			let callCount = 0;
+			const tools = createMockTools();
+			(tools.executeActions as any) = mock(async () => {
+				callCount++;
+				if (callCount >= 2) {
+					return [{ success: true, isDone: true, extractedContent: 'Result' }];
+				}
+				return [{ success: true }];
+			});
+
+			const agent = new Agent(
+				createDefaultAgentOptions({
+					model: doneModel,
+					tools,
+					onStepStart: (step) => stepStarts.push(step),
+				}),
+			);
+
+			await agent.run();
+
+			expect(stepStarts.length).toBeGreaterThan(0);
+			expect(stepStarts[0]).toBe(1);
+		});
+
+		test('calls onDone callback with result', async () => {
+			let doneResult: RunOutcome | undefined;
+
+			const doneModel = createDoneOnStepModel(1, 'Final answer');
+			const tools = createMockTools([
+				{ success: true, isDone: true, extractedContent: 'Final answer' },
+			]);
+
+			const agent = new Agent(
+				createDefaultAgentOptions({
+					model: doneModel,
+					tools,
+					onDone: (r) => { doneResult = r; },
+				}),
+			);
+
+			await agent.run();
