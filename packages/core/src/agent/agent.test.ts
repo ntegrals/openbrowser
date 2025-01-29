@@ -398,3 +398,43 @@ describe('Agent', () => {
 				callCount++;
 				if (callCount >= 2) {
 					return [{ success: true, isDone: true, extractedContent: 'Done' }];
+				}
+				return [{ success: true }];
+			});
+
+			const model = createDoneOnStepModel(2, 'Done');
+			const agent = new Agent(
+				createDefaultAgentOptions({ model, tools }),
+			);
+			await agent.run();
+
+			const state = agent.getState();
+			expect(state.totalInputTokens).toBeGreaterThan(0);
+			expect(state.totalOutputTokens).toBeGreaterThan(0);
+		});
+	});
+
+	describe('failure recovery', () => {
+		test('consecutive failures increment failure count', async () => {
+			let callCount = 0;
+			const errorModel: LanguageModel = {
+				modelId: 'test-model',
+				provider: 'custom',
+				invoke: async <T>(): Promise<InferenceResult<T>> => {
+					callCount++;
+					throw new Error(`Simulated error ${callCount}`);
+				},
+			};
+
+			const agent = new Agent(
+				createDefaultAgentOptions({
+					model: errorModel,
+					settings: {
+						stepLimit: 10,
+						failureThreshold: 3,
+						retryDelay: 0,
+						enableScreenshots: false,
+						commandDelayMs: 0,
+						autoNavigateToUrls: false,
+						contextWindowSize: 50000,
+					},
