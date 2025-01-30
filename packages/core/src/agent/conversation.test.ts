@@ -198,3 +198,43 @@ describe('ConversationManager', () => {
 		test('estimateTotalTokens reflects actual message content', () => {
 			const mm2 = createManager({ contextWindowSize: 100000, includeLastScreenshot: false });
 			mm2.addStateMessage('A'.repeat(400), undefined, 1); // ~100 tokens
+			mm2.addStateMessage('B'.repeat(800), undefined, 2); // ~200 tokens
+
+			const total = mm2.estimateTotalTokens();
+			// Total should be roughly 300 tokens for 1200 chars
+			expect(total).toBeGreaterThanOrEqual(250);
+			expect(total).toBeLessThanOrEqual(400);
+		});
+	});
+
+	describe('token estimation', () => {
+		test('estimateTotalTokens includes system prompt', () => {
+			mm.setInstructionBuilder('System prompt text');
+			const tokensWithSystem = mm.estimateTotalTokens();
+			expect(tokensWithSystem).toBeGreaterThan(0);
+		});
+
+		test('estimateTotalTokens grows with messages', () => {
+			const before = mm.estimateTotalTokens();
+			mm.addStateMessage('Some state text', undefined, 1);
+			const after = mm.estimateTotalTokens();
+			expect(after).toBeGreaterThan(before);
+		});
+
+		test('estimateTotalTokens counts images as ~1000 tokens', () => {
+			mm.addStateMessage('Text', 'screenshot', 1);
+			const tokens = mm.estimateTotalTokens();
+			// Text ~4 chars = 1 token, plus ~1000 for image
+			expect(tokens).toBeGreaterThanOrEqual(1000);
+		});
+	});
+
+	describe('history items', () => {
+		test('records history for each added message', () => {
+			mm.addStateMessage('State text', undefined, 1);
+			mm.addAssistantMessage('Agent response', 1);
+			mm.addCommandResultMessage('Result text', 1);
+
+			const items = mm.getConversationEntrys();
+			expect(items).toHaveLength(3);
+			expect(items[0].category).toBe('state');
