@@ -478,3 +478,43 @@ describe('ConversationManager', () => {
 		test('no filtering when maskedValues is not set', () => {
 			mm.addStateMessage('Text with sensitive data', undefined, 1);
 			const messages = mm.getMessages();
+			const content = messages[0].content;
+			if (Array.isArray(content)) {
+				const textPart = content.find((p: any) => p.type === 'text');
+				expect((textPart as any).text).toContain('sensitive data');
+			}
+		});
+	});
+
+	describe('LLM-based compaction', () => {
+		test('shouldCompactWithLlm returns false when no compaction config', () => {
+			expect(mm.shouldCompactWithLlm()).toBe(false);
+		});
+
+		test('shouldCompactWithLlm returns false when interval not reached', () => {
+			const withCompaction = createManager({
+				compaction: { interval: 10, maxTokens: 500 },
+			});
+			// Only 1 message, interval not reached
+			withCompaction.addStateMessage('State', undefined, 1);
+			expect(withCompaction.shouldCompactWithLlm()).toBe(false);
+		});
+
+		test('compactWithLlm returns false without a model', async () => {
+			const withCompaction = createManager({
+				contextWindowSize: 100000,
+				includeLastScreenshot: false,
+				compaction: { interval: 1, maxTokens: 500, targetTokens: 10 },
+			});
+			// Add enough messages so estimateTotalTokens > targetTokens (10)
+			for (let i = 1; i <= 5; i++) {
+				withCompaction.addStateMessage('x'.repeat(100), undefined, i);
+			}
+			const result = await withCompaction.compactWithLlm();
+			expect(result).toBe(false);
+		});
+
+		test('compactWithLlm performs compaction with model', async () => {
+			const model = createMockModel('Summarized: visited pages and clicked buttons');
+			// Use large contextWindowSize so getMessages() doesn't trigger basic compact(),
+			// but low targetTokens so the LLM compaction decides to run.
