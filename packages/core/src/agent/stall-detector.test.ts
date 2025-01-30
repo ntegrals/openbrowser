@@ -118,3 +118,43 @@ describe('StallDetector', () => {
 			custom.recordAction([clickAction(10)]); // prefix to avoid cycle match
 			custom.recordAction([clickAction(1)]);
 			custom.recordAction([clickAction(1)]);
+			custom.recordAction([clickAction(1)]);
+			// 3 trailing repeats < 5 threshold, and cycle check sees [10,1,1,1] which is not A->B->A->B
+			expect(custom.isStuck().stuck).toBe(false);
+
+			// Add two more to reach 5 trailing repeats
+			custom.recordAction([clickAction(1)]);
+			custom.recordAction([clickAction(1)]);
+			expect(custom.isStuck().stuck).toBe(true);
+		});
+	});
+
+	describe('action cycle detection (A -> B -> A -> B)', () => {
+		test('detects alternating two-action cycle', () => {
+			detector.recordAction([clickAction(1)]);
+			detector.recordAction([clickAction(2)]);
+			detector.recordAction([clickAction(1)]);
+			detector.recordAction([clickAction(2)]);
+
+			const result = detector.isStuck();
+			expect(result.stuck).toBe(true);
+			expect(result.reason).toContain('cycle');
+		});
+
+		test('does not falsely detect A -> B -> A -> C as a cycle', () => {
+			detector.recordAction([clickAction(1)]);
+			detector.recordAction([clickAction(2)]);
+			detector.recordAction([clickAction(1)]);
+			detector.recordAction([clickAction(3)]);
+
+			const result = detector.isStuck();
+			expect(result.stuck).toBe(false);
+		});
+	});
+
+	describe('triple cycle detection (A -> B -> C -> A -> B -> C)', () => {
+		test('detects 3-step cycle', () => {
+			detector.recordAction([clickAction(1)]);
+			detector.recordAction([clickAction(2)]);
+			detector.recordAction([clickAction(3)]);
+			detector.recordAction([clickAction(1)]);
