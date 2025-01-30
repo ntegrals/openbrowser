@@ -38,3 +38,43 @@ function makeFingerprint(overrides: Partial<PageSignature> = {}): PageSignature 
 		url: 'https://example.com',
 		domHash: 'abc123',
 		scrollY: 0,
+		elementCount: 50,
+		textHash: 'texthash1',
+		...overrides,
+	};
+}
+
+// ── Tests ──
+
+describe('StallDetector', () => {
+	let detector: StallDetector;
+
+	beforeEach(() => {
+		detector = new StallDetector();
+	});
+
+	describe('initial state', () => {
+		test('isStuck returns not stuck when no actions recorded', () => {
+			const result = detector.isStuck();
+			expect(result.stuck).toBe(false);
+			expect(result.severity).toBe(0);
+		});
+
+		test('getTotalRepetitions returns 0 initially', () => {
+			expect(detector.getTotalRepetitions()).toBe(0);
+		});
+
+		test('getLoopNudgeMessage returns empty string when not stuck', () => {
+			expect(detector.getLoopNudgeMessage()).toBe('');
+		});
+	});
+
+	describe('recordAction and repeated action detection', () => {
+		test('does not flag non-repeated actions', () => {
+			detector.recordAction([clickAction(1)]);
+			detector.recordAction([clickAction(2)]);
+			detector.recordAction([clickAction(3)]);
+
+			const result = detector.isStuck();
+			expect(result.stuck).toBe(false);
+		});
