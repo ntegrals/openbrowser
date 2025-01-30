@@ -838,3 +838,43 @@ describe('Agent', () => {
 			const tasks = agent.getFollowUpTasks();
 			expect(tasks).toHaveLength(2);
 			expect(tasks[0]).toBe('Follow up: check price again');
+			expect(tasks[1]).toBe('Follow up: compare with competitor');
+		});
+
+		test('getFollowUpTasks returns a copy', () => {
+			const agent = new Agent(createDefaultAgentOptions());
+			agent.addNewTask('Task 1');
+
+			const tasks1 = agent.getFollowUpTasks();
+			const tasks2 = agent.getFollowUpTasks();
+			expect(tasks1).toEqual(tasks2);
+			expect(tasks1).not.toBe(tasks2);
+		});
+	});
+
+	describe('getState', () => {
+		test('returns a copy of the state', () => {
+			const agent = new Agent(createDefaultAgentOptions());
+			const state1 = agent.getState();
+			const state2 = agent.getState();
+			expect(state1).toEqual(state2);
+			expect(state1).not.toBe(state2);
+		});
+
+		test('tracks current URL after run', async () => {
+			const doneModel = createDoneOnStepModel(1, 'Done');
+			const tools = createMockTools([
+				{ success: true, isDone: true, extractedContent: 'Done' },
+			]);
+
+			const agent = new Agent(
+				createDefaultAgentOptions({ model: doneModel, tools }),
+			);
+			await agent.run();
+
+			const state = agent.getState();
+			expect(state.currentUrl).toBe('https://example.com');
+		});
+	});
+
+	describe('getAccumulatedCost', () => {
