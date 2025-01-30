@@ -558,3 +558,43 @@ describe('Agent', () => {
 			const result = await agent.run();
 
 			expect(result.finalResult).toBe('Could not find');
+			expect(result.success).toBe(false);
+		});
+	});
+
+	describe('pause / resume / stop', () => {
+		test('pause sets isPaused flag', () => {
+			const agent = new Agent(createDefaultAgentOptions());
+			agent.pause();
+			expect(agent.getState().isPaused).toBe(true);
+		});
+
+		test('resume clears isPaused flag', () => {
+			const agent = new Agent(createDefaultAgentOptions());
+			agent.pause();
+			agent.resume();
+			expect(agent.getState().isPaused).toBe(false);
+		});
+
+		test('stop sets isRunning to false', async () => {
+			let stepCount = 0;
+			const tools = createMockTools();
+			(tools.executeActions as any) = mock(async () => {
+				stepCount++;
+				return [{ success: true }];
+			});
+
+			const model = createMockModel();
+			const agent = new Agent(
+				createDefaultAgentOptions({
+					model,
+					tools,
+					settings: {
+						stepLimit: 100,
+						enableScreenshots: false,
+						commandDelayMs: 0,
+						retryDelay: 0,
+						autoNavigateToUrls: false,
+						contextWindowSize: 50000,
+					},
+				}),
