@@ -798,3 +798,43 @@ describe('Agent', () => {
 				createDefaultAgentOptions({ model: doneModel, tools }),
 			);
 			await agent.run();
+
+			const history = agent.getHistory();
+			expect(history.endTime).toBeDefined();
+			expect(history.totalDuration).toBeDefined();
+		});
+	});
+
+	describe('cost tracking', () => {
+		test('cumulative cost accumulates across steps', async () => {
+			let callCount = 0;
+			const tools = createMockTools();
+			(tools.executeActions as any) = mock(async () => {
+				callCount++;
+				if (callCount >= 3) {
+					return [{ success: true, isDone: true, extractedContent: 'Done' }];
+				}
+				return [{ success: true }];
+			});
+
+			const model = createDoneOnStepModel(3, 'Done');
+			const agent = new Agent(
+				createDefaultAgentOptions({ model, tools }),
+			);
+			await agent.run();
+
+			const cost = agent.getAccumulatedCost();
+			expect(cost.totalInputTokens).toBeGreaterThanOrEqual(100);
+			expect(cost.totalOutputTokens).toBeGreaterThanOrEqual(50);
+		});
+	});
+
+	describe('follow-up tasks', () => {
+		test('addNewTask stores follow-up tasks', () => {
+			const agent = new Agent(createDefaultAgentOptions());
+			agent.addNewTask('Follow up: check price again');
+			agent.addNewTask('Follow up: compare with competitor');
+
+			const tasks = agent.getFollowUpTasks();
+			expect(tasks).toHaveLength(2);
+			expect(tasks[0]).toBe('Follow up: check price again');
