@@ -118,3 +118,43 @@ describe('ConversationManager', () => {
 		});
 	});
 
+	describe('addCommandResultMessage', () => {
+		test('adds a user role message for action results', () => {
+			mm.addCommandResultMessage('click: success', 1);
+			const messages = mm.getMessages();
+			expect(messages[0].role).toBe('user');
+			expect(messages[0].content).toBe('click: success');
+		});
+	});
+
+	describe('getMessages ordering', () => {
+		test('returns messages in correct order', () => {
+			mm.setInstructionBuilder('System prompt');
+			mm.addStateMessage('State text', undefined, 1);
+			mm.addAssistantMessage('Agent thought', 1);
+			mm.addCommandResultMessage('Action result', 1);
+
+			const messages = mm.getMessages();
+			expect(messages).toHaveLength(4);
+			expect(messages[0].role).toBe('system');
+			expect(messages[1].role).toBe('user');
+			expect(messages[2].role).toBe('assistant');
+			expect(messages[3].role).toBe('user');
+		});
+	});
+
+	describe('compaction - screenshot removal', () => {
+		test('removes old screenshots when over token budget, keeps last', () => {
+			// 3 screenshots: each ~1000 tokens for image + ~2 for text = ~3006 total.
+			// Budget of 1500: after removing 2 old screenshots (saving 2000),
+			// total becomes ~1006 < 1500, so compact exits successfully.
+			const small = createManager({ contextWindowSize: 1500 });
+			small.addStateMessage('State 1', 'screenshot1', 1);
+			small.addStateMessage('State 2', 'screenshot2', 2);
+			small.addStateMessage('State 3', 'screenshot3', 3);
+
+			const messages = small.getMessages();
+			// After compaction, older screenshots should be removed
+			// The last message should still have its image
+			const lastMessage = messages[messages.length - 1];
+			const lastContent = lastMessage.content;
