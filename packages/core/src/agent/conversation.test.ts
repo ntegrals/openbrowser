@@ -158,3 +158,43 @@ describe('ConversationManager', () => {
 			// The last message should still have its image
 			const lastMessage = messages[messages.length - 1];
 			const lastContent = lastMessage.content;
+			expect(Array.isArray(lastContent)).toBe(true);
+			if (Array.isArray(lastContent)) {
+				const hasImage = lastContent.some(
+					(p: any) => typeof p === 'object' && p.type === 'image',
+				);
+				expect(hasImage).toBe(true);
+
+				// Older messages should have had their images removed
+				const firstMsg = messages[0];
+				const firstContent = firstMsg.content;
+				if (Array.isArray(firstContent)) {
+					const firstHasImage = firstContent.some(
+						(p: any) => typeof p === 'object' && p.type === 'image',
+					);
+					expect(firstHasImage).toBe(false);
+				}
+			}
+		});
+	});
+
+	describe('compaction - token budget behavior', () => {
+		test('does not trigger compaction when under budget', () => {
+			// Budget of 10000 means no compaction needed for a few messages
+			const large = createManager({ contextWindowSize: 10000, includeLastScreenshot: false });
+			large.addStateMessage('Short state', undefined, 1);
+			large.addAssistantMessage('Short response', 1);
+
+			const messages = large.getMessages();
+			// No summaries should be present
+			const summaryMessages = messages.filter(
+				(m) =>
+					typeof m.content === 'string' &&
+					m.content.includes('omitted to save tokens'),
+			);
+			expect(summaryMessages).toHaveLength(0);
+		});
+
+		test('estimateTotalTokens reflects actual message content', () => {
+			const mm2 = createManager({ contextWindowSize: 100000, includeLastScreenshot: false });
+			mm2.addStateMessage('A'.repeat(400), undefined, 1); // ~100 tokens
