@@ -518,3 +518,43 @@ describe('ConversationManager', () => {
 			const model = createMockModel('Summarized: visited pages and clicked buttons');
 			// Use large contextWindowSize so getMessages() doesn't trigger basic compact(),
 			// but low targetTokens so the LLM compaction decides to run.
+			const longText = 'A'.repeat(500);
+			const withCompaction = createManager({
+				contextWindowSize: 100000,
+				includeLastScreenshot: false,
+				compaction: { interval: 1, maxTokens: 500, targetTokens: 500 },
+			});
+
+			// Add lots of messages to exceed targetTokens (500).
+			// Each 500-char message = ~125 tokens. 10 messages = ~1250 tokens > 500.
+			for (let i = 1; i <= 10; i++) {
+				withCompaction.addStateMessage(`${longText} step ${i}`, undefined, i);
+				withCompaction.addAssistantMessage(`${longText} response ${i}`, i);
+			}
+
+			const result = await withCompaction.compactWithLlm(model);
+			expect(result).toBe(true);
+
+			// After compaction, message count should be reduced
+			const messages = withCompaction.getMessages();
+			expect(messages.length).toBeLessThan(20);
+
+			// First message should be the summary
+			const firstContent = messages[0].content;
+			expect(typeof firstContent).toBe('string');
+			expect(firstContent as string).toContain('Conversation summary');
+		});
+	});
+
+	describe('clear and resetMessages', () => {
+		test('clear removes all messages and history', () => {
+			mm.setInstructionBuilder('System');
+			mm.addStateMessage('State', undefined, 1);
+			mm.addAssistantMessage('Response', 1);
+
+			mm.clear();
+
+			expect(mm.messageCount).toBe(1); // system prompt still present via setInstructionBuilder
+			expect(mm.getConversationEntrys()).toHaveLength(0);
+			expect(mm.step).toBe(0);
+		});
