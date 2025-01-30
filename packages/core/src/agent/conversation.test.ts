@@ -238,3 +238,43 @@ describe('ConversationManager', () => {
 			const items = mm.getConversationEntrys();
 			expect(items).toHaveLength(3);
 			expect(items[0].category).toBe('state');
+			expect(items[1].category).toBe('assistant');
+			expect(items[2].category).toBe('action_result');
+		});
+
+		test('history items include step number', () => {
+			mm.addStateMessage('State', undefined, 5);
+			const items = mm.getConversationEntrys();
+			expect(items[0].step).toBe(5);
+		});
+
+		test('history items include truncated summary', () => {
+			const longText = 'a'.repeat(200);
+			mm.addStateMessage(longText, undefined, 1);
+			const items = mm.getConversationEntrys();
+			// Summary should be truncated to 120 chars
+			expect(items[0].summary.length).toBeLessThanOrEqual(123); // 120 + '...'
+		});
+
+		test('history items track screenshot presence', () => {
+			mm.addStateMessage('State', 'screenshot_data', 1);
+			const items = mm.getConversationEntrys();
+			expect(items[0].hasScreenshot).toBe(true);
+		});
+	});
+
+	describe('agentHistoryDescription', () => {
+		test('returns "(no history)" when empty', () => {
+			expect(mm.agentHistoryDescription()).toBe('(no history)');
+		});
+
+		test('shows all steps when under stepLimitShown', () => {
+			mm.addStateMessage('State 1', undefined, 1);
+			mm.addAssistantMessage('Agent 1', 1);
+			mm.addStateMessage('State 2', undefined, 2);
+			mm.addAssistantMessage('Agent 2', 2);
+
+			const desc = mm.agentHistoryDescription(10);
+			expect(desc).toContain('Step 1:');
+			expect(desc).toContain('Step 2:');
+		});
