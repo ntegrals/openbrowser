@@ -318,3 +318,43 @@ describe('ConversationManager', () => {
 
 		test('ephemeral message is removed after being consumed', () => {
 			mm.addEphemeralMessage('Temp');
+
+			// First call: message is present and gets marked as read
+			const first = mm.getMessages();
+			expect(first.some((m) => typeof m.content === 'string' && m.content === 'Temp')).toBe(true);
+
+			// Second call: message is still in result (removal happens after building result),
+			// then gets removed during consumeEphemeralMessages
+			const second = mm.getMessages();
+
+			// Third call: message is now actually gone from this.messages
+			const third = mm.getMessages();
+			const found = third.some(
+				(m) => typeof m.content === 'string' && m.content === 'Temp',
+			);
+			expect(found).toBe(false);
+		});
+
+		test('ephemeral message with assistant role', () => {
+			mm.addEphemeralMessage('Agent thought', 'assistant');
+			const messages = mm.getMessages();
+			const found = messages.find(
+				(m) => m.role === 'assistant' && m.content === 'Agent thought',
+			);
+			expect(found).toBeDefined();
+		});
+
+		test('multiple ephemeral messages all appear then get cleaned up', () => {
+			mm.addEphemeralMessage('Temp 1');
+			mm.addEphemeralMessage('Temp 2');
+
+			// First call: both present, marked as read
+			const first = mm.getMessages();
+			expect(first).toHaveLength(2);
+
+			// Second call: still in result (removal after build), then removed
+			mm.getMessages();
+
+			// Third call: messages have been removed
+			const third = mm.getMessages();
+			expect(third).toHaveLength(0);
