@@ -78,3 +78,43 @@ describe('ConversationManager', () => {
 		test('includes screenshot when provided and vision enabled', () => {
 			mm.addStateMessage('State', 'base64screenshot', 1);
 			const messages = mm.getMessages();
+			const content = messages[0].content;
+			expect(Array.isArray(content)).toBe(true);
+			if (Array.isArray(content)) {
+				expect(content).toHaveLength(2);
+				expect(content[0]).toEqual({ type: 'text', text: 'State' });
+				expect(content[1]).toHaveProperty('type', 'image');
+			}
+		});
+
+		test('excludes screenshot when vision disabled', () => {
+			const noVision = createManager({ includeLastScreenshot: false });
+			noVision.addStateMessage('State', 'base64screenshot', 1);
+			const messages = noVision.getMessages();
+			const content = messages[0].content;
+			// Content should be text-only array
+			expect(Array.isArray(content)).toBe(true);
+			if (Array.isArray(content)) {
+				expect(content).toHaveLength(1);
+				expect(content[0]).toHaveProperty('type', 'text');
+			}
+		});
+
+		test('updates messageCount', () => {
+			expect(mm.messageCount).toBe(0);
+			mm.addStateMessage('State 1', undefined, 1);
+			expect(mm.messageCount).toBe(1);
+			mm.addStateMessage('State 2', undefined, 2);
+			expect(mm.messageCount).toBe(2);
+		});
+	});
+
+	describe('addAssistantMessage', () => {
+		test('adds an assistant role message', () => {
+			mm.addAssistantMessage('Agent response', 1);
+			const messages = mm.getMessages();
+			expect(messages[0].role).toBe('assistant');
+			expect(messages[0].content).toBe('Agent response');
+		});
+	});
+
