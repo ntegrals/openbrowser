@@ -78,3 +78,43 @@ describe('StallDetector', () => {
 			const result = detector.isStuck();
 			expect(result.stuck).toBe(false);
 		});
+
+		test('flags the same action repeated maxRepeatedActions times (default 3)', () => {
+			detector.recordAction([clickAction(5)]);
+			detector.recordAction([clickAction(5)]);
+			detector.recordAction([clickAction(5)]);
+
+			const result = detector.isStuck();
+			expect(result.stuck).toBe(true);
+			expect(result.reason).toContain('repeated');
+			expect(result.reason).toContain('3');
+		});
+
+		test('flags repeated multi-action steps', () => {
+			const actions: Command[] = [clickAction(1), inputAction(2, 'hello')];
+			detector.recordAction(actions);
+			detector.recordAction(actions);
+			detector.recordAction(actions);
+
+			const result = detector.isStuck();
+			expect(result.stuck).toBe(true);
+		});
+
+		test('does not flag when only two repeated actions (below threshold)', () => {
+			detector.recordAction([clickAction(5)]);
+			detector.recordAction([clickAction(5)]);
+
+			const result = detector.isStuck();
+			expect(result.stuck).toBe(false);
+		});
+
+		test('custom maxRepeatedActions threshold', () => {
+			// With maxRepeatedActions=5, only 5+ trailing repeats should trigger.
+			// Note: cycle detection (A->B->A->B) fires with 4 identical actions
+			// because all 4 being the same matches the pattern. So we can only test
+			// that at exactly 3 trailing repeats (below our custom threshold of 5,
+			// and below the cycle check threshold of 4 identical entries), it's not stuck.
+			const custom = new StallDetector({ maxRepeatedActions: 5 });
+			custom.recordAction([clickAction(10)]); // prefix to avoid cycle match
+			custom.recordAction([clickAction(1)]);
+			custom.recordAction([clickAction(1)]);
