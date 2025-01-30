@@ -438,3 +438,43 @@ describe('ConversationManager', () => {
 
 	describe('sensitive data filtering', () => {
 		test('masks sensitive values in outgoing messages', () => {
+			const sensitive = createManager({
+				maskedValues: { password: 'secret123', apiKey: 'key-abc' },
+			});
+			sensitive.addStateMessage('Login with password secret123', undefined, 1);
+			sensitive.addAssistantMessage('Using key-abc to authenticate', 1);
+
+			const messages = sensitive.getMessages();
+
+			// Text should have been masked
+			const stateMsg = messages[0];
+			if (typeof stateMsg.content === 'string') {
+				expect(stateMsg.content).not.toContain('secret123');
+				expect(stateMsg.content).toContain('***');
+			} else if (Array.isArray(stateMsg.content)) {
+				const textPart = stateMsg.content.find((p: any) => p.type === 'text');
+				expect((textPart as any).text).not.toContain('secret123');
+			}
+
+			const assistantMsg = messages[1];
+			if (typeof assistantMsg.content === 'string') {
+				expect(assistantMsg.content).not.toContain('key-abc');
+				expect(assistantMsg.content).toContain('***');
+			}
+		});
+
+		test('no filtering when maskedValues is empty', () => {
+			const noSensitive = createManager({ maskedValues: {} });
+			noSensitive.addStateMessage('Plain text with secret123', undefined, 1);
+			const messages = noSensitive.getMessages();
+
+			const content = messages[0].content;
+			if (Array.isArray(content)) {
+				const textPart = content.find((p: any) => p.type === 'text');
+				expect((textPart as any).text).toContain('secret123');
+			}
+		});
+
+		test('no filtering when maskedValues is not set', () => {
+			mm.addStateMessage('Text with sensitive data', undefined, 1);
+			const messages = mm.getMessages();
