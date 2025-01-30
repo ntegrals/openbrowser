@@ -358,3 +358,43 @@ describe('ConversationManager', () => {
 			// Third call: messages have been removed
 			const third = mm.getMessages();
 			expect(third).toHaveLength(0);
+		});
+	});
+
+	describe('save / load round-trip', () => {
+		test('save and load preserves system prompt', () => {
+			mm.setInstructionBuilder('My system prompt');
+			mm.addStateMessage('State 1', undefined, 1);
+
+			const saved = mm.save();
+			const restored = createManager();
+			restored.load(saved);
+
+			const messages = restored.getMessages();
+			expect(messages[0].role).toBe('system');
+			expect(messages[0].content).toBe('My system prompt');
+		});
+
+		test('save and load preserves messages', () => {
+			mm.addStateMessage('State 1', undefined, 1);
+			mm.addAssistantMessage('Response 1', 1);
+			mm.addCommandResultMessage('Result 1', 1);
+
+			const saved = mm.save();
+			const restored = createManager();
+			restored.load(saved);
+
+			const messages = restored.getMessages();
+			expect(messages).toHaveLength(3);
+			expect(messages[0].role).toBe('user');
+			expect(messages[1].role).toBe('assistant');
+			expect(messages[2].role).toBe('user');
+		});
+
+		test('save and load preserves history items', () => {
+			mm.addStateMessage('State 1', undefined, 1);
+			mm.addAssistantMessage('Response 1', 1);
+
+			const saved = mm.save();
+			const restored = createManager();
+			restored.load(saved);
