@@ -918,3 +918,8 @@ describe('Agent', () => {
 			const result = await agent.run();
 
 			expect(result.history).toBeDefined();
+			expect(result.history.task).toBe('Find the price of the product');
+			expect(typeof result.history.finalResult).toBe('function');
+		});
+	});
+});
