@@ -558,3 +558,43 @@ describe('ConversationManager', () => {
 			expect(mm.getConversationEntrys()).toHaveLength(0);
 			expect(mm.step).toBe(0);
 		});
+
+		test('resetMessages removes messages but preserves history', () => {
+			mm.addStateMessage('State', undefined, 1);
+			mm.addAssistantMessage('Response', 1);
+
+			const historyBefore = mm.getConversationEntrys().length;
+			mm.resetMessages();
+
+			// Messages cleared
+			const messages = mm.getMessages();
+			expect(messages).toHaveLength(0);
+
+			// History preserved
+			expect(mm.getConversationEntrys()).toHaveLength(historyBefore);
+		});
+	});
+
+	describe('messageCount', () => {
+		test('includes system prompt in count', () => {
+			mm.setInstructionBuilder('System');
+			expect(mm.messageCount).toBe(1);
+
+			mm.addStateMessage('State', undefined, 1);
+			expect(mm.messageCount).toBe(2);
+		});
+
+		test('does not count system prompt when not set', () => {
+			expect(mm.messageCount).toBe(0);
+			mm.addStateMessage('State', undefined, 1);
+			expect(mm.messageCount).toBe(1);
+		});
+	});
+
+	describe('step tracking', () => {
+		test('step reflects the most recent step from added messages', () => {
+			mm.addStateMessage('State 1', undefined, 1);
+			expect(mm.step).toBe(1);
+
+			mm.addStateMessage('State 5', undefined, 5);
+			expect(mm.step).toBe(5);
