@@ -278,3 +278,43 @@ describe('ConversationManager', () => {
 			expect(desc).toContain('Step 1:');
 			expect(desc).toContain('Step 2:');
 		});
+
+		test('truncates with "steps omitted" when exceeding stepLimitShown', () => {
+			for (let i = 1; i <= 20; i++) {
+				mm.addStateMessage(`State ${i}`, undefined, i);
+				mm.addAssistantMessage(`Agent ${i}`, i);
+			}
+
+			const desc = mm.agentHistoryDescription(4);
+			expect(desc).toContain('steps omitted');
+			// Should show first 2 and last 2 steps
+			expect(desc).toContain('Step 1:');
+			expect(desc).toContain('Step 2:');
+			expect(desc).toContain('Step 19:');
+			expect(desc).toContain('Step 20:');
+		});
+
+		test('includes category prefixes in description', () => {
+			mm.addStateMessage('Page loaded', undefined, 1);
+			mm.addAssistantMessage('Clicking button', 1);
+			mm.addCommandResultMessage('click: success', 1);
+
+			const desc = mm.agentHistoryDescription();
+			expect(desc).toContain('State:');
+			expect(desc).toContain('Agent:');
+			expect(desc).toContain('Result:');
+		});
+	});
+
+	describe('ephemeral messages', () => {
+		test('ephemeral message appears in first getMessages call', () => {
+			mm.addEphemeralMessage('Temporary instruction');
+			const messages = mm.getMessages();
+			const found = messages.some(
+				(m) => typeof m.content === 'string' && m.content === 'Temporary instruction',
+			);
+			expect(found).toBe(true);
+		});
+
+		test('ephemeral message is removed after being consumed', () => {
+			mm.addEphemeralMessage('Temp');
