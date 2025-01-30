@@ -398,3 +398,43 @@ describe('ConversationManager', () => {
 			const saved = mm.save();
 			const restored = createManager();
 			restored.load(saved);
+
+			const items = restored.getConversationEntrys();
+			expect(items).toHaveLength(2);
+			expect(items[0].category).toBe('state');
+			expect(items[1].category).toBe('assistant');
+		});
+
+		test('save and load preserves currentStep', () => {
+			mm.addStateMessage('State', undefined, 7);
+			const saved = mm.save();
+			expect(saved.currentStep).toBe(7);
+
+			const restored = createManager();
+			restored.load(saved);
+			expect(restored.step).toBe(7);
+		});
+
+		test('save strips screenshots (text only in serialized form)', () => {
+			mm.addStateMessage('State with screenshot', 'base64data', 1);
+			const saved = mm.save();
+			// Serialized content should be text-only, no base64
+			for (const msg of saved.messages) {
+				expect(msg.content).not.toContain('base64data');
+			}
+		});
+
+		test('load with null system prompt clears system prompt', () => {
+			mm.setInstructionBuilder('Initial prompt');
+			const saved = mm.save();
+			saved.systemPrompt = null;
+
+			mm.load(saved);
+			const messages = mm.getMessages();
+			const hasSystem = messages.some((m) => m.role === 'system');
+			expect(hasSystem).toBe(false);
+		});
+	});
+
+	describe('sensitive data filtering', () => {
+		test('masks sensitive values in outgoing messages', () => {
