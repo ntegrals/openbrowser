@@ -878,3 +878,43 @@ describe('Agent', () => {
 	});
 
 	describe('getAccumulatedCost', () => {
+		test('returns a copy of cost data', () => {
+			const agent = new Agent(createDefaultAgentOptions());
+			const cost1 = agent.getAccumulatedCost();
+			const cost2 = agent.getAccumulatedCost();
+			expect(cost1).toEqual(cost2);
+			expect(cost1).not.toBe(cost2);
+		});
+	});
+
+	describe('run result structure', () => {
+		test('result contains all expected fields', async () => {
+			const doneModel = createDoneOnStepModel(1, 'Answer');
+			const tools = createMockTools([
+				{ success: true, isDone: true, extractedContent: 'Answer' },
+			]);
+
+			const agent = new Agent(
+				createDefaultAgentOptions({ model: doneModel, tools }),
+			);
+			const result = await agent.run();
+
+			expect(result).toHaveProperty('finalResult');
+			expect(result).toHaveProperty('success');
+			expect(result).toHaveProperty('history');
+			expect(result).toHaveProperty('errors');
+			expect(result).toHaveProperty('totalCost');
+		});
+
+		test('result.history is an ExecutionLog', async () => {
+			const doneModel = createDoneOnStepModel(1, 'Answer');
+			const tools = createMockTools([
+				{ success: true, isDone: true, extractedContent: 'Answer' },
+			]);
+
+			const agent = new Agent(
+				createDefaultAgentOptions({ model: doneModel, tools }),
+			);
+			const result = await agent.run();
+
+			expect(result.history).toBeDefined();
