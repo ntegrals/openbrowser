@@ -638,3 +638,43 @@ describe('Agent', () => {
 				(e) => e.includes('maximum steps'),
 			);
 			expect(hasMaxStepsError).toBe(true);
+		});
+
+		test('run() accepts stepLimit parameter to override settings', async () => {
+			const model = createMockModel();
+			const tools = createMockTools([{ success: true }]);
+
+			const agent = new Agent(
+				createDefaultAgentOptions({
+					model,
+					tools,
+					settings: {
+						stepLimit: 100,
+						enableScreenshots: false,
+						commandDelayMs: 0,
+						retryDelay: 0,
+						autoNavigateToUrls: false,
+						contextWindowSize: 50000,
+					},
+				}),
+			);
+
+			const result = await agent.run(2);
+
+			const hasMaxStepsError = result.errors.some(
+				(e) => e.includes('maximum steps'),
+			);
+			expect(hasMaxStepsError).toBe(true);
+		});
+	});
+
+	describe('sensitive data filtering', () => {
+		test('filters sensitive values from action results', async () => {
+			const tools = createMockTools([
+				{
+					success: true,
+					isDone: true,
+					extractedContent: 'Your API key is sk-12345 and password is hunter2',
+				},
+			]);
+
