@@ -598,3 +598,6 @@ describe('ConversationManager', () => {
 
 			mm.addStateMessage('State 5', undefined, 5);
 			expect(mm.step).toBe(5);
+		});
+	});
+});
