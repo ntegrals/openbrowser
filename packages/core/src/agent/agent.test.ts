@@ -718,3 +718,43 @@ describe('Agent', () => {
 					isDone: true,
 					extractedContent: 'Plain text result',
 				},
+			]);
+
+			const model = createDoneOnStepModel(1, 'Done');
+			const agent = new Agent(
+				createDefaultAgentOptions({ model, tools }),
+			);
+
+			const result = await agent.run();
+			expect(result.finalResult).toBe('Plain text result');
+		});
+	});
+
+	describe('history recording', () => {
+		test('history entries contain step number', async () => {
+			let callCount = 0;
+			const tools = createMockTools();
+			(tools.executeActions as any) = mock(async () => {
+				callCount++;
+				if (callCount >= 2) {
+					return [{ success: true, isDone: true, extractedContent: 'Done' }];
+				}
+				return [{ success: true }];
+			});
+
+			const model = createDoneOnStepModel(2, 'Done');
+			const agent = new Agent(
+				createDefaultAgentOptions({ model, tools }),
+			);
+			await agent.run();
+
+			const history = agent.getHistory();
+			expect(history.entries.length).toBeGreaterThanOrEqual(1);
+			expect(history.entries[0].step).toBe(1);
+		});
+
+		test('history entries contain browser state info', async () => {
+			const doneModel = createDoneOnStepModel(1, 'Done');
+			const tools = createMockTools([
+				{ success: true, isDone: true, extractedContent: 'Done' },
+			]);
