@@ -598,3 +598,43 @@ describe('Agent', () => {
 						contextWindowSize: 50000,
 					},
 				}),
+			);
+
+			const runPromise = agent.run();
+
+			// Stop after a brief moment
+			await new Promise((r) => setTimeout(r, 50));
+			agent.stop();
+
+			await runPromise;
+			const state = agent.getState();
+			expect(state.isRunning).toBe(false);
+		});
+	});
+
+	describe('max steps reached', () => {
+		test('returns error when max steps exceeded without done', async () => {
+			const model = createMockModel();
+			const tools = createMockTools([{ success: true }]);
+
+			const agent = new Agent(
+				createDefaultAgentOptions({
+					model,
+					tools,
+					settings: {
+						stepLimit: 3,
+						enableScreenshots: false,
+						commandDelayMs: 0,
+						retryDelay: 0,
+						autoNavigateToUrls: false,
+						contextWindowSize: 50000,
+					},
+				}),
+			);
+
+			const result = await agent.run();
+
+			const hasMaxStepsError = result.errors.some(
+				(e) => e.includes('maximum steps'),
+			);
+			expect(hasMaxStepsError).toBe(true);
