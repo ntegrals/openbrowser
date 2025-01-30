@@ -678,3 +678,43 @@ describe('Agent', () => {
 				},
 			]);
 
+			const model = createDoneOnStepModel(1, 'Done');
+			const agent = new Agent(
+				createDefaultAgentOptions({
+					model,
+					tools,
+					settings: {
+						stepLimit: 5,
+						enableScreenshots: false,
+						commandDelayMs: 0,
+						retryDelay: 0,
+						autoNavigateToUrls: false,
+						contextWindowSize: 50000,
+						maskedValues: {
+							apiKey: 'sk-12345',
+							password: 'hunter2',
+						},
+					},
+				}),
+			);
+
+			const result = await agent.run();
+
+			const history = agent.getHistory();
+			for (const entry of history.entries) {
+				for (const ar of entry.actionResults) {
+					if (ar.extractedContent) {
+						expect(ar.extractedContent).not.toContain('sk-12345');
+						expect(ar.extractedContent).not.toContain('hunter2');
+					}
+				}
+			}
+		});
+
+		test('returns unmodified results when no sensitive data configured', async () => {
+			const tools = createMockTools([
+				{
+					success: true,
+					isDone: true,
+					extractedContent: 'Plain text result',
+				},
