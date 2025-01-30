@@ -758,3 +758,43 @@ describe('Agent', () => {
 			const tools = createMockTools([
 				{ success: true, isDone: true, extractedContent: 'Done' },
 			]);
+
+			const agent = new Agent(
+				createDefaultAgentOptions({ model: doneModel, tools }),
+			);
+			await agent.run();
+
+			const history = agent.getHistory();
+			expect(history.entries.length).toBeGreaterThanOrEqual(1);
+			expect(history.entries[0].browserState.url).toBe('https://example.com');
+			expect(history.entries[0].browserState.title).toBe('Example Page');
+		});
+
+		test('history entries contain usage info', async () => {
+			const doneModel = createDoneOnStepModel(1, 'Done');
+			const tools = createMockTools([
+				{ success: true, isDone: true, extractedContent: 'Done' },
+			]);
+
+			const agent = new Agent(
+				createDefaultAgentOptions({ model: doneModel, tools }),
+			);
+			await agent.run();
+
+			const history = agent.getHistory();
+			expect(history.entries.length).toBeGreaterThanOrEqual(1);
+			expect(history.entries[0].usage).toBeDefined();
+			expect(history.entries[0].usage!.inputTokens).toBe(100);
+			expect(history.entries[0].usage!.outputTokens).toBe(50);
+		});
+
+		test('history is finalized after run', async () => {
+			const doneModel = createDoneOnStepModel(1, 'Done');
+			const tools = createMockTools([
+				{ success: true, isDone: true, extractedContent: 'Done' },
+			]);
+
+			const agent = new Agent(
+				createDefaultAgentOptions({ model: doneModel, tools }),
+			);
+			await agent.run();
