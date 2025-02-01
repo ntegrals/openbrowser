@@ -158,3 +158,43 @@ describe('StallDetector', () => {
 			detector.recordAction([clickAction(2)]);
 			detector.recordAction([clickAction(3)]);
 			detector.recordAction([clickAction(1)]);
+			detector.recordAction([clickAction(2)]);
+			detector.recordAction([clickAction(3)]);
+
+			const result = detector.isStuck();
+			expect(result.stuck).toBe(true);
+			expect(result.reason).toContain('3-step');
+		});
+
+		test('does not detect partial triple cycle', () => {
+			detector.recordAction([clickAction(1)]);
+			detector.recordAction([clickAction(2)]);
+			detector.recordAction([clickAction(3)]);
+			detector.recordAction([clickAction(1)]);
+			detector.recordAction([clickAction(2)]);
+
+			// Only 5 entries, needs 6 for triple check
+			const result = detector.isStuck();
+			expect(result.stuck).toBe(false);
+		});
+	});
+
+	describe('fingerprint-based stuck detection', () => {
+		test('detects repeated page fingerprints', () => {
+			const fp = makeFingerprint();
+			detector.recordFingerprint(fp);
+			detector.recordFingerprint(fp);
+			detector.recordFingerprint(fp);
+
+			const result = detector.isStuck();
+			expect(result.stuck).toBe(true);
+			expect(result.reason).toContain('Page state unchanged');
+		});
+
+		test('different fingerprints do not trigger stuck', () => {
+			detector.recordFingerprint(makeFingerprint({ domHash: 'hash1' }));
+			detector.recordFingerprint(makeFingerprint({ domHash: 'hash2' }));
+			detector.recordFingerprint(makeFingerprint({ domHash: 'hash3' }));
+
+			const result = detector.isStuck();
+			expect(result.stuck).toBe(false);
