@@ -278,3 +278,43 @@ describe('StallDetector', () => {
 			const result = detector.isStuck();
 			expect(result.stuck).toBe(true);
 			expect(result.severity).toBe(0);
+		});
+
+		test('severity 1 at 5+ total repetitions via cycle detection', () => {
+			// Cycle detection path uses getSeverity(this.totalRepetitions)
+			// so accumulating enough totalRepetitions can reach severity 1.
+			const det = new StallDetector({ maxRepeatedActions: 3 });
+
+			// First: accumulate 3 via repeated actions
+			for (let i = 0; i < 3; i++) {
+				det.recordAction([clickAction(1)]);
+			}
+			det.isStuck(); // totalRepetitions += 3
+
+			// Break the trailing sequence, then trigger a 2-cycle
+			det.recordAction([clickAction(10)]);
+			// A->B->A->B cycle adds 2 to totalRepetitions -> total 5
+			det.recordAction([clickAction(20)]);
+			det.recordAction([clickAction(10)]);
+			det.recordAction([clickAction(20)]);
+			const result = det.isStuck();
+			expect(result.stuck).toBe(true);
+			// totalRepetitions = 3 + 2 = 5, getSeverity(5) = 1
+			expect(result.severity).toBe(1);
+		});
+
+		test('nudge message contains appropriate text', () => {
+			for (let i = 0; i < 3; i++) {
+				detector.recordAction([clickAction(1)]);
+			}
+			const msg = detector.getLoopNudgeMessage();
+			expect(msg).toContain('Warning:');
+			expect(msg.length).toBeGreaterThan(0);
+		});
+	});
+
+	describe('action hash normalization', () => {
+		test('click actions normalized by index only', () => {
+			// Two click actions with same index but different click counts
+			// should both normalize to "click:5"
+			const d1 = new StallDetector();
