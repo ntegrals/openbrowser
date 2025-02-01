@@ -438,3 +438,26 @@ describe('hashTextContent', () => {
 		expect(hash1).toBe(hash2);
 	});
 
+	test('normalizes case: same hash for different casing', () => {
+		const hash1 = hashTextContent('Hello World');
+		const hash2 = hashTextContent('hello world');
+		expect(hash1).toBe(hash2);
+	});
+
+	test('normalizes whitespace: collapses multiple spaces', () => {
+		const hash1 = hashTextContent('hello    world');
+		const hash2 = hashTextContent('hello world');
+		expect(hash1).toBe(hash2);
+	});
+
+	test('removes punctuation for content-based matching', () => {
+		const hash1 = hashTextContent('hello, world!');
+		const hash2 = hashTextContent('hello world');
+		expect(hash1).toBe(hash2);
+	});
+
+	test('handles empty string', () => {
+		const hash = hashTextContent('');
+		expect(hash).toBe('0');
+	});
+});
