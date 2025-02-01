@@ -118,3 +118,43 @@ describe('BridgeServer', () => {
 			expect(result.tools.length).toBeGreaterThan(0);
 
 			// Each tool should have name, description, inputSchema
+			const firstTool = result.tools[0];
+			expect(firstTool.name).toBeDefined();
+			expect(firstTool.description).toBeDefined();
+			expect(firstTool.inputSchema).toBeDefined();
+
+			// Tool names should be prefixed with browser_
+			expect(firstTool.name.startsWith('browser_')).toBe(true);
+		});
+	});
+
+	describe('handleRequest: tools/call', () => {
+		test('executes a browser tool and returns result', async () => {
+			const response = await server.handleRequest(
+				makeRequest('tools/call', 1, {
+					name: 'browser_tap',
+					arguments: { index: 0 },
+				}),
+			);
+
+			expect(response.result).toBeDefined();
+			const result = response.result as any;
+			expect(result.content).toBeDefined();
+			expect(Array.isArray(result.content)).toBe(true);
+			expect(result.content[0].type).toBe('text');
+			expect(result.isError).toBe(false);
+		});
+
+		test('returns error for unknown tool', async () => {
+			const response = await server.handleRequest(
+				makeRequest('tools/call', 1, {
+					name: 'unknown_tool',
+					arguments: {},
+				}),
+			);
+
+			expect(response.error).toBeDefined();
+			expect(response.error!.code).toBe(-32602);
+			expect(response.error!.message).toContain('Unknown tool');
+		});
+
