@@ -238,3 +238,43 @@ describe('StallDetector', () => {
 			for (let i = 0; i < 5; i++) {
 				// Different domHash/scrollY so fingerprint hashing is distinct,
 				// but same URL and elementCount triggers stagnant detection.
+				detector5.recordFingerprint(
+					makeFingerprint({
+						domHash: `hash_${i}`,
+						scrollY: i * 200,
+						elementCount: 50,
+					}),
+				);
+			}
+
+			const result = detector5.isStuck();
+			expect(result.stuck).toBe(true);
+			expect(result.reason).toContain('stagnant');
+		});
+
+		test('different URLs do not trigger stagnant detection', () => {
+			for (let i = 0; i < 5; i++) {
+				detector.recordFingerprint(
+					makeFingerprint({
+						url: `https://example.com/page${i}`,
+						domHash: `hash_${i}`,
+						scrollY: i * 200,
+						elementCount: 50,
+					}),
+				);
+			}
+
+			const result = detector.isStuck();
+			expect(result.stuck).toBe(false);
+		});
+	});
+
+	describe('escalating nudge messages', () => {
+		test('severity 0 for repetitions below 5', () => {
+			// 3 repetitions -> gets flagged as stuck but severity 0
+			for (let i = 0; i < 3; i++) {
+				detector.recordAction([clickAction(1)]);
+			}
+			const result = detector.isStuck();
+			expect(result.stuck).toBe(true);
+			expect(result.severity).toBe(0);
