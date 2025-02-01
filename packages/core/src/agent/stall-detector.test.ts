@@ -198,3 +198,43 @@ describe('StallDetector', () => {
 
 			const result = detector.isStuck();
 			expect(result.stuck).toBe(false);
+		});
+
+		test('scroll position bucketed (200px buckets) - same bucket triggers stuck', () => {
+			// scrollY 0 and 100 are in the same bucket (both floor to 0)
+			detector.recordFingerprint(makeFingerprint({ scrollY: 0 }));
+			detector.recordFingerprint(makeFingerprint({ scrollY: 50 }));
+			detector.recordFingerprint(makeFingerprint({ scrollY: 100 }));
+
+			const result = detector.isStuck();
+			expect(result.stuck).toBe(true);
+		});
+
+		test('different scroll buckets not considered stuck', () => {
+			detector.recordFingerprint(makeFingerprint({ scrollY: 0 }));
+			detector.recordFingerprint(makeFingerprint({ scrollY: 200 }));
+			detector.recordFingerprint(makeFingerprint({ scrollY: 400 }));
+
+			const result = detector.isStuck();
+			expect(result.stuck).toBe(false);
+		});
+
+		test('custom maxRepeatedFingerprints threshold', () => {
+			const custom = new StallDetector({ maxRepeatedFingerprints: 5 });
+			const fp = makeFingerprint();
+			for (let i = 0; i < 4; i++) {
+				custom.recordFingerprint(fp);
+			}
+			expect(custom.isStuck().stuck).toBe(false);
+
+			custom.recordFingerprint(fp);
+			expect(custom.isStuck().stuck).toBe(true);
+		});
+	});
+
+	describe('consecutive stagnant pages detection', () => {
+		test('detects stagnant pages with same URL and similar element count', () => {
+			const detector5 = new StallDetector({ maxStagnantPages: 5 });
+			for (let i = 0; i < 5; i++) {
+				// Different domHash/scrollY so fingerprint hashing is distinct,
+				// but same URL and elementCount triggers stagnant detection.
