@@ -318,3 +318,43 @@ describe('StallDetector', () => {
 			// Two click actions with same index but different click counts
 			// should both normalize to "click:5"
 			const d1 = new StallDetector();
+			const d2 = new StallDetector();
+
+			const act1: Command = { action: 'tap', index: 5, clickCount: 1 };
+			const act2: Command = { action: 'tap', index: 5, clickCount: 2 };
+
+			// Record 3 of each in separate detectors
+			for (let i = 0; i < 3; i++) {
+				d1.recordAction([act1]);
+				d2.recordAction([act2]);
+			}
+
+			// Both should detect as stuck since click is normalized by index
+			expect(d1.isStuck().stuck).toBe(true);
+			expect(d2.isStuck().stuck).toBe(true);
+		});
+
+		test('search queries normalized for order independence', () => {
+			// "best pizza NYC" and "NYC best pizza" should produce same hash
+			const d = new StallDetector();
+			d.recordAction([searchGoogleAction('best pizza NYC')]);
+			d.recordAction([searchGoogleAction('NYC best pizza')]);
+			d.recordAction([searchGoogleAction('pizza best NYC')]);
+
+			expect(d.isStuck().stuck).toBe(true);
+		});
+
+		test('different navigate URLs not considered same action', () => {
+			detector.recordAction([navigateAction('https://a.com')]);
+			detector.recordAction([navigateAction('https://b.com')]);
+			detector.recordAction([navigateAction('https://c.com')]);
+
+			expect(detector.isStuck().stuck).toBe(false);
+		});
+
+		test('scroll actions include direction and index', () => {
+			// Same direction, same index -> stuck
+			for (let i = 0; i < 3; i++) {
+				detector.recordAction([scrollAction('down', 1)]);
+			}
+			expect(detector.isStuck().stuck).toBe(true);
