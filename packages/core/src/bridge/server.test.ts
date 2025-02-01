@@ -78,3 +78,43 @@ describe('BridgeServer', () => {
 
 	beforeEach(() => {
 		browser = makeMockViewport();
+		domService = makeMockPageAnalyzer();
+		tools = new CommandExecutor();
+
+		server = new BridgeServer({
+			browser,
+			domService,
+			tools,
+			name: 'test-server',
+			version: '1.0.0',
+		});
+	});
+
+	describe('handleRequest: initialize', () => {
+		test('returns server info and capabilities', async () => {
+			const response = await server.handleRequest(makeRequest('initialize'));
+
+			expect(response.jsonrpc).toBe('2.0');
+			expect(response.id).toBe(1);
+			expect(response.result).toBeDefined();
+
+			const result = response.result as any;
+			expect(result.protocolVersion).toBe('2024-11-05');
+			expect(result.serverInfo.name).toBe('test-server');
+			expect(result.serverInfo.version).toBe('1.0.0');
+			expect(result.capabilities.tools).toBeDefined();
+			expect(result.capabilities.resources).toBeDefined();
+			expect(result.capabilities.resources.subscribe).toBe(true);
+		});
+	});
+
+	describe('handleRequest: tools/list', () => {
+		test('returns list of available tools', async () => {
+			const response = await server.handleRequest(makeRequest('tools/list'));
+
+			expect(response.result).toBeDefined();
+			const result = response.result as any;
+			expect(Array.isArray(result.tools)).toBe(true);
+			expect(result.tools.length).toBeGreaterThan(0);
+
+			// Each tool should have name, description, inputSchema
