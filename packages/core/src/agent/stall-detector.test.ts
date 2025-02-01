@@ -398,3 +398,43 @@ describe('StallDetector', () => {
 			for (let i = 0; i < 3; i++) {
 				smallWindow.recordAction([clickAction(99)]);
 			}
+
+			// Should still detect the repetition
+			expect(smallWindow.isStuck().stuck).toBe(true);
+		});
+	});
+});
+
+describe('hashPageTree', () => {
+	test('produces consistent hash for same input', () => {
+		const hash1 = hashPageTree('<div>hello</div>');
+		const hash2 = hashPageTree('<div>hello</div>');
+		expect(hash1).toBe(hash2);
+	});
+
+	test('produces different hash for different input', () => {
+		const hash1 = hashPageTree('<div>hello</div>');
+		const hash2 = hashPageTree('<div>world</div>');
+		expect(hash1).not.toBe(hash2);
+	});
+
+	test('returns a base-36 string', () => {
+		const hash = hashPageTree('some content');
+		expect(typeof hash).toBe('string');
+		// Base-36 characters: 0-9, a-z, and optional leading minus
+		expect(hash).toMatch(/^-?[0-9a-z]+$/);
+	});
+
+	test('handles empty string', () => {
+		const hash = hashPageTree('');
+		expect(hash).toBe('0');
+	});
+});
+
+describe('hashTextContent', () => {
+	test('produces consistent hash for same input', () => {
+		const hash1 = hashTextContent('Hello World');
+		const hash2 = hashTextContent('Hello World');
+		expect(hash1).toBe(hash2);
+	});
+
