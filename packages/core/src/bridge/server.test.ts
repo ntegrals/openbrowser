@@ -38,3 +38,43 @@ function makeMockPageAnalyzer() {
 	return {
 		extractState: mock(() =>
 			Promise.resolve({
+				tree: '<html>...</html>',
+				selectorMap: {},
+				elementCount: 5,
+				interactiveElementCount: 2,
+				scrollPosition: { x: 0, y: 0 },
+				viewportSize: { width: 1280, height: 800 },
+				documentSize: { width: 1280, height: 2000 },
+				pixelsAbove: 0,
+				pixelsBelow: 1200,
+			}),
+		),
+		clickElementByIndex: mock(() => Promise.resolve()),
+		inputTextByIndex: mock(() => Promise.resolve()),
+		getElementSelector: mock(() => Promise.resolve('#el')),
+	} as any;
+}
+
+function makeRequest(
+	method: string,
+	id: number | string = 1,
+	params?: Record<string, unknown>,
+): MCPRequest & { id: number | string } {
+	return {
+		jsonrpc: '2.0' as const,
+		id,
+		method,
+		...(params ? { params } : {}),
+	};
+}
+
+// ── Tests ──
+
+describe('BridgeServer', () => {
+	let server: BridgeServer;
+	let browser: ReturnType<typeof makeMockViewport>;
+	let domService: ReturnType<typeof makeMockPageAnalyzer>;
+	let tools: CommandExecutor;
+
+	beforeEach(() => {
+		browser = makeMockViewport();
