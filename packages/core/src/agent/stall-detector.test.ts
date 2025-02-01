@@ -358,3 +358,43 @@ describe('StallDetector', () => {
 				detector.recordAction([scrollAction('down', 1)]);
 			}
 			expect(detector.isStuck().stuck).toBe(true);
+		});
+
+		test('done actions include text prefix', () => {
+			detector.recordAction([doneAction('Task completed successfully')]);
+			detector.recordAction([doneAction('Task completed successfully')]);
+			detector.recordAction([doneAction('Task completed successfully')]);
+
+			expect(detector.isStuck().stuck).toBe(true);
+		});
+	});
+
+	describe('reset', () => {
+		test('clears all history and repetitions', () => {
+			for (let i = 0; i < 3; i++) {
+				detector.recordAction([clickAction(1)]);
+				detector.recordFingerprint(makeFingerprint());
+			}
+			expect(detector.isStuck().stuck).toBe(true);
+
+			detector.reset();
+
+			expect(detector.isStuck().stuck).toBe(false);
+			expect(detector.getTotalRepetitions()).toBe(0);
+			expect(detector.getLoopNudgeMessage()).toBe('');
+		});
+	});
+
+	describe('window size pruning', () => {
+		test('keeps action history within bounds', () => {
+			const smallWindow = new StallDetector({ windowSize: 5 });
+
+			// Record 15 unique actions, then 3 repeated
+			for (let i = 0; i < 15; i++) {
+				smallWindow.recordAction([clickAction(i)]);
+			}
+
+			// Now repeat same action 3 times
+			for (let i = 0; i < 3; i++) {
+				smallWindow.recordAction([clickAction(99)]);
+			}
