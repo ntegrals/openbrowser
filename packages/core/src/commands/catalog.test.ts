@@ -478,3 +478,43 @@ describe('CommandCatalog', () => {
 		});
 
 		test('returns simple object schema when no actions registered', () => {
+			const schema = registry.buildDynamicSchema();
+			const result = schema.safeParse({ action: 'anything' });
+			expect(result.success).toBe(true);
+		});
+
+		test('returns single schema when only one action registered', () => {
+			registry.register({
+				name: 'only',
+				description: 'Only action',
+				schema: z.object({ x: z.number() }),
+				handler: makeHandler(),
+			});
+
+			const schema = registry.buildDynamicSchema();
+			const result = schema.safeParse({ action: 'only', x: 42 });
+			expect(result.success).toBe(true);
+		});
+	});
+
+	describe('registerCustom', () => {
+		test('registers a custom action definition', () => {
+			registry.registerCustom({
+				name: 'custom_action',
+				description: 'A custom action',
+				schema: z.object({ query: z.string() }),
+				handler: async () => ({ success: true }),
+			});
+
+			expect(registry.has('custom_action')).toBe(true);
+		});
+
+		test('registers with terminatesSequence flag', () => {
+			registry.registerCustom({
+				name: 'custom_done',
+				description: 'Custom done',
+				schema: z.object({}),
+				handler: async () => ({ success: true, isDone: true }),
+				terminatesSequence: true,
+			});
+
