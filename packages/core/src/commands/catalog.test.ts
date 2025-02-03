@@ -78,3 +78,43 @@ describe('CommandCatalog', () => {
 
 		test('get returns undefined for unregistered action', () => {
 			expect(registry.get('nonexistent')).toBeUndefined();
+		});
+
+		test('respects excludeActions option', () => {
+			const filtered = new CommandCatalog({ excludeActions: ['blocked'] });
+
+			filtered.register({
+				name: 'blocked',
+				description: 'Should not register',
+				schema: testSchema,
+				handler: makeHandler(),
+			});
+
+			filtered.register({
+				name: 'allowed',
+				description: 'Should register',
+				schema: testSchema,
+				handler: makeHandler(),
+			});
+
+			expect(filtered.has('blocked')).toBe(false);
+			expect(filtered.has('allowed')).toBe(true);
+		});
+
+		test('respects includeActions option', () => {
+			const filtered = new CommandCatalog({ includeActions: ['only_this'] });
+
+			filtered.register({
+				name: 'only_this',
+				description: 'Should register',
+				schema: testSchema,
+				handler: makeHandler(),
+			});
+
+			filtered.register({
+				name: 'other',
+				description: 'Should not register',
+				schema: testSchema,
+				handler: makeHandler(),
+			});
+
