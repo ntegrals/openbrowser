@@ -158,3 +158,43 @@ describe('BridgeServer', () => {
 			expect(response.error!.message).toContain('Unknown tool');
 		});
 
+		test('returns error for tool that does not start with browser_', async () => {
+			const response = await server.handleRequest(
+				makeRequest('tools/call', 1, {
+					name: 'not_browser_tool',
+					arguments: {},
+				}),
+			);
+
+			expect(response.error).toBeDefined();
+			expect(response.error!.code).toBe(-32602);
+		});
+
+		test('returns success content for done action', async () => {
+			const response = await server.handleRequest(
+				makeRequest('tools/call', 1, {
+					name: 'browser_finish',
+					arguments: { text: 'All done' },
+				}),
+			);
+
+			expect(response.result).toBeDefined();
+			const result = response.result as any;
+			expect(result.content[0].text).toContain('All done');
+		});
+	});
+
+	describe('handleRequest: resources/list', () => {
+		test('returns available resources', async () => {
+			const response = await server.handleRequest(makeRequest('resources/list'));
+
+			expect(response.result).toBeDefined();
+			const result = response.result as any;
+			expect(Array.isArray(result.resources)).toBe(true);
+
+			const uris = result.resources.map((r: any) => r.uri);
+			expect(uris).toContain('browser://state');
+			expect(uris).toContain('browser://dom');
+			expect(uris).toContain('browser://screenshot');
+			expect(uris).toContain('browser://tabs');
+
