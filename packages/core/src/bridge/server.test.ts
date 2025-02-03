@@ -278,3 +278,43 @@ describe('BridgeServer', () => {
 			expect(response.error!.message).toContain('Missing required parameter');
 		});
 	});
+
+	describe('handleRequest: unknown method', () => {
+		test('returns method not found error', async () => {
+			const response = await server.handleRequest(
+				makeRequest('unknown/method'),
+			);
+
+			expect(response.error).toBeDefined();
+			expect(response.error!.code).toBe(-32601);
+			expect(response.error!.message).toContain('Method not found');
+		});
+	});
+
+	describe('handleRequest: ping', () => {
+		test('responds to ping', async () => {
+			const response = await server.handleRequest(makeRequest('ping'));
+
+			expect(response.jsonrpc).toBe('2.0');
+			expect(response.result).toEqual({});
+		});
+	});
+
+	describe('handleRequest: resources/subscribe', () => {
+		test('subscribes to a valid resource', async () => {
+			const response = await server.handleRequest(
+				makeRequest('resources/subscribe', 1, { uri: 'browser://state' }),
+			);
+
+			expect(response.result).toEqual({});
+			expect(response.error).toBeUndefined();
+		});
+
+		test('returns error for unknown resource URI', async () => {
+			const response = await server.handleRequest(
+				makeRequest('resources/subscribe', 1, { uri: 'browser://invalid' }),
+			);
+
+			expect(response.error).toBeDefined();
+			expect(response.error!.message).toContain('Unknown resource URI');
+		});
