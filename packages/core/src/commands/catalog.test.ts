@@ -318,3 +318,43 @@ describe('CommandCatalog', () => {
 			registry.register({
 				name: 'abort',
 				description: 'Abort',
+				schema: testSchema,
+				handler: makeHandler(),
+				terminatesSequence: true,
+			});
+			registry.register({
+				name: 'tap',
+				description: 'Click',
+				schema: testSchema,
+				handler: makeHandler(),
+			});
+
+			const terminating = registry.getTerminatingActions();
+			expect(terminating).toContain('finish');
+			expect(terminating).toContain('abort');
+			expect(terminating).not.toContain('tap');
+		});
+	});
+
+	describe('getPromptDescription', () => {
+		test('returns formatted description of all actions', () => {
+			registry.register({
+				name: 'tap',
+				description: 'Click on an element',
+				schema: z.object({
+					index: z.number().describe('Element index'),
+				}),
+				handler: makeHandler(),
+			});
+			registry.register({
+				name: 'finish',
+				description: 'Mark task as done',
+				schema: z.object({
+					text: z.string().describe('Result text'),
+				}),
+				handler: makeHandler(),
+				terminatesSequence: true,
+			});
+
+			const desc = registry.getPromptDescription();
+			expect(desc).toContain('- tap: Click on an element');
