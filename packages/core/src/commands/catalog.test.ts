@@ -438,3 +438,43 @@ describe('CommandCatalog', () => {
 					return { success: true };
 				},
 			});
+
+			// The handler doesn't use named special params, so set should be empty
+			const special = registry.getSpecialParams('with_page');
+			expect(special.size).toBe(0);
+		});
+
+		test('returns empty set for unregistered action', () => {
+			const special = registry.getSpecialParams('nonexistent');
+			expect(special.size).toBe(0);
+		});
+	});
+
+	describe('buildDynamicSchema', () => {
+		test('builds a union schema from registered actions', () => {
+			registry.register({
+				name: 'tap',
+				description: 'Click',
+				schema: z.object({ index: z.number() }),
+				handler: makeHandler(),
+			});
+			registry.register({
+				name: 'finish',
+				description: 'Done',
+				schema: z.object({ text: z.string() }),
+				handler: makeHandler(),
+			});
+
+			const schema = registry.buildDynamicSchema();
+			expect(schema).toBeDefined();
+
+			// Should parse a click action
+			const clickResult = schema.safeParse({ action: 'tap', index: 5 });
+			expect(clickResult.success).toBe(true);
+
+			// Should parse a done action
+			const doneResult = schema.safeParse({ action: 'finish', text: 'finished' });
+			expect(doneResult.success).toBe(true);
+		});
+
+		test('returns simple object schema when no actions registered', () => {
