@@ -518,3 +518,7 @@ describe('CommandCatalog', () => {
 				terminatesSequence: true,
 			});
 
+			expect(registry.isTerminating('custom_done')).toBe(true);
+		});
+	});
+});
