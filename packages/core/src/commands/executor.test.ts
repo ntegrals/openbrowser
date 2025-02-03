@@ -78,3 +78,43 @@ function makeContext(overrides: Partial<ExecutionContext> = {}): ExecutionContex
 
 /**
  * Helper to create action objects. Zod schemas with .default() produce
+ * required fields in the inferred output type, but at runtime the defaults
+ * are applied during validation. We cast through `any` to allow omitting
+ * fields that have Zod defaults.
+ */
+function action(a: Record<string, unknown>): Command {
+	return a as Command;
+}
+
+// ── Tests ──
+
+describe('CommandExecutor', () => {
+	let tools: CommandExecutor;
+
+	beforeEach(() => {
+		tools = new CommandExecutor();
+	});
+
+	describe('constructor and registration', () => {
+		test('registers all built-in actions', () => {
+			const names = tools.registry.getNames();
+			expect(names).toContain('tap');
+			expect(names).toContain('type_text');
+			expect(names).toContain('navigate');
+			expect(names).toContain('back');
+			expect(names).toContain('scroll');
+			expect(names).toContain('press_keys');
+			expect(names).toContain('extract');
+			expect(names).toContain('finish');
+			expect(names).toContain('focus_tab');
+			expect(names).toContain('new_tab');
+			expect(names).toContain('close_tab');
+			expect(names).toContain('web_search');
+			expect(names).toContain('capture');
+			expect(names).toContain('read_page');
+			expect(names).toContain('wait');
+			expect(names).toContain('scroll_to');
+			expect(names).toContain('find');
+			expect(names).toContain('search');
+			expect(names).toContain('extract_structured');
+		});
