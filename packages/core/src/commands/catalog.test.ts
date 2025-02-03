@@ -238,3 +238,43 @@ describe('CommandCatalog', () => {
 
 			const actions = registry.getActionsForDomain('example.com');
 			expect(actions.map((a) => a.name)).toContain('universal');
+		});
+
+		test('returns domain-specific actions matching the domain', () => {
+			registry.register({
+				name: 'github_only',
+				description: 'GitHub',
+				schema: testSchema,
+				handler: makeHandler(),
+				domainFilter: ['github.com'],
+			});
+
+			const githubActions = registry.getActionsForDomain('github.com');
+			expect(githubActions.map((a) => a.name)).toContain('github_only');
+
+			const otherActions = registry.getActionsForDomain('example.com');
+			expect(otherActions.map((a) => a.name)).not.toContain('github_only');
+		});
+
+		test('matches subdomains', () => {
+			registry.register({
+				name: 'google_all',
+				description: 'Google subdomains',
+				schema: testSchema,
+				handler: makeHandler(),
+				domainFilter: ['google.com'],
+			});
+
+			const actions = registry.getActionsForDomain('mail.google.com');
+			expect(actions.map((a) => a.name)).toContain('google_all');
+		});
+
+		test('strips www prefix from domain', () => {
+			registry.register({
+				name: 'example',
+				description: 'Example',
+				schema: testSchema,
+				handler: makeHandler(),
+				domainFilter: ['example.com'],
+			});
+
