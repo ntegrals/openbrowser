@@ -158,3 +158,43 @@ describe('CommandCatalog', () => {
 			});
 
 			const ctx = makeContext();
+			const result = await registry.execute('exec_test', { value: 'hello' }, ctx);
+
+			expect(result.success).toBe(true);
+			expect(result.extractedContent).toBe('result');
+			expect(handler).toHaveBeenCalledTimes(1);
+		});
+
+		test('throws CommandFailedError for unregistered action', async () => {
+			const ctx = makeContext();
+
+			await expect(
+				registry.execute('nonexistent', {}, ctx),
+			).rejects.toThrow(CommandFailedError);
+		});
+
+		test('throws CommandFailedError when schema validation fails', async () => {
+			registry.register({
+				name: 'strict',
+				description: 'Strict schema',
+				schema: z.object({ required: z.string() }),
+				handler: makeHandler(),
+			});
+
+			const ctx = makeContext();
+
+			await expect(
+				registry.execute('strict', { wrong: 'param' }, ctx),
+			).rejects.toThrow(CommandFailedError);
+		});
+
+		test('wraps handler errors in CommandFailedError', async () => {
+			registry.register({
+				name: 'failing',
+				description: 'Fails',
+				schema: testSchema,
+				handler: async () => {
+					throw new Error('Internal failure');
+				},
+			});
+
