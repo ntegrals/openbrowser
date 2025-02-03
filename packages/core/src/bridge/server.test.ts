@@ -238,3 +238,43 @@ describe('BridgeServer', () => {
 
 		test('reads browser://screenshot resource', async () => {
 			const response = await server.handleRequest(
+				makeRequest('resources/read', 1, { uri: 'browser://screenshot' }),
+			);
+
+			expect(response.result).toBeDefined();
+			const result = response.result as any;
+			expect(result.contents[0].uri).toBe('browser://screenshot');
+			expect(result.contents[0].mimeType).toBe('image/png');
+			expect(result.contents[0].blob).toBe('abc123');
+		});
+
+		test('reads browser://tabs resource', async () => {
+			const response = await server.handleRequest(
+				makeRequest('resources/read', 1, { uri: 'browser://tabs' }),
+			);
+
+			expect(response.result).toBeDefined();
+			const result = response.result as any;
+			expect(result.contents[0].uri).toBe('browser://tabs');
+			const tabs = JSON.parse(result.contents[0].text);
+			expect(Array.isArray(tabs)).toBe(true);
+		});
+
+		test('returns error for unknown resource URI', async () => {
+			const response = await server.handleRequest(
+				makeRequest('resources/read', 1, { uri: 'browser://nonexistent' }),
+			);
+
+			expect(response.error).toBeDefined();
+			expect(response.error!.message).toContain('Unknown resource URI');
+		});
+
+		test('returns error when uri parameter is missing', async () => {
+			const response = await server.handleRequest(
+				makeRequest('resources/read', 1, {}),
+			);
+
+			expect(response.error).toBeDefined();
+			expect(response.error!.message).toContain('Missing required parameter');
+		});
+	});
