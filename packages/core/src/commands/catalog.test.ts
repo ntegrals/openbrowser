@@ -358,3 +358,43 @@ describe('CommandCatalog', () => {
 
 			const desc = registry.getPromptDescription();
 			expect(desc).toContain('- tap: Click on an element');
+			expect(desc).toContain('index');
+			expect(desc).toContain('Element index');
+			expect(desc).toContain('- finish: Mark task as done [terminates]');
+		});
+
+		test('filters by page URL domain', () => {
+			registry.register({
+				name: 'universal',
+				description: 'Universal action',
+				schema: testSchema,
+				handler: makeHandler(),
+			});
+			registry.register({
+				name: 'github_only',
+				description: 'GitHub action',
+				schema: testSchema,
+				handler: makeHandler(),
+				domainFilter: ['github.com'],
+			});
+
+			const githubDesc = registry.getPromptDescription('https://github.com/repo');
+			expect(githubDesc).toContain('universal');
+			expect(githubDesc).toContain('github_only');
+
+			const otherDesc = registry.getPromptDescription('https://example.com');
+			expect(otherDesc).toContain('universal');
+			expect(otherDesc).not.toContain('github_only');
+		});
+	});
+
+	describe('sensitive data replacement', () => {
+		test('replaces sensitive values with placeholders', () => {
+			const result = registry.replaceSensitiveData(
+				'The password is hunter2 and the key is abc123',
+				{ PASSWORD: 'hunter2', API_KEY: 'abc123' },
+			);
+
+			expect(result).toBe('The password is <PASSWORD> and the key is <API_KEY>');
+		});
+
