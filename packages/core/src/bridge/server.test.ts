@@ -318,3 +318,43 @@ describe('BridgeServer', () => {
 			expect(response.error).toBeDefined();
 			expect(response.error!.message).toContain('Unknown resource URI');
 		});
+
+		test('returns error when uri is missing', async () => {
+			const response = await server.handleRequest(
+				makeRequest('resources/subscribe', 1, {}),
+			);
+
+			expect(response.error).toBeDefined();
+		});
+	});
+
+	describe('handleRequest: resources/unsubscribe', () => {
+		test('unsubscribes from a resource', async () => {
+			// First subscribe
+			await server.handleRequest(
+				makeRequest('resources/subscribe', 1, { uri: 'browser://state' }),
+			);
+
+			// Then unsubscribe
+			const response = await server.handleRequest(
+				makeRequest('resources/unsubscribe', 2, { uri: 'browser://state' }),
+			);
+
+			expect(response.result).toEqual({});
+		});
+
+		test('returns error when uri is missing', async () => {
+			const response = await server.handleRequest(
+				makeRequest('resources/unsubscribe', 1, {}),
+			);
+
+			expect(response.error).toBeDefined();
+		});
+	});
+
+	describe('error handling', () => {
+		test('returns error response for synchronously thrown errors', async () => {
+			// Test with a method that will cause a synchronous error in the handler
+			// The try/catch in handleRequest catches synchronous errors from switch cases
+			const response = await server.handleRequest(
+				makeRequest('resources/read', 1, { uri: 'browser://nonexistent' }),
