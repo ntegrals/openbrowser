@@ -38,3 +38,43 @@ describe('CommandCatalog', () => {
 
 	describe('register and unregister', () => {
 		test('registers an action', () => {
+			registry.register({
+				name: 'test_action',
+				description: 'A test action',
+				schema: testSchema,
+				handler: makeHandler(),
+			});
+
+			expect(registry.has('test_action')).toBe(true);
+			expect(registry.size).toBe(1);
+		});
+
+		test('unregisters an action', () => {
+			registry.register({
+				name: 'test_action',
+				description: 'A test action',
+				schema: testSchema,
+				handler: makeHandler(),
+			});
+
+			registry.unregister('test_action');
+			expect(registry.has('test_action')).toBe(false);
+			expect(registry.size).toBe(0);
+		});
+
+		test('get returns registered action', () => {
+			registry.register({
+				name: 'my_action',
+				description: 'Mine',
+				schema: testSchema,
+				handler: makeHandler(),
+			});
+
+			const action = registry.get('my_action');
+			expect(action).toBeDefined();
+			expect(action!.name).toBe('my_action');
+			expect(action!.description).toBe('Mine');
+		});
+
+		test('get returns undefined for unregistered action', () => {
+			expect(registry.get('nonexistent')).toBeUndefined();
