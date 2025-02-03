@@ -278,3 +278,43 @@ describe('CommandCatalog', () => {
 				domainFilter: ['example.com'],
 			});
 
+			const actions = registry.getActionsForDomain('www.example.com');
+			expect(actions.map((a) => a.name)).toContain('example');
+		});
+	});
+
+	describe('terminatesSequence flag', () => {
+		test('isTerminating returns true for terminating actions', () => {
+			registry.register({
+				name: 'finish',
+				description: 'Finish',
+				schema: testSchema,
+				handler: makeHandler(),
+				terminatesSequence: true,
+			});
+
+			expect(registry.isTerminating('finish')).toBe(true);
+		});
+
+		test('isTerminating returns false for non-terminating actions', () => {
+			registry.register({
+				name: 'continue',
+				description: 'Continue',
+				schema: testSchema,
+				handler: makeHandler(),
+			});
+
+			expect(registry.isTerminating('continue')).toBe(false);
+		});
+
+		test('getTerminatingActions returns all terminating action names', () => {
+			registry.register({
+				name: 'finish',
+				description: 'Done',
+				schema: testSchema,
+				handler: makeHandler(),
+				terminatesSequence: true,
+			});
+			registry.register({
+				name: 'abort',
+				description: 'Abort',
