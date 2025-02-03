@@ -118,3 +118,43 @@ describe('CommandCatalog', () => {
 				handler: makeHandler(),
 			});
 
+			expect(filtered.has('only_this')).toBe(true);
+			expect(filtered.has('other')).toBe(false);
+		});
+	});
+
+	describe('getAll and getNames', () => {
+		test('returns all registered actions', () => {
+			registry.register({
+				name: 'alpha',
+				description: 'Alpha',
+				schema: testSchema,
+				handler: makeHandler(),
+			});
+			registry.register({
+				name: 'beta',
+				description: 'Beta',
+				schema: testSchema,
+				handler: makeHandler(),
+			});
+
+			const all = registry.getAll();
+			expect(all).toHaveLength(2);
+
+			const names = registry.getNames();
+			expect(names).toContain('alpha');
+			expect(names).toContain('beta');
+		});
+	});
+
+	describe('execute', () => {
+		test('executes registered action with valid params', async () => {
+			const handler = makeHandler({ success: true, extractedContent: 'result' });
+			registry.register({
+				name: 'exec_test',
+				description: 'Test execute',
+				schema: testSchema,
+				handler,
+			});
+
+			const ctx = makeContext();
