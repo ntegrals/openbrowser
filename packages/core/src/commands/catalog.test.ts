@@ -198,3 +198,43 @@ describe('CommandCatalog', () => {
 				},
 			});
 
+			const ctx = makeContext();
+
+			await expect(
+				registry.execute('failing', { value: 'x' }, ctx),
+			).rejects.toThrow(CommandFailedError);
+		});
+
+		test('re-throws CommandFailedError without wrapping', async () => {
+			const original = new CommandFailedError('tool', 'original error');
+			registry.register({
+				name: 'rethrow',
+				description: 'Rethrow',
+				schema: testSchema,
+				handler: async () => {
+					throw original;
+				},
+			});
+
+			const ctx = makeContext();
+
+			try {
+				await registry.execute('rethrow', { value: 'x' }, ctx);
+				expect.unreachable('Should have thrown');
+			} catch (error) {
+				expect(error).toBe(original);
+			}
+		});
+	});
+
+	describe('domain-based filtering', () => {
+		test('returns universal actions for any domain', () => {
+			registry.register({
+				name: 'universal',
+				description: 'No filter',
+				schema: testSchema,
+				handler: makeHandler(),
+			});
+
+			const actions = registry.getActionsForDomain('example.com');
+			expect(actions.map((a) => a.name)).toContain('universal');
