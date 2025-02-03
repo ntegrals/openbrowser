@@ -398,3 +398,43 @@ describe('CommandCatalog', () => {
 			expect(result).toBe('The password is <PASSWORD> and the key is <API_KEY>');
 		});
 
+		test('replaces longer values first to avoid partial replacements', () => {
+			const result = registry.replaceSensitiveData(
+				'Token: my-long-secret-token and key: secret',
+				{ TOKEN: 'my-long-secret-token', KEY: 'secret' },
+			);
+
+			// "my-long-secret-token" should be replaced first, not the inner "secret"
+			expect(result).toBe('Token: <TOKEN> and key: <KEY>');
+		});
+
+		test('handles empty text', () => {
+			const result = registry.replaceSensitiveData('', { KEY: 'value' });
+			expect(result).toBe('');
+		});
+
+		test('handles empty sensitive data', () => {
+			const result = registry.replaceSensitiveData('some text', {});
+			expect(result).toBe('some text');
+		});
+
+		test('handles special regex characters in values', () => {
+			const result = registry.replaceSensitiveData(
+				'Found: $100.00 (USD)',
+				{ PRICE: '$100.00' },
+			);
+
+			expect(result).toBe('Found: <PRICE> (USD)');
+		});
+	});
+
+	describe('parameter inspection and injection', () => {
+		test('detects special parameters from handler function', () => {
+			registry.register({
+				name: 'with_page',
+				description: 'Uses page',
+				schema: z.object({}),
+				handler: async (params, ctx) => {
+					return { success: true };
+				},
+			});
