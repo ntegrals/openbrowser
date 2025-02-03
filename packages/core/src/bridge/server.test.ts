@@ -398,3 +398,30 @@ describe('BridgeServer', () => {
 				// If the error propagates as a rejection, that is acceptable too
 				expect(error).toBeDefined();
 			}
+		});
+	});
+
+	describe('handleMessage (with notifications)', () => {
+		test('returns null for notification (no id)', async () => {
+			const notification: MCPRequest = {
+				jsonrpc: '2.0',
+				method: 'notifications/initialized',
+			};
+
+			const response = await server.handleMessage(notification);
+			expect(response).toBeNull();
+		});
+
+		test('returns response for request (with id)', async () => {
+			const request: MCPRequest = {
+				jsonrpc: '2.0',
+				id: 1,
+				method: 'ping',
+			};
+
+			const response = await server.handleMessage(request);
+			expect(response).not.toBeNull();
+			expect(response!.result).toEqual({});
+		});
+	});
+});
