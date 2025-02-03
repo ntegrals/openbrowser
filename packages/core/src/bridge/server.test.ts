@@ -198,3 +198,43 @@ describe('BridgeServer', () => {
 			expect(uris).toContain('browser://screenshot');
 			expect(uris).toContain('browser://tabs');
 
+			// Each resource should have standard fields
+			for (const resource of result.resources) {
+				expect(resource.name).toBeDefined();
+				expect(resource.description).toBeDefined();
+				expect(resource.mimeType).toBeDefined();
+			}
+		});
+	});
+
+	describe('handleRequest: resources/read', () => {
+		test('reads browser://state resource', async () => {
+			const response = await server.handleRequest(
+				makeRequest('resources/read', 1, { uri: 'browser://state' }),
+			);
+
+			expect(response.result).toBeDefined();
+			const result = response.result as any;
+			expect(result.contents).toBeDefined();
+			expect(result.contents[0].uri).toBe('browser://state');
+			expect(result.contents[0].mimeType).toBe('application/json');
+			expect(result.contents[0].text).toBeDefined();
+
+			const state = JSON.parse(result.contents[0].text);
+			expect(state.url).toBe('https://example.com');
+		});
+
+		test('reads browser://dom resource', async () => {
+			const response = await server.handleRequest(
+				makeRequest('resources/read', 1, { uri: 'browser://dom' }),
+			);
+
+			expect(response.result).toBeDefined();
+			const result = response.result as any;
+			expect(result.contents[0].uri).toBe('browser://dom');
+			expect(result.contents[0].mimeType).toBe('text/plain');
+			expect(result.contents[0].text).toContain('<html>');
+		});
+
+		test('reads browser://screenshot resource', async () => {
+			const response = await server.handleRequest(
