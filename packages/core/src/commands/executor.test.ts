@@ -118,3 +118,43 @@ describe('CommandExecutor', () => {
 			expect(names).toContain('search');
 			expect(names).toContain('extract_structured');
 		});
+
+		test('has default commandsPerStep of 10', () => {
+			expect(tools.commandsPerStep).toBe(10);
+		});
+
+		test('respects custom commandsPerStep', () => {
+			const custom = new CommandExecutor({ commandsPerStep: 5 });
+			expect(custom.commandsPerStep).toBe(5);
+		});
+	});
+
+	describe('click action', () => {
+		test('delegates to domService.clickElementByIndex', async () => {
+			const ctx = makeContext();
+			const result = await tools.executeAction(
+				action({ action: 'tap', index: 0 }),
+				ctx,
+			);
+
+			expect(result.success).toBe(true);
+			expect(ctx.domService.clickElementByIndex).toHaveBeenCalledWith(
+				ctx.page,
+				ctx.cdpSession,
+				0,
+			);
+		});
+
+		test('supports multiple clicks via clickCount', async () => {
+			const ctx = makeContext();
+			await tools.executeAction(
+				action({ action: 'tap', index: 0, clickCount: 3 }),
+				ctx,
+			);
+
+			// First call + 2 additional
+			expect(ctx.domService.clickElementByIndex).toHaveBeenCalledTimes(3);
+		});
+
+		test('uses coordinate-based clicking when enabled', async () => {
+			tools.setCoordinateClicking(true);
