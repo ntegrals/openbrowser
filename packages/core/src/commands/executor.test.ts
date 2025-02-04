@@ -158,3 +158,43 @@ describe('CommandExecutor', () => {
 
 		test('uses coordinate-based clicking when enabled', async () => {
 			tools.setCoordinateClicking(true);
+			const ctx = makeContext();
+
+			const result = await tools.executeAction(
+				action({ action: 'tap', index: 0, coordinateX: 100, coordinateY: 200 }),
+				ctx,
+			);
+
+			expect(result.success).toBe(true);
+			expect(ctx.page.mouse.click).toHaveBeenCalledWith(100, 200);
+			// domService should NOT have been called
+			expect(ctx.domService.clickElementByIndex).not.toHaveBeenCalled();
+		});
+
+		test('coordinate click supports clickCount', async () => {
+			tools.setCoordinateClicking(true);
+			const ctx = makeContext();
+
+			await tools.executeAction(
+				action({ action: 'tap', index: 0, coordinateX: 50, coordinateY: 50, clickCount: 2 }),
+				ctx,
+			);
+
+			expect(ctx.page.mouse.click).toHaveBeenCalledTimes(2);
+		});
+
+		test('falls back to index-based click when coordinate clicking disabled', async () => {
+			// Default: coordinate clicking is disabled
+			const ctx = makeContext();
+
+			await tools.executeAction(
+				action({ action: 'tap', index: 0, coordinateX: 100, coordinateY: 200 }),
+				ctx,
+			);
+
+			// Should use domService, not coordinates
+			expect(ctx.domService.clickElementByIndex).toHaveBeenCalled();
+		});
+	});
+
+	describe('navigate action', () => {
