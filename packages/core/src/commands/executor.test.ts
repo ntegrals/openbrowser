@@ -278,3 +278,43 @@ describe('CommandExecutor', () => {
 			);
 
 			expect(result.success).toBe(true);
+		});
+
+		test('scrolls an element when index is provided', async () => {
+			const ctx = makeContext();
+			const result = await tools.executeAction(
+				action({ action: 'scroll', direction: 'up', index: 5 }),
+				ctx,
+			);
+
+			expect(result.success).toBe(true);
+			expect(ctx.domService.getElementSelector).toHaveBeenCalledWith(5);
+		});
+	});
+
+	describe('search_google action', () => {
+		test('navigates to Google search URL', async () => {
+			const ctx = makeContext();
+			const result = await tools.executeAction(
+				action({ action: 'web_search', query: 'bun test runner' }),
+				ctx,
+			);
+
+			expect(result.success).toBe(true);
+			expect(ctx.browserSession.navigate).toHaveBeenCalled();
+			const navigateArg = (ctx.browserSession.navigate as any).mock.calls[0][0] as string;
+			expect(navigateArg).toContain('google.com/search');
+			expect(navigateArg).toContain('bun%20test%20runner');
+		});
+	});
+
+	describe('done action', () => {
+		test('returns isDone=true with text', async () => {
+			const ctx = makeContext();
+			const result = await tools.executeAction(
+				action({ action: 'finish', text: 'Task completed successfully' }),
+				ctx,
+			);
+
+			expect(result.success).toBe(true);
+			expect(result.isDone).toBe(true);
