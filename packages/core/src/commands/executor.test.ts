@@ -558,3 +558,43 @@ describe('CommandExecutor', () => {
 			const ctx = makeContext();
 			ctx.domService.clickElementByIndex = mock(() =>
 				Promise.reject(new Error('browser has been closed')),
+			);
+
+			const results = await tools.executeActions(
+				[
+					action({ action: 'tap', index: 0 }),
+					action({ action: 'tap', index: 1 }), // should not run
+				],
+				ctx,
+			);
+
+			expect(results).toHaveLength(1);
+			expect(results[0].success).toBe(false);
+		});
+
+		test('continues after retryable error', async () => {
+			const ctx = makeContext();
+			let callCount = 0;
+			ctx.domService.clickElementByIndex = mock(() => {
+				callCount++;
+				if (callCount === 1) {
+					return Promise.reject(new Error('Element is not visible'));
+				}
+				return Promise.resolve();
+			});
+
+			const results = await tools.executeActions(
+				[
+					action({ action: 'tap', index: 0 }),
+					action({ action: 'tap', index: 1 }),
+				],
+				ctx,
+			);
+
+			expect(results).toHaveLength(2);
+			expect(results[0].success).toBe(false);
+			expect(results[1].success).toBe(true);
+		});
+
+		test('masks sensitive data in error messages', async () => {
+			const ctx = makeContext({
