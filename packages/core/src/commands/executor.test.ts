@@ -358,3 +358,43 @@ describe('CommandExecutor', () => {
 
 			expect(result.success).toBe(true);
 			expect(ctx.page.keyboard.press).toHaveBeenCalledWith('Enter');
+		});
+	});
+
+	describe('find_elements action', () => {
+		test('returns found elements description', async () => {
+			const page = makeMockPage();
+			page.evaluate = mock(() =>
+				Promise.resolve([
+					{ tag: 'button', text: 'Submit', attributes: { id: 'btn-submit' } },
+					{ tag: 'a', text: 'Home', attributes: {} },
+				]),
+			);
+			const ctx = makeContext({ page });
+
+			const result = await tools.executeAction(
+				action({ action: 'find', query: 'submit' }),
+				ctx,
+			);
+
+			expect(result.success).toBe(true);
+			expect(result.extractedContent).toContain('Found 2 element(s)');
+			expect(result.extractedContent).toContain('button');
+			expect(result.extractedContent).toContain('Submit');
+		});
+
+		test('returns message when no elements found', async () => {
+			const page = makeMockPage();
+			page.evaluate = mock(() => Promise.resolve([]));
+			const ctx = makeContext({ page });
+
+			const result = await tools.executeAction(
+				action({ action: 'find', query: 'nonexistent' }),
+				ctx,
+			);
+
+			expect(result.success).toBe(true);
+			expect(result.extractedContent).toContain('No elements found');
+		});
+	});
+
