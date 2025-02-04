@@ -318,3 +318,43 @@ describe('CommandExecutor', () => {
 
 			expect(result.success).toBe(true);
 			expect(result.isDone).toBe(true);
+			expect(result.extractedContent).toBe('Task completed successfully');
+			expect(result.includeInMemory).toBe(true);
+		});
+
+		test('respects explicit success=false', async () => {
+			const ctx = makeContext();
+			const result = await tools.executeAction(
+				action({ action: 'finish', text: 'Could not complete', success: false }),
+				ctx,
+			);
+
+			expect(result.success).toBe(false);
+			expect(result.isDone).toBe(true);
+		});
+	});
+
+	describe('go_back action', () => {
+		test('calls page.goBack and waits for ready', async () => {
+			const ctx = makeContext();
+			const result = await tools.executeAction(
+				action({ action: 'back' }),
+				ctx,
+			);
+
+			expect(result.success).toBe(true);
+			expect(ctx.page.goBack).toHaveBeenCalled();
+			expect(ctx.browserSession.waitForPageReady).toHaveBeenCalled();
+		});
+	});
+
+	describe('send_keys action', () => {
+		test('presses keyboard keys', async () => {
+			const ctx = makeContext();
+			const result = await tools.executeAction(
+				action({ action: 'press_keys', keys: 'Enter' }),
+				ctx,
+			);
+
+			expect(result.success).toBe(true);
+			expect(ctx.page.keyboard.press).toHaveBeenCalledWith('Enter');
