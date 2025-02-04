@@ -438,3 +438,43 @@ describe('CommandExecutor', () => {
 			);
 
 			expect(result.success).toBe(true);
+			const url = (ctx.browserSession.navigate as any).mock.calls[0][0] as string;
+			expect(url).toContain('bing.com/search');
+		});
+
+		test('defaults to Google', async () => {
+			const ctx = makeContext();
+			await tools.executeAction(
+				action({ action: 'search', query: 'hello' }),
+				ctx,
+			);
+
+			const url = (ctx.browserSession.navigate as any).mock.calls[0][0] as string;
+			expect(url).toContain('google.com/search');
+		});
+	});
+
+	describe('sensitive data masking', () => {
+		test('masks sensitive data in action results', async () => {
+			const ctx = makeContext({
+				maskedValues: {
+					PASSWORD: 'secret123',
+					API_KEY: 'sk-abc',
+				},
+			});
+
+			// Execute done action with text containing sensitive data
+			const result = await tools.executeActions(
+				[action({ action: 'finish', text: 'Found password: secret123 and key: sk-abc' })],
+				ctx,
+			);
+
+			expect(result[0].success).toBe(true);
+			expect(result[0].extractedContent).toContain('<PASSWORD>');
+			expect(result[0].extractedContent).toContain('<API_KEY>');
+			expect(result[0].extractedContent).not.toContain('secret123');
+			expect(result[0].extractedContent).not.toContain('sk-abc');
+		});
+
+		test('does not mask when no sensitive data configured', async () => {
+			const ctx = makeContext(); // no maskedValues
