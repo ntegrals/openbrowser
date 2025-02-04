@@ -238,3 +238,43 @@ describe('CommandExecutor', () => {
 		test('inputs text into element', async () => {
 			const ctx = makeContext();
 			const result = await tools.executeAction(
+				action({ action: 'type_text', index: 3, text: 'hello' }),
+				ctx,
+			);
+
+			expect(result.success).toBe(true);
+			expect(ctx.domService.inputTextByIndex).toHaveBeenCalledWith(
+				ctx.page,
+				ctx.cdpSession,
+				3,
+				'hello',
+				true, // clearFirst defaults to true
+			);
+		});
+
+		test('passes clearFirst=false when specified', async () => {
+			const ctx = makeContext();
+			await tools.executeAction(
+				action({ action: 'type_text', index: 0, text: 'append', clearFirst: false }),
+				ctx,
+			);
+
+			expect(ctx.domService.inputTextByIndex).toHaveBeenCalledWith(
+				ctx.page,
+				ctx.cdpSession,
+				0,
+				'append',
+				false,
+			);
+		});
+	});
+
+	describe('scroll action', () => {
+		test('scrolls the page when no index provided', async () => {
+			const ctx = makeContext();
+			const result = await tools.executeAction(
+				action({ action: 'scroll', direction: 'down' }),
+				ctx,
+			);
+
+			expect(result.success).toBe(true);
