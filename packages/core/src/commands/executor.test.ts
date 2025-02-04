@@ -198,3 +198,43 @@ describe('CommandExecutor', () => {
 	});
 
 	describe('navigate action', () => {
+		test('navigates to valid URL', async () => {
+			const ctx = makeContext();
+			const result = await tools.executeAction(
+				action({ action: 'navigate', url: 'https://example.com' }),
+				ctx,
+			);
+
+			expect(result.success).toBe(true);
+			expect(ctx.browserSession.navigate).toHaveBeenCalledWith('https://example.com');
+		});
+
+		test('throws CommandFailedError wrapping UrlBlockedError for blocked URL', async () => {
+			const restricted = new CommandExecutor({ blockedUrls: ['evil.com'] });
+			const ctx = makeContext();
+
+			await expect(
+				restricted.executeAction(
+					action({ action: 'navigate', url: 'https://evil.com/page' }),
+					ctx,
+				),
+			).rejects.toThrow(CommandFailedError);
+		});
+
+		test('throws when URL not in allowlist', async () => {
+			const restricted = new CommandExecutor({ allowedUrls: ['safe.com'] });
+			const ctx = makeContext();
+
+			await expect(
+				restricted.executeAction(
+					action({ action: 'navigate', url: 'https://other.com' }),
+					ctx,
+				),
+			).rejects.toThrow(CommandFailedError);
+		});
+	});
+
+	describe('input_text action', () => {
+		test('inputs text into element', async () => {
+			const ctx = makeContext();
+			const result = await tools.executeAction(
