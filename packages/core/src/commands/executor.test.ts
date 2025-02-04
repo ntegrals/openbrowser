@@ -478,3 +478,43 @@ describe('CommandExecutor', () => {
 
 		test('does not mask when no sensitive data configured', async () => {
 			const ctx = makeContext(); // no maskedValues
+
+			const result = await tools.executeActions(
+				[action({ action: 'finish', text: 'Plain text with no secrets' })],
+				ctx,
+			);
+
+			expect(result[0].extractedContent).toBe('Plain text with no secrets');
+		});
+	});
+
+	describe('action sequence execution', () => {
+		test('executes multiple actions in sequence', async () => {
+			const ctx = makeContext();
+
+			const results = await tools.executeActions(
+				[
+					action({ action: 'tap', index: 0 }),
+					action({ action: 'tap', index: 1 }),
+				],
+				ctx,
+			);
+
+			expect(results).toHaveLength(2);
+			expect(results[0].success).toBe(true);
+			expect(results[1].success).toBe(true);
+		});
+
+		test('stops at done action', async () => {
+			const ctx = makeContext();
+
+			const results = await tools.executeActions(
+				[
+					action({ action: 'tap', index: 0 }),
+					action({ action: 'finish', text: 'Finished' }),
+					action({ action: 'tap', index: 1 }), // should not execute
+				],
+				ctx,
+			);
+
+			expect(results).toHaveLength(2);
