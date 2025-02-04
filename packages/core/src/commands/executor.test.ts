@@ -518,3 +518,43 @@ describe('CommandExecutor', () => {
 			);
 
 			expect(results).toHaveLength(2);
+			expect(results[1].isDone).toBe(true);
+		});
+
+		test('respects commandsPerStep limit', async () => {
+			const limited = new CommandExecutor({ commandsPerStep: 2 });
+			const ctx = makeContext();
+
+			const results = await limited.executeActions(
+				[
+					action({ action: 'tap', index: 0 }),
+					action({ action: 'tap', index: 1 }),
+					action({ action: 'tap', index: 2 }), // should not execute (limit=2)
+				],
+				ctx,
+			);
+
+			expect(results).toHaveLength(2);
+		});
+
+		test('handles errors gracefully in sequence', async () => {
+			const ctx = makeContext();
+			ctx.domService.clickElementByIndex = mock(() =>
+				Promise.reject(new Error('Element is not visible')),
+			);
+
+			const results = await tools.executeActions(
+				[action({ action: 'tap', index: 0 })],
+				ctx,
+			);
+
+			expect(results).toHaveLength(1);
+			expect(results[0].success).toBe(false);
+			expect(results[0].error).toBeDefined();
+			expect(results[0].error).toContain('not visible');
+		});
+
+		test('stops sequence on non-retryable error', async () => {
+			const ctx = makeContext();
+			ctx.domService.clickElementByIndex = mock(() =>
+				Promise.reject(new Error('browser has been closed')),
