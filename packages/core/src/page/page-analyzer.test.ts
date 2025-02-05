@@ -438,3 +438,43 @@ describe('PageAnalyzer', () => {
 			// The inside node should keep its highlightIndex
 			expect(insideNode.highlightIndex).toBe(1 as ElementRef);
 		});
+
+		test('keeps elements within the viewport expansion margin', () => {
+			const svc = new PageAnalyzer({ viewportExpansion: 500 });
+			const nearNode = makeNode({
+				tagName: 'a',
+				highlightIndex: 0 as ElementRef,
+				rect: { x: 0, y: 1100, width: 100, height: 30 },
+			});
+			const root = makeNode({ children: [nearNode] });
+
+			(svc as any).applyViewportThresholdFilter(
+				root,
+				{ width: 1280, height: 800 },
+				{ x: 0, y: 0 },
+			);
+
+			// y=1100 is within 0..800+500=1300, so should be kept
+			expect(nearNode.highlightIndex).toBe(0 as ElementRef);
+		});
+
+		test('removes elements far to the right of the viewport', () => {
+			const farRightNode = makeNode({
+				tagName: 'button',
+				highlightIndex: 0 as ElementRef,
+				rect: { x: 5000, y: 100, width: 100, height: 30 },
+			});
+			const root = makeNode({ children: [farRightNode] });
+
+			(service as any).applyViewportThresholdFilter(
+				root,
+				{ width: 1280, height: 800 },
+				{ x: 0, y: 0 },
+			);
+
+			expect(farRightNode.highlightIndex).toBeUndefined();
+		});
+	});
+
+	describe('integrateShadowDOMChildren (via private access)', () => {
+		test('merges shadow children into the children array', () => {
