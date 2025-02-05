@@ -558,3 +558,43 @@ describe('CompositeUsageMeter', () => {
 				outputTokens: 50,
 			});
 
+			const summary2 = multiTracker.getSummary();
+			expect(summary2.durationMs).toBeDefined();
+		});
+
+		test('explicit start() sets the timer', () => {
+			multiTracker.start();
+
+			const summary = multiTracker.getSummary();
+			expect(summary.durationMs).toBeDefined();
+			expect(summary.durationMs!).toBeGreaterThanOrEqual(0);
+		});
+	});
+});
+
+// ── estimateTokenCount ──
+
+describe('estimateTokenCount', () => {
+	test('estimates roughly 1 token per 4 chars', () => {
+		expect(estimateTokenCount('hello world')).toBe(3); // ceil(11/4)
+	});
+
+	test('returns 0 for empty string', () => {
+		expect(estimateTokenCount('')).toBe(0);
+	});
+
+	test('rounds up', () => {
+		expect(estimateTokenCount('a')).toBe(1); // ceil(1/4) = 1
+	});
+});
+
+// ── BudgetDepletedError ──
+
+describe('BudgetDepletedError', () => {
+	test('has correct properties', () => {
+		const error = new BudgetDepletedError(5.5, 5.0);
+		expect(error.name).toBe('BudgetDepletedError');
+		expect(error.currentCost).toBe(5.5);
+		expect(error.maxCost).toBe(5.0);
+		expect(error.message).toContain('$5.5000');
+		expect(error.message).toContain('$5.0000');
