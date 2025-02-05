@@ -318,3 +318,43 @@ describe('CompositeUsageMeter', () => {
 			multiTracker.record({
 				modelId: 'gpt-4o',
 				role: 'main',
+				inputTokens: 10_000,
+				outputTokens: 0,
+			});
+
+			expect(thresholdCrossed).toHaveBeenCalledTimes(1);
+		});
+
+		test('throws BudgetDepletedError when budget exceeded and callback returns false', () => {
+			multiTracker.setBudget({
+				maxCostUsd: 0.01,
+				thresholds: [1.0],
+				onThresholdCrossed: () => {},
+				onBudgetExhausted: () => false,
+			});
+
+			expect(() =>
+				multiTracker.record({
+					modelId: 'gpt-4o',
+					role: 'main',
+					inputTokens: 1_000_000,
+					outputTokens: 0,
+				}),
+			).toThrow(BudgetDepletedError);
+		});
+
+		test('allows continuing when onBudgetExhausted returns true', () => {
+			multiTracker.setBudget({
+				maxCostUsd: 0.01,
+				thresholds: [1.0],
+				onThresholdCrossed: () => {},
+				onBudgetExhausted: () => true,
+			});
+
+			expect(() =>
+				multiTracker.record({
+					modelId: 'gpt-4o',
+					role: 'main',
+					inputTokens: 1_000_000,
+					outputTokens: 0,
+				}),
