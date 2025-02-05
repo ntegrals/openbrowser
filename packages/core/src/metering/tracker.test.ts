@@ -438,3 +438,43 @@ describe('CompositeUsageMeter', () => {
 			expect(mainRole).toBeDefined();
 			expect(mainRole!.callCount).toBe(1);
 
+			// Action trace
+			expect(summary.actionTrace).toHaveLength(2);
+			expect(summary.actionTrace[0].actionName).toBe('tap');
+			expect(summary.actionTrace[1].actionName).toBe('extract');
+
+			// Duration
+			expect(summary.durationMs).toBeDefined();
+			expect(summary.durationMs!).toBeGreaterThanOrEqual(0);
+		});
+
+		test('generates human-readable summary text', () => {
+			multiTracker.record({
+				modelId: 'gpt-4o',
+				role: 'main',
+				inputTokens: 10000,
+				outputTokens: 5000,
+			});
+
+			const text = multiTracker.getSummaryText();
+			expect(text).toContain('Token Usage Summary');
+			expect(text).toContain('Total:');
+			expect(text).toContain('Cost:');
+			expect(text).toContain('Calls:');
+			expect(text).toContain('Duration:');
+			expect(text).toContain('By Role');
+			expect(text).toContain('By Model');
+		});
+
+		test('includes budget info in summary text when configured', () => {
+			multiTracker.setBudget({
+				maxCostUsd: 5.0,
+				thresholds: [],
+				onThresholdCrossed: () => {},
+			});
+
+			multiTracker.record({
+				modelId: 'gpt-4o',
+				role: 'main',
+				inputTokens: 100_000,
+				outputTokens: 0,
