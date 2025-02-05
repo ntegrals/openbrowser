@@ -398,3 +398,43 @@ describe('CompositeUsageMeter', () => {
 		});
 	});
 
+	describe('MeteringSummary generation', () => {
+		test('generates comprehensive summary', () => {
+			multiTracker.record({
+				modelId: 'gpt-4o',
+				role: 'main',
+				inputTokens: 1000,
+				outputTokens: 500,
+				stepIndex: 0,
+				actionName: 'tap',
+			});
+			multiTracker.record({
+				modelId: 'gpt-4o-mini',
+				role: 'extraction',
+				inputTokens: 2000,
+				outputTokens: 300,
+				stepIndex: 1,
+				actionName: 'extract',
+			});
+
+			const summary = multiTracker.getSummary();
+
+			expect(summary.totalInputTokens).toBe(3000);
+			expect(summary.totalOutputTokens).toBe(800);
+			expect(summary.totalTokens).toBe(3800);
+			expect(summary.totalCalls).toBe(2);
+			expect(summary.totalEstimatedCost).toBeGreaterThan(0);
+
+			// By model breakdown
+			expect(summary.byModel).toHaveLength(2);
+			const gpt4o = summary.byModel.find((m) => m.modelId === 'gpt-4o');
+			expect(gpt4o).toBeDefined();
+			expect(gpt4o!.inputTokens).toBe(1000);
+			expect(gpt4o!.callCount).toBe(1);
+
+			// By role breakdown
+			expect(summary.byRole).toHaveLength(2);
+			const mainRole = summary.byRole.find((r) => r.role === 'main');
+			expect(mainRole).toBeDefined();
+			expect(mainRole!.callCount).toBe(1);
+
