@@ -278,3 +278,43 @@ describe('CompositeUsageMeter', () => {
 			multiTracker.setBudget({
 				maxCostUsd: 1.0,
 				thresholds: [0.5, 1.0],
+				onThresholdCrossed: thresholdCrossed,
+			});
+
+			// Cross 0.5 threshold
+			multiTracker.record({
+				modelId: 'gpt-4o',
+				role: 'main',
+				inputTokens: 200_000,
+				outputTokens: 0,
+			});
+
+			// Cross 1.0 threshold
+			multiTracker.record({
+				modelId: 'gpt-4o',
+				role: 'main',
+				inputTokens: 200_000,
+				outputTokens: 0,
+			});
+
+			expect(thresholdCrossed).toHaveBeenCalledTimes(2);
+		});
+
+		test('does not fire same threshold twice', () => {
+			const thresholdCrossed = mock(() => {});
+			multiTracker.setBudget({
+				maxCostUsd: 1.0,
+				thresholds: [0.5],
+				onThresholdCrossed: thresholdCrossed,
+			});
+
+			// Cross 0.5 threshold twice
+			multiTracker.record({
+				modelId: 'gpt-4o',
+				role: 'main',
+				inputTokens: 200_000,
+				outputTokens: 0,
+			});
+			multiTracker.record({
+				modelId: 'gpt-4o',
+				role: 'main',
