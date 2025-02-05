@@ -638,3 +638,43 @@ describe('CommandExecutor', () => {
 			expect(result.success).toBe(true);
 			expect(ctx.browserSession.newTab).toHaveBeenCalledWith('https://example.com');
 		});
+
+		test('throws for blocked URL', async () => {
+			const restricted = new CommandExecutor({ blockedUrls: ['banned.com'] });
+			const ctx = makeContext();
+
+			await expect(
+				restricted.executeAction(
+					action({ action: 'new_tab', url: 'https://banned.com' }),
+					ctx,
+				),
+			).rejects.toThrow(CommandFailedError);
+		});
+	});
+
+	describe('close_tab action', () => {
+		test('closes specified tab', async () => {
+			const ctx = makeContext();
+			const result = await tools.executeAction(
+				action({ action: 'close_tab', tabIndex: 2 }),
+				ctx,
+			);
+
+			expect(result.success).toBe(true);
+			expect(ctx.browserSession.closeTab).toHaveBeenCalledWith(2);
+		});
+	});
+
+	describe('screenshot action', () => {
+		test('takes a screenshot', async () => {
+			const ctx = makeContext();
+			const result = await tools.executeAction(
+				action({ action: 'capture' }),
+				ctx,
+			);
+
+			expect(result.success).toBe(true);
+			expect(result.extractedContent).toContain('Screenshot taken');
+			expect(ctx.browserSession.screenshot).toHaveBeenCalled();
+		});
+	});
