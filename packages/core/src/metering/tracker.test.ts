@@ -38,3 +38,43 @@ describe('UsageMeter', () => {
 			tracker.record(100, 50);
 			tracker.record(200, 100);
 			tracker.record(300, 150);
+
+			const usage = tracker.getTotalUsage();
+			expect(usage.inputTokens).toBe(600);
+			expect(usage.outputTokens).toBe(300);
+			expect(usage.totalTokens).toBe(900);
+		});
+
+		test('returns a copy of usage object', () => {
+			tracker.record(100, 50);
+			const usage1 = tracker.getTotalUsage();
+			const usage2 = tracker.getTotalUsage();
+			expect(usage1).not.toBe(usage2);
+			expect(usage1).toEqual(usage2);
+		});
+	});
+
+	describe('getEstimatedCost', () => {
+		test('computes correct cost for gpt-4o', () => {
+			// gpt-4o: $2.50/M input, $10.00/M output
+			tracker.record(1_000_000, 500_000);
+
+			const cost = tracker.getEstimatedCost();
+			// input: 1M * 2.5/M = 2.5; output: 0.5M * 10/M = 5.0
+			expect(cost).toBeCloseTo(7.5, 4);
+		});
+
+		test('returns 0 for unknown model', () => {
+			const unknown = new UsageMeter('unknown-model', TEST_PRICING);
+			unknown.record(1000, 500);
+
+			expect(unknown.getEstimatedCost()).toBe(0);
+		});
+
+		test('formats cost as dollar string', () => {
+			tracker.record(100_000, 50_000);
+			const formatted = tracker.getEstimatedCostFormatted();
+			expect(formatted).toMatch(/^\$\d+\.\d{4}$/);
+		});
+	});
+
