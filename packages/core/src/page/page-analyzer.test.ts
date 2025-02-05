@@ -478,3 +478,30 @@ describe('PageAnalyzer', () => {
 
 	describe('integrateShadowDOMChildren (via private access)', () => {
 		test('merges shadow children into the children array', () => {
+			const shadowChild = makeNode({ tagName: 'span', text: 'shadow' });
+			const regularChild = makeNode({ tagName: 'p', text: 'regular' });
+			const root = makeNode({
+				children: [regularChild],
+				shadowChildren: [shadowChild],
+			});
+
+			(service as any).integrateShadowDOMChildren(root);
+
+			expect(root.children).toHaveLength(2);
+			expect(root.children[0].tagName).toBe('span'); // shadow comes first
+			expect(root.children[1].tagName).toBe('p');
+			expect(root.children[0].isShadowRoot).toBe(true);
+			expect(root.children[0].parentNode).toBe(root);
+			expect(root.shadowChildren).toBeUndefined();
+		});
+
+		test('handles nodes with no shadow children', () => {
+			const root = makeNode({
+				children: [makeNode({ tagName: 'div' })],
+			});
+
+			(service as any).integrateShadowDOMChildren(root);
+			expect(root.children).toHaveLength(1);
+		});
+	});
+});
