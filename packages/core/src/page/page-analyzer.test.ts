@@ -118,3 +118,43 @@ describe('PageAnalyzer', () => {
 			const page = makeMockPage();
 			const cdp = makeMockCdpSession({
 				send: mock(() =>
+					Promise.resolve({
+						model: {
+							content: [10, 10, 110, 10, 110, 60, 10, 60],
+						},
+					}),
+				),
+			});
+
+			// Inject a selector map with a backendNodeId
+			const selectorMap: SelectorIndex = {
+				0: {
+					cssSelector: '#btn',
+					backendNodeId: 123,
+					tagName: 'button',
+				},
+			};
+			// Use the private cachedSelectorMap via prototype access
+			(service as any).cachedSelectorMap = selectorMap;
+
+			await service.clickElementByIndex(page, cdp, 0);
+
+			// Should have used mouse.click with center coordinates
+			expect(page.mouse.click).toHaveBeenCalledTimes(1);
+			// Center of quad: ((10+110+110+10)/4, (10+10+60+60)/4) = (60, 35)
+			expect(page.mouse.click).toHaveBeenCalledWith(60, 35);
+
+			// Should have recorded the interaction
+			const interactions = service.getInteractedElements();
+			expect(interactions).toHaveLength(1);
+			expect(interactions[0].action).toBe('click');
+			expect(interactions[0].tagName).toBe('button');
+		});
+
+		test('Strategy 2: falls back to JS getBoundingClientRect when CDP fails', async () => {
+			const evaluateMock = mock(() =>
+				Promise.resolve({ x: 50, y: 25 }),
+			);
+			const page = makeMockPage({ evaluate: evaluateMock });
+			const cdp = makeMockCdpSession({
+				send: mock(() => Promise.reject(new Error('CDP failed'))),
