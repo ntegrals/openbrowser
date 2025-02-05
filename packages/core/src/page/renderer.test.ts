@@ -78,3 +78,43 @@ describe('TreeRenderer', () => {
 					makeNode({
 						tagName: 'button',
 						isInteractive: true,
+						isVisible: true,
+						highlightIndex: 0 as ElementRef,
+						text: 'Click me',
+						cssSelector: '#btn',
+					}),
+					makeNode({
+						tagName: 'p',
+						text: 'Paragraph',
+					}),
+				],
+			});
+
+			const state = serializer.serializeTree(root, defaultScroll, defaultViewport, defaultDocSize);
+
+			expect(state.interactiveElementCount).toBeGreaterThanOrEqual(1);
+			expect(state.elementCount).toBeGreaterThanOrEqual(1);
+		});
+
+		test('builds selector map for interactive elements with highlightIndex', () => {
+			const root = makeNode({
+				tagName: 'html',
+				children: [
+					makeNode({
+						tagName: 'button',
+						isInteractive: true,
+						isVisible: true,
+						highlightIndex: 0 as ElementRef,
+						cssSelector: '#submit-btn',
+						text: 'Submit',
+						role: 'button',
+						ariaLabel: 'Submit form',
+					}),
+				],
+			});
+
+			const state = serializer.serializeTree(root, defaultScroll, defaultViewport, defaultDocSize);
+
+			expect(state.selectorMap[0]).toBeDefined();
+			expect(state.selectorMap[0].cssSelector).toBe('#submit-btn');
+			expect(state.selectorMap[0].tagName).toBe('button');
