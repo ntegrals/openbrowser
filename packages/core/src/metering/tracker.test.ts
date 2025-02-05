@@ -598,3 +598,10 @@ describe('BudgetDepletedError', () => {
 		expect(error.maxCost).toBe(5.0);
 		expect(error.message).toContain('$5.5000');
 		expect(error.message).toContain('$5.0000');
+	});
+
+	test('is instanceof Error', () => {
+		const error = new BudgetDepletedError(1, 1);
+		expect(error instanceof Error).toBe(true);
+	});
+});
