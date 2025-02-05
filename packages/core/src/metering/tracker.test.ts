@@ -118,3 +118,43 @@ describe('UsageMeter', () => {
 
 			tracker.reset();
 
+			const usage = tracker.getTotalUsage();
+			expect(usage.inputTokens).toBe(0);
+			expect(usage.outputTokens).toBe(0);
+			expect(usage.totalTokens).toBe(0);
+			expect(tracker.getStepUsages()).toHaveLength(0);
+			expect(tracker.getEstimatedCost()).toBe(0);
+		});
+	});
+
+	describe('partial model matching', () => {
+		test('matches model by partial ID', () => {
+			// "gpt-4o" pricing should match "gpt-4o-2024-08-06" via partial match
+			const versioned = new UsageMeter('gpt-4o-2024-08-06', TEST_PRICING);
+			versioned.record(1_000_000, 0);
+
+			// Should find gpt-4o pricing ($2.50/M input)
+			expect(versioned.getEstimatedCost()).toBeCloseTo(2.5, 4);
+		});
+	});
+});
+
+// ── CompositeUsageMeter ──
+
+describe('CompositeUsageMeter', () => {
+	let multiTracker: CompositeUsageMeter;
+
+	beforeEach(() => {
+		multiTracker = new CompositeUsageMeter(TEST_PRICING);
+	});
+
+	describe('record and getTotalUsage', () => {
+		test('records usage for a single model', () => {
+			multiTracker.record({
+				modelId: 'gpt-4o',
+				role: 'main',
+				inputTokens: 1000,
+				outputTokens: 500,
+			});
+
+			const usage = multiTracker.getTotalUsage();
