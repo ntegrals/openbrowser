@@ -238,3 +238,43 @@ describe('PageAnalyzer', () => {
 		});
 
 		test('fills input with text when clearFirst is true (default)', async () => {
+			const page = makeMockPage();
+			const cdp = makeMockCdpSession();
+
+			(service as any).cachedSelectorMap = {
+				0: { cssSelector: '#name', tagName: 'input' },
+			};
+
+			await service.inputTextByIndex(page, cdp, 0, 'Alice');
+
+			expect(page.fill).toHaveBeenCalledWith('#name', 'Alice');
+			expect(service.getInteractedElements()).toHaveLength(1);
+			expect(service.getInteractedElements()[0].action).toBe('input');
+		});
+
+		test('types text without clearing when clearFirst is false', async () => {
+			const page = makeMockPage();
+			const cdp = makeMockCdpSession();
+
+			(service as any).cachedSelectorMap = {
+				0: { cssSelector: '#name', tagName: 'input' },
+			};
+
+			await service.inputTextByIndex(page, cdp, 0, 'Bob', false);
+
+			expect(page.click).toHaveBeenCalledWith('#name');
+			expect(page.keyboard.type).toHaveBeenCalledWith('Bob');
+		});
+	});
+
+	describe('getElementSelector', () => {
+		test('returns undefined when no selector map cached', async () => {
+			const result = await service.getElementSelector(0);
+			expect(result).toBeUndefined();
+		});
+
+		test('returns CSS selector when element is in the map', async () => {
+			(service as any).cachedSelectorMap = {
+				5: { cssSelector: '.item-5', tagName: 'div' },
+			};
+
