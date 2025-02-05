@@ -78,3 +78,43 @@ describe('PageAnalyzer', () => {
 
 		test('getCachedSelectorMap returns null initially', () => {
 			expect(service.getCachedSelectorMap()).toBeNull();
+		});
+
+		test('clearCache resets tree and selector map', () => {
+			// We can't set cachedTree directly, but clearCache should work on empty state
+			service.clearCache();
+			expect(service.getCachedTree()).toBeNull();
+			expect(service.getCachedSelectorMap()).toBeNull();
+		});
+	});
+
+	describe('interaction recording', () => {
+		test('getInteractedElements returns empty array initially', () => {
+			expect(service.getInteractedElements()).toEqual([]);
+		});
+
+		test('clearInteractedElements resets the list', () => {
+			service.clearInteractedElements();
+			expect(service.getInteractedElements()).toEqual([]);
+		});
+
+		test('getInteractedElements returns a copy', () => {
+			const elements = service.getInteractedElements();
+			expect(elements).not.toBe(service.getInteractedElements());
+		});
+	});
+
+	describe('clickElementByIndex', () => {
+		test('throws PageExtractionError when element not in selector map', async () => {
+			const page = makeMockPage();
+			const cdp = makeMockCdpSession();
+
+			await expect(
+				service.clickElementByIndex(page, cdp, 42),
+			).rejects.toThrow(PageExtractionError);
+		});
+
+		test('Strategy 1: uses CDP box model when backendNodeId is available', async () => {
+			const page = makeMockPage();
+			const cdp = makeMockCdpSession({
+				send: mock(() =>
