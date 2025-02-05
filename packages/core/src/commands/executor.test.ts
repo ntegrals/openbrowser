@@ -598,3 +598,43 @@ describe('CommandExecutor', () => {
 
 		test('masks sensitive data in error messages', async () => {
 			const ctx = makeContext({
+				maskedValues: { TOKEN: 'my-secret-token' },
+			});
+			ctx.domService.clickElementByIndex = mock(() =>
+				Promise.reject(new Error('Failed with my-secret-token')),
+			);
+
+			const results = await tools.executeActions(
+				[action({ action: 'tap', index: 0 })],
+				ctx,
+			);
+
+			expect(results[0].error).not.toContain('my-secret-token');
+			expect(results[0].error).toContain('<TOKEN>');
+		});
+	});
+
+	describe('switch_tab action', () => {
+		test('switches to specified tab', async () => {
+			const ctx = makeContext();
+			const result = await tools.executeAction(
+				action({ action: 'focus_tab', tabIndex: 1 }),
+				ctx,
+			);
+
+			expect(result.success).toBe(true);
+			expect(ctx.browserSession.switchTab).toHaveBeenCalledWith(1);
+		});
+	});
+
+	describe('open_tab action', () => {
+		test('opens new tab with URL', async () => {
+			const ctx = makeContext();
+			const result = await tools.executeAction(
+				action({ action: 'new_tab', url: 'https://example.com' }),
+				ctx,
+			);
+
+			expect(result.success).toBe(true);
+			expect(ctx.browserSession.newTab).toHaveBeenCalledWith('https://example.com');
+		});
