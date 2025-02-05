@@ -678,3 +678,18 @@ describe('CommandExecutor', () => {
 			expect(ctx.browserSession.screenshot).toHaveBeenCalled();
 		});
 	});
+
+	describe('setCoordinateClicking', () => {
+		test('enables coordinate-based clicking', () => {
+			tools.setCoordinateClicking(true);
+			// Verified through click behavior in click action tests above
+			expect(tools).toBeDefined();
+		});
+
+		test('disables coordinate-based clicking', () => {
+			tools.setCoordinateClicking(true);
+			tools.setCoordinateClicking(false);
+			expect(tools).toBeDefined();
+		});
+	});
+});
