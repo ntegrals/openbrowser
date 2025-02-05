@@ -158,3 +158,43 @@ describe('PageAnalyzer', () => {
 			const page = makeMockPage({ evaluate: evaluateMock });
 			const cdp = makeMockCdpSession({
 				send: mock(() => Promise.reject(new Error('CDP failed'))),
+			});
+
+			const selectorMap: SelectorIndex = {
+				0: {
+					cssSelector: '#btn',
+					backendNodeId: 123,
+					tagName: 'button',
+				},
+			};
+			(service as any).cachedSelectorMap = selectorMap;
+
+			await service.clickElementByIndex(page, cdp, 0);
+
+			// Should have called page.evaluate (JS fallback)
+			expect(evaluateMock).toHaveBeenCalled();
+			// Then mouse.click with the returned coords
+			expect(page.mouse.click).toHaveBeenCalledWith(50, 25);
+		});
+
+		test('Strategy 3: falls back to CSS selector click when JS rect returns null', async () => {
+			const evaluateMock = mock(() => Promise.resolve(null));
+			const page = makeMockPage({ evaluate: evaluateMock });
+			const cdp = makeMockCdpSession({
+				send: mock(() => Promise.reject(new Error('CDP failed'))),
+			});
+
+			const selectorMap: SelectorIndex = {
+				0: {
+					cssSelector: '.my-btn',
+					backendNodeId: 123,
+					tagName: 'button',
+				},
+			};
+			(service as any).cachedSelectorMap = selectorMap;
+
+			await service.clickElementByIndex(page, cdp, 0);
+
+			// Should have fallen through to page.click(cssSelector)
+			expect(page.click).toHaveBeenCalledWith('.my-btn', { timeout: 5000 });
+		});
