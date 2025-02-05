@@ -358,3 +358,43 @@ describe('CompositeUsageMeter', () => {
 					inputTokens: 1_000_000,
 					outputTokens: 0,
 				}),
+			).not.toThrow();
+		});
+
+		test('getBudgetState reflects current state', () => {
+			multiTracker.setBudget({
+				maxCostUsd: 10.0,
+				thresholds: [0.5],
+				onThresholdCrossed: () => {},
+			});
+
+			multiTracker.record({
+				modelId: 'gpt-4o',
+				role: 'main',
+				inputTokens: 1_000_000,
+				outputTokens: 0,
+			});
+
+			const status = multiTracker.getBudgetState();
+			expect(status.maxCostUsd).toBe(10.0);
+			expect(status.currentCostUsd).toBeCloseTo(2.5, 2);
+			expect(status.fractionUsed).toBeCloseTo(0.25, 2);
+			expect(status.isExhausted).toBe(false);
+		});
+
+		test('clearBudget removes budget configuration', () => {
+			multiTracker.setBudget({
+				maxCostUsd: 1.0,
+				thresholds: [0.5],
+				onThresholdCrossed: () => {},
+			});
+
+			multiTracker.clearBudget();
+
+			const status = multiTracker.getBudgetState();
+			expect(status.maxCostUsd).toBeUndefined();
+			expect(status.fractionUsed).toBeUndefined();
+			expect(status.isExhausted).toBe(false);
+		});
+	});
+
