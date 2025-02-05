@@ -318,3 +318,43 @@ describe('PageAnalyzer', () => {
 
 		test('returns null when CDP call fails', async () => {
 			const cdp = makeMockCdpSession({
+				send: mock(() => Promise.reject(new Error('not found'))),
+			});
+
+			const result = await service.getElementByBackendNodeId(cdp, 42);
+			expect(result).toBeNull();
+		});
+
+		test('returns null when node has no result', async () => {
+			const cdp = makeMockCdpSession({
+				send: mock(() => Promise.resolve({ node: null })),
+			});
+
+			const result = await service.getElementByBackendNodeId(cdp, 42);
+			expect(result).toBeNull();
+		});
+	});
+
+	describe('collectHiddenElementHints (via private access)', () => {
+		test('collects hints for elements below the viewport', () => {
+			const root = makeNode({
+				children: [
+					makeNode({
+						tagName: 'button',
+						isInteractive: true,
+						isVisible: false,
+						highlightIndex: 0 as ElementRef,
+						ariaLabel: 'Submit form',
+						rect: { x: 0, y: 2000, width: 100, height: 30 },
+					}),
+				],
+			});
+
+			const viewport = { width: 1280, height: 800 };
+			const scroll = { x: 0, y: 0 };
+
+			const hints = (service as any).collectHiddenElementHints(root, viewport, scroll);
+
+			expect(hints).toHaveLength(1);
+			expect(hints[0]).toContain('Submit form');
+			expect(hints[0]).toContain('pages below');
