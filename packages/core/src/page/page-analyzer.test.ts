@@ -358,3 +358,43 @@ describe('PageAnalyzer', () => {
 			expect(hints).toHaveLength(1);
 			expect(hints[0]).toContain('Submit form');
 			expect(hints[0]).toContain('pages below');
+		});
+
+		test('collects hints for elements above the viewport', () => {
+			const root = makeNode({
+				children: [
+					makeNode({
+						tagName: 'a',
+						isInteractive: true,
+						isVisible: false,
+						highlightIndex: 1 as ElementRef,
+						text: 'Top link',
+						rect: { x: 0, y: 100, width: 80, height: 20 },
+					}),
+				],
+			});
+
+			const viewport = { width: 1280, height: 800 };
+			const scroll = { x: 0, y: 1600 }; // scrolled way down
+
+			const hints = (service as any).collectHiddenElementHints(root, viewport, scroll);
+
+			expect(hints).toHaveLength(1);
+			expect(hints[0]).toContain('Top link');
+			expect(hints[0]).toContain('pages above');
+		});
+
+		test('ignores visible or non-interactive elements', () => {
+			const root = makeNode({
+				children: [
+					makeNode({
+						tagName: 'button',
+						isInteractive: true,
+						isVisible: true, // visible elements are not collected
+						highlightIndex: 0 as ElementRef,
+						rect: { x: 0, y: 2000, width: 100, height: 30 },
+					}),
+					makeNode({
+						tagName: 'div',
+						isInteractive: false, // non-interactive
+						isVisible: false,
