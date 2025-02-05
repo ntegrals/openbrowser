@@ -478,3 +478,43 @@ describe('CompositeUsageMeter', () => {
 				role: 'main',
 				inputTokens: 100_000,
 				outputTokens: 0,
+			});
+
+			const text = multiTracker.getSummaryText();
+			expect(text).toContain('Budget:');
+			expect(text).toContain('$5.0000');
+		});
+	});
+
+	describe('reset', () => {
+		test('clears all tracking data', () => {
+			multiTracker.record({
+				modelId: 'gpt-4o',
+				role: 'main',
+				inputTokens: 1000,
+				outputTokens: 500,
+			});
+			multiTracker.record({
+				modelId: 'gpt-4o-mini',
+				role: 'extraction',
+				inputTokens: 500,
+				outputTokens: 200,
+			});
+
+			multiTracker.reset();
+
+			const usage = multiTracker.getTotalUsage();
+			expect(usage.totalTokens).toBe(0);
+			expect(multiTracker.getTotalCost()).toBe(0);
+
+			const summary = multiTracker.getSummary();
+			expect(summary.totalCalls).toBe(0);
+			expect(summary.byModel).toHaveLength(0);
+			expect(summary.byRole).toHaveLength(0);
+			expect(summary.durationMs).toBeUndefined();
+		});
+
+		test('resets budget thresholds', () => {
+			const thresholdCrossed = mock(() => {});
+			multiTracker.setBudget({
+				maxCostUsd: 1.0,
