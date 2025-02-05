@@ -78,3 +78,43 @@ describe('UsageMeter', () => {
 		});
 	});
 
+	describe('getStepUsages', () => {
+		test('tracks per-step usage', () => {
+			tracker.record(100, 50);
+			tracker.record(200, 100);
+
+			const steps = tracker.getStepUsages();
+			expect(steps).toHaveLength(2);
+			expect(steps[0]).toEqual({ inputTokens: 100, outputTokens: 50, totalTokens: 150 });
+			expect(steps[1]).toEqual({ inputTokens: 200, outputTokens: 100, totalTokens: 300 });
+		});
+
+		test('returns a copy of step usages array', () => {
+			tracker.record(100, 50);
+			const steps1 = tracker.getStepUsages();
+			const steps2 = tracker.getStepUsages();
+			expect(steps1).not.toBe(steps2);
+		});
+	});
+
+	describe('getSummary', () => {
+		test('returns formatted summary string', () => {
+			tracker.record(1000, 500);
+
+			const summary = tracker.getSummary();
+			expect(summary).toContain('Model: gpt-4o');
+			expect(summary).toContain('Steps: 1');
+			expect(summary).toContain('Input tokens:');
+			expect(summary).toContain('Output tokens:');
+			expect(summary).toContain('Total tokens:');
+			expect(summary).toContain('Estimated cost: $');
+		});
+	});
+
+	describe('reset', () => {
+		test('resets all usage data', () => {
+			tracker.record(1000, 500);
+			tracker.record(2000, 1000);
+
+			tracker.reset();
+
