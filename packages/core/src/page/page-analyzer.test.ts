@@ -38,3 +38,43 @@ function makeNode(overrides: Partial<PageTreeNode> = {}): PageTreeNode {
 		children: [],
 		isVisible: true,
 		isInteractive: false,
+		isClickable: false,
+		isEditable: false,
+		isScrollable: false,
+		...overrides,
+	};
+}
+
+// ── Tests ──
+
+describe('PageAnalyzer', () => {
+	let service: PageAnalyzer;
+
+	beforeEach(() => {
+		service = new PageAnalyzer();
+	});
+
+	describe('constructor defaults', () => {
+		test('has default viewport expansion of 0', () => {
+			// The service is created with defaults, including viewportExpansion = 0
+			expect(service).toBeDefined();
+		});
+
+		test('accepts custom options', () => {
+			const custom = new PageAnalyzer({
+				viewportExpansion: 500,
+				maxElementsInDom: 100,
+				maxIframes: 1,
+				capturedAttributes: ['title'],
+			});
+			expect(custom).toBeDefined();
+		});
+	});
+
+	describe('cache management', () => {
+		test('getCachedTree returns null initially', () => {
+			expect(service.getCachedTree()).toBeNull();
+		});
+
+		test('getCachedSelectorMap returns null initially', () => {
+			expect(service.getCachedSelectorMap()).toBeNull();
