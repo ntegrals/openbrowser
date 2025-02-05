@@ -238,3 +238,43 @@ describe('CompositeUsageMeter', () => {
 				outputTokens: 200,
 			});
 
+			const tracker = multiTracker.getTracker('gpt-4o');
+			expect(tracker.getTotalUsage().inputTokens).toBe(500);
+		});
+
+		test('creates tracker on first access', () => {
+			const tracker = multiTracker.getTracker('claude-3-5-sonnet');
+			expect(tracker).toBeDefined();
+			expect(tracker.getTotalUsage().totalTokens).toBe(0);
+		});
+	});
+
+	describe('budget alerts', () => {
+		test('fires threshold callback when cost crosses threshold', () => {
+			const thresholdCrossed = mock(() => {});
+			multiTracker.setBudget({
+				maxCostUsd: 1.0,
+				thresholds: [0.5, 0.8, 1.0],
+				onThresholdCrossed: thresholdCrossed,
+			});
+
+			// Record enough to cross 0.5 threshold ($0.50)
+			// gpt-4o: $2.50/M input -> need 200k tokens for $0.50
+			multiTracker.record({
+				modelId: 'gpt-4o',
+				role: 'main',
+				inputTokens: 200_000,
+				outputTokens: 0,
+			});
+
+			expect(thresholdCrossed).toHaveBeenCalledTimes(1);
+			const call = (thresholdCrossed as any).mock.calls[0];
+			expect(call[1]).toBe(0.5); // threshold
+			expect(call[2]).toBe(1.0); // maxCost
+		});
+
+		test('fires multiple thresholds as cost increases', () => {
+			const thresholdCrossed = mock(() => {});
+			multiTracker.setBudget({
+				maxCostUsd: 1.0,
+				thresholds: [0.5, 1.0],
