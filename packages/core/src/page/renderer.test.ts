@@ -158,3 +158,43 @@ describe('TreeRenderer', () => {
 	describe('SVG collapse', () => {
 		test('collapses SVG to placeholder with icon label', () => {
 			const root = makeNode({
+				tagName: 'html',
+				children: [
+					makeNode({
+						tagName: 'svg',
+						isVisible: true,
+						attributes: {},
+						children: [
+							makeNode({
+								tagName: 'path',
+								isVisible: true,
+								attributes: { d: 'M0 0L10 10' },
+							}),
+						],
+					}),
+				],
+			});
+
+			const state = serializer.serializeTree(root, defaultScroll, defaultViewport, defaultDocSize);
+			expect(state.tree).toContain('<svg>icon</svg>');
+		});
+
+		test('uses aria-label from SVG if available', () => {
+			const root = makeNode({
+				tagName: 'html',
+				children: [
+					makeNode({
+						tagName: 'svg',
+						isVisible: true,
+						ariaLabel: 'Search icon',
+						attributes: {},
+						children: [],
+					}),
+				],
+			});
+
+			const state = serializer.serializeTree(root, defaultScroll, defaultViewport, defaultDocSize);
+			expect(state.tree).toContain('<svg>Search icon</svg>');
+		});
+
+		test('finds title in nested SVG structure', () => {
