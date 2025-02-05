@@ -198,3 +198,43 @@ describe('PageAnalyzer', () => {
 			// Should have fallen through to page.click(cssSelector)
 			expect(page.click).toHaveBeenCalledWith('.my-btn', { timeout: 5000 });
 		});
+
+		test('uses CSS selector click when no backendNodeId', async () => {
+			const evaluateMock = mock(() => Promise.resolve(null));
+			const page = makeMockPage({ evaluate: evaluateMock });
+			const cdp = makeMockCdpSession();
+
+			const selectorMap: SelectorIndex = {
+				0: {
+					cssSelector: '#submit',
+					tagName: 'button',
+					// No backendNodeId
+				},
+			};
+			(service as any).cachedSelectorMap = selectorMap;
+
+			await service.clickElementByIndex(page, cdp, 0);
+
+			expect(page.click).toHaveBeenCalledWith('#submit', { timeout: 5000 });
+		});
+	});
+
+	describe('clickAtCoordinates', () => {
+		test('clicks at the specified coordinates', async () => {
+			const page = makeMockPage();
+			await service.clickAtCoordinates(page, 100, 200);
+			expect(page.mouse.click).toHaveBeenCalledWith(100, 200);
+		});
+	});
+
+	describe('inputTextByIndex', () => {
+		test('throws when element not in selector map', async () => {
+			const page = makeMockPage();
+			const cdp = makeMockCdpSession();
+
+			await expect(
+				service.inputTextByIndex(page, cdp, 99, 'hello'),
+			).rejects.toThrow(PageExtractionError);
+		});
+
+		test('fills input with text when clearFirst is true (default)', async () => {
