@@ -518,3 +518,43 @@ describe('CompositeUsageMeter', () => {
 			const thresholdCrossed = mock(() => {});
 			multiTracker.setBudget({
 				maxCostUsd: 1.0,
+				thresholds: [0.5],
+				onThresholdCrossed: thresholdCrossed,
+			});
+
+			// Cross 0.5 threshold
+			multiTracker.record({
+				modelId: 'gpt-4o',
+				role: 'main',
+				inputTokens: 200_000,
+				outputTokens: 0,
+			});
+
+			multiTracker.reset();
+
+			// Record again -- should fire threshold callback again since it was reset
+			// But reset() clears crossedThresholds AND trackers, so cost starts at 0
+			multiTracker.record({
+				modelId: 'gpt-4o',
+				role: 'main',
+				inputTokens: 200_000,
+				outputTokens: 0,
+			});
+
+			// Both before and after reset should have fired
+			expect(thresholdCrossed).toHaveBeenCalledTimes(2);
+		});
+	});
+
+	describe('auto-start', () => {
+		test('automatically starts timer on first record', () => {
+			const summary1 = multiTracker.getSummary();
+			expect(summary1.durationMs).toBeUndefined();
+
+			multiTracker.record({
+				modelId: 'gpt-4o',
+				role: 'main',
+				inputTokens: 100,
+				outputTokens: 50,
+			});
+
