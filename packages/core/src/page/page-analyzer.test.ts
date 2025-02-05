@@ -278,3 +278,43 @@ describe('PageAnalyzer', () => {
 				5: { cssSelector: '.item-5', tagName: 'div' },
 			};
 
+			const result = await service.getElementSelector(5);
+			expect(result).toBe('.item-5');
+		});
+	});
+
+	describe('getElementByBackendNodeId', () => {
+		test('returns selector with ID when available', async () => {
+			const cdp = makeMockCdpSession({
+				send: mock(() =>
+					Promise.resolve({
+						node: {
+							nodeName: 'DIV',
+							attributes: ['id', 'main-content', 'class', 'wrapper'],
+						},
+					}),
+				),
+			});
+
+			const result = await service.getElementByBackendNodeId(cdp, 42);
+			expect(result).toEqual({ selector: '#main-content' });
+		});
+
+		test('returns tag name when no ID attribute', async () => {
+			const cdp = makeMockCdpSession({
+				send: mock(() =>
+					Promise.resolve({
+						node: {
+							nodeName: 'BUTTON',
+							attributes: ['class', 'primary'],
+						},
+					}),
+				),
+			});
+
+			const result = await service.getElementByBackendNodeId(cdp, 42);
+			expect(result).toEqual({ selector: 'button' });
+		});
+
+		test('returns null when CDP call fails', async () => {
+			const cdp = makeMockCdpSession({
