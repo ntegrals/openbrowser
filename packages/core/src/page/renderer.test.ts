@@ -118,3 +118,43 @@ describe('TreeRenderer', () => {
 			expect(state.selectorMap[0]).toBeDefined();
 			expect(state.selectorMap[0].cssSelector).toBe('#submit-btn');
 			expect(state.selectorMap[0].tagName).toBe('button');
+			expect(state.selectorMap[0].role).toBe('button');
+			expect(state.selectorMap[0].ariaLabel).toBe('Submit form');
+		});
+
+		test('includes highlight index in serialized output', () => {
+			const root = makeNode({
+				tagName: 'html',
+				children: [
+					makeNode({
+						tagName: 'a',
+						isInteractive: true,
+						isVisible: true,
+						highlightIndex: 3 as ElementRef,
+						cssSelector: 'a.link',
+						text: 'Link text',
+					}),
+				],
+			});
+
+			const state = serializer.serializeTree(root, defaultScroll, defaultViewport, defaultDocSize);
+			expect(state.tree).toContain('[3]');
+		});
+
+		test('computes pixelsAbove and pixelsBelow', () => {
+			const root = makeNode({ tagName: 'html' });
+			const state = serializer.serializeTree(
+				root,
+				{ x: 0, y: 400 },
+				{ width: 1280, height: 800 },
+				{ width: 1280, height: 2000 },
+			);
+
+			expect(state.pixelsAbove).toBe(400);
+			expect(state.pixelsBelow).toBe(800); // 2000 - 400 - 800
+		});
+	});
+
+	describe('SVG collapse', () => {
+		test('collapses SVG to placeholder with icon label', () => {
+			const root = makeNode({
