@@ -398,3 +398,43 @@ describe('PageAnalyzer', () => {
 						tagName: 'div',
 						isInteractive: false, // non-interactive
 						isVisible: false,
+						highlightIndex: 1 as ElementRef,
+						rect: { x: 0, y: 2000, width: 100, height: 30 },
+					}),
+				],
+			});
+
+			const viewport = { width: 1280, height: 800 };
+			const scroll = { x: 0, y: 0 };
+
+			const hints = (service as any).collectHiddenElementHints(root, viewport, scroll);
+			expect(hints).toHaveLength(0);
+		});
+	});
+
+	describe('applyViewportThresholdFilter (via private access)', () => {
+		test('removes highlightIndex from elements outside expanded viewport', () => {
+			const outsideNode = makeNode({
+				tagName: 'button',
+				highlightIndex: 0 as ElementRef,
+				rect: { x: 0, y: 5000, width: 100, height: 30 },
+			});
+			const insideNode = makeNode({
+				tagName: 'input',
+				highlightIndex: 1 as ElementRef,
+				rect: { x: 0, y: 200, width: 200, height: 30 },
+			});
+			const root = makeNode({
+				children: [outsideNode, insideNode],
+			});
+
+			const viewport = { width: 1280, height: 800 };
+			const scroll = { x: 0, y: 0 };
+
+			(service as any).applyViewportThresholdFilter(root, viewport, scroll);
+
+			// The outside node should have its highlightIndex removed
+			expect(outsideNode.highlightIndex).toBeUndefined();
+			// The inside node should keep its highlightIndex
+			expect(insideNode.highlightIndex).toBe(1 as ElementRef);
+		});
