@@ -158,3 +158,43 @@ describe('CompositeUsageMeter', () => {
 			});
 
 			const usage = multiTracker.getTotalUsage();
+			expect(usage.inputTokens).toBe(1000);
+			expect(usage.outputTokens).toBe(500);
+			expect(usage.totalTokens).toBe(1500);
+		});
+
+		test('aggregates across multiple models', () => {
+			multiTracker.record({
+				modelId: 'gpt-4o',
+				role: 'main',
+				inputTokens: 1000,
+				outputTokens: 500,
+			});
+			multiTracker.record({
+				modelId: 'gpt-4o-mini',
+				role: 'extraction',
+				inputTokens: 2000,
+				outputTokens: 800,
+			});
+
+			const usage = multiTracker.getTotalUsage();
+			expect(usage.inputTokens).toBe(3000);
+			expect(usage.outputTokens).toBe(1300);
+			expect(usage.totalTokens).toBe(4300);
+		});
+
+		test('returns estimated cost for the recorded call', () => {
+			const cost = multiTracker.record({
+				modelId: 'gpt-4o',
+				role: 'main',
+				inputTokens: 1_000_000,
+				outputTokens: 0,
+			});
+
+			// gpt-4o: $2.50/M input
+			expect(cost).toBeCloseTo(2.5, 4);
+		});
+	});
+
+	describe('getTotalCost', () => {
+		test('sums costs across all models', () => {
