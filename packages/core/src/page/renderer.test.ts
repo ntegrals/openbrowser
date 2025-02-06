@@ -398,3 +398,43 @@ describe('TreeRenderer', () => {
 					}),
 				],
 			});
+
+			const state = noDedup.serializeTree(root, defaultScroll, defaultViewport, defaultDocSize);
+			expect(state.tree).not.toContain('... and');
+			expect(state.tree).toContain('Item 7');
+		});
+	});
+
+	describe('max elements cap', () => {
+		test('truncates tree when max elements is exceeded', () => {
+			const small = new TreeRenderer({
+				maxElementsInDom: 5,
+				filterPaintOrder: false,
+				deduplicateSiblings: false,
+			});
+
+			const children = Array.from({ length: 20 }, (_, i) =>
+				makeNode({
+					tagName: 'p',
+					isVisible: true,
+					text: `Para ${i}`,
+					children: [],
+				}),
+			);
+
+			const root = makeNode({
+				tagName: 'html',
+				children: [
+					makeNode({
+						tagName: 'body',
+						isVisible: true,
+						children,
+					}),
+				],
+			});
+
+			const state = small.serializeTree(root, defaultScroll, defaultViewport, defaultDocSize);
+			expect(state.tree).toContain('DOM truncated at 5 elements');
+		});
+	});
+
