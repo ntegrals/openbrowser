@@ -638,3 +638,43 @@ describe('TreeRenderer', () => {
 			expect(state.tree).toContain('pages above');
 		});
 
+		test('limits hints to 15 off-screen elements', () => {
+			const children = Array.from({ length: 20 }, (_, i) =>
+				makeNode({
+					tagName: 'button',
+					isVisible: true,
+					isInteractive: true,
+					highlightIndex: i as ElementRef,
+					cssSelector: `button.item-${i}`,
+					ariaLabel: `Button ${i}`,
+					rect: { x: 100, y: 2000 + i * 100, width: 100, height: 30 },
+				}),
+			);
+
+			const root = makeNode({
+				tagName: 'html',
+				children,
+			});
+
+			const state = serializer.serializeTree(root, defaultScroll, defaultViewport, defaultDocSize);
+
+			// Should cap at 15 and say "... and N more"
+			expect(state.tree).toContain('more off-screen elements');
+		});
+	});
+
+	describe('attributes serialization', () => {
+		test('includes configured attributes in output', () => {
+			const root = makeNode({
+				tagName: 'html',
+				children: [
+					makeNode({
+						tagName: 'input',
+						isVisible: true,
+						attributes: {
+							placeholder: 'Enter email',
+							title: 'Email field',
+						},
+						children: [],
+					}),
+				],
