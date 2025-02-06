@@ -238,3 +238,43 @@ describe('TreeRenderer', () => {
 					}),
 				],
 			});
+
+			const state = serializer.serializeTree(root, defaultScroll, defaultViewport, defaultDocSize);
+			expect(state.tree).toContain('[5]<svg>');
+		});
+
+		test('does not collapse SVG when collapseSvg is disabled', () => {
+			const noCollapse = new TreeRenderer({
+				collapseSvg: false,
+				filterPaintOrder: false,
+			});
+			const root = makeNode({
+				tagName: 'html',
+				children: [
+					makeNode({
+						tagName: 'svg',
+						isVisible: true,
+						attributes: {},
+						children: [
+							makeNode({
+								tagName: 'rect',
+								isVisible: true,
+								attributes: {},
+							}),
+						],
+					}),
+				],
+			});
+
+			const state = noCollapse.serializeTree(root, defaultScroll, defaultViewport, defaultDocSize);
+			// Should not be collapsed to a single <svg>icon</svg> placeholder
+			expect(state.tree).toContain('<svg>');
+			// Inner SVG elements (path, rect, etc.) are always skipped by the
+			// SVG_TAGS filter, so they won't appear. The key difference is
+			// collapseSvg=false does NOT produce the collapsed placeholder format.
+			expect(state.tree).not.toContain('<svg>icon</svg>');
+		});
+	});
+
+	describe('sibling deduplication', () => {
+		test('deduplicates runs of same-tag non-interactive siblings', () => {
