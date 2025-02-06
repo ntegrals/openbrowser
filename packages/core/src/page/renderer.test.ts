@@ -718,3 +718,43 @@ describe('TreeRenderer', () => {
 					}),
 				],
 			});
+
+			const state = serializer.serializeTree(root, defaultScroll, defaultViewport, defaultDocSize);
+			expect(state.tree).toContain('value="current text"');
+		});
+	});
+
+	describe('text node handling', () => {
+		test('renders text content inline for leaf elements', () => {
+			const root = makeNode({
+				tagName: 'html',
+				children: [
+					makeNode({
+						tagName: 'p',
+						isVisible: true,
+						text: 'Hello world',
+						children: [],
+					}),
+				],
+			});
+
+			const state = serializer.serializeTree(root, defaultScroll, defaultViewport, defaultDocSize);
+			expect(state.tree).toContain('Hello world');
+		});
+
+		test('renders text node children', () => {
+			const root = makeNode({
+				tagName: 'html',
+				children: [
+					makeNode({
+						tagName: 'p',
+						isVisible: true,
+						children: [makeTextNode('Some text content')],
+					}),
+				],
+			});
+
+			const state = serializer.serializeTree(root, defaultScroll, defaultViewport, defaultDocSize);
+			expect(state.tree).toContain('Some text content');
+		});
+	});
