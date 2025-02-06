@@ -478,3 +478,43 @@ describe('TreeRenderer', () => {
 				text: 'Text',
 				rect: { x: 0, y: 0, width: 100, height: 20 },
 			});
+
+			const wrapper = makeNode({
+				tagName: 'div',
+				isVisible: true,
+				highlightIndex: 1 as ElementRef,
+				cssSelector: 'div#parent',
+				rect: { x: 0, y: 0, width: 100, height: 20 },
+				children: [inner],
+			});
+
+			const root = makeNode({
+				tagName: 'html',
+				children: [wrapper],
+			});
+
+			const state = serializer.serializeTree(root, defaultScroll, defaultViewport, defaultDocSize);
+			expect(state.tree).toContain('<div');
+		});
+
+		test('does not skip non-generic tag wrappers', () => {
+			const inner = makeNode({
+				tagName: 'p',
+				isVisible: true,
+				text: 'Hello',
+				rect: { x: 0, y: 0, width: 100, height: 20 },
+			});
+
+			const wrapper = makeNode({
+				tagName: 'nav', // not in genericTags set
+				isVisible: true,
+				rect: { x: 0, y: 0, width: 100, height: 20 },
+				children: [inner],
+			});
+
+			const root = makeNode({
+				tagName: 'html',
+				children: [wrapper],
+			});
+
+			const state = serializer.serializeTree(root, defaultScroll, defaultViewport, defaultDocSize);
