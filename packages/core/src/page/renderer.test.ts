@@ -678,3 +678,43 @@ describe('TreeRenderer', () => {
 						children: [],
 					}),
 				],
+			});
+
+			const state = serializer.serializeTree(root, defaultScroll, defaultViewport, defaultDocSize);
+			expect(state.tree).toContain('placeholder="Enter email"');
+			expect(state.tree).toContain('title="Email field"');
+		});
+
+		test('includes role and aria-label from node properties', () => {
+			const root = makeNode({
+				tagName: 'html',
+				children: [
+					makeNode({
+						tagName: 'div',
+						isVisible: true,
+						role: 'navigation',
+						ariaLabel: 'Main menu',
+						attributes: {},
+						children: [makeTextNode('Menu')],
+					}),
+				],
+			});
+
+			const state = serializer.serializeTree(root, defaultScroll, defaultViewport, defaultDocSize);
+			expect(state.tree).toContain('role="navigation"');
+			expect(state.tree).toContain('aria-label="Main menu"');
+		});
+
+		test('includes input value in output', () => {
+			const root = makeNode({
+				tagName: 'html',
+				children: [
+					makeNode({
+						tagName: 'input',
+						isVisible: true,
+						inputValue: 'current text',
+						attributes: {},
+						children: [],
+					}),
+				],
+			});
