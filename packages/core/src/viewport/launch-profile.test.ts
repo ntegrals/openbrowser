@@ -78,3 +78,43 @@ describe('LaunchProfile', () => {
 		});
 	});
 
+	describe('.headless()', () => {
+		test('headless(true) sets headless to true', () => {
+			const opts = LaunchProfile.create().headless(true).build();
+			expect(opts.headless).toBe(true);
+		});
+
+		test('headless(false) sets headless to false', () => {
+			const opts = LaunchProfile.create().headless(false).build();
+			expect(opts.headless).toBe(false);
+		});
+
+		test('headless() with no argument defaults to true', () => {
+			const opts = LaunchProfile.create().headless().build();
+			expect(opts.headless).toBe(true);
+		});
+	});
+
+	describe('.headful() equivalent', () => {
+		test('headless(false) creates headful mode', () => {
+			const opts = LaunchProfile.create().headless(false).build();
+			expect(opts.headless).toBe(false);
+		});
+	});
+
+	describe('.stealthMode()', () => {
+		test('adds stealth args when enabled', () => {
+			const opts = LaunchProfile.create().stealthMode().build();
+			for (const arg of ANTI_DETECTION_FLAGS) {
+				expect(opts.extraArgs).toContain(arg);
+			}
+		});
+
+		test('does not add stealth args when disabled', () => {
+			const opts = LaunchProfile.create().stealthMode(false).build();
+			// ANTI_DETECTION_FLAGS[1] is --disable-features=AutomationControlled
+			// which won't be in the base args (only in ANTI_DETECTION_FLAGS)
+			// But CHROME_AUTOMATION_FLAGS also contains --disable-blink-features=AutomationControlled
+			// so check for the features one specifically
+			const stealthOnlyArg = '--disable-features=AutomationControlled';
+			const hasStealthOnlyArg = opts.extraArgs.some(
