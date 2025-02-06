@@ -558,3 +558,43 @@ describe('TreeRenderer', () => {
 				tagName: 'html',
 				children: [offCanvas],
 			});
+
+			const state = serializer.serializeTree(root, defaultScroll, defaultViewport, defaultDocSize);
+			expect(state.selectorMap[0]).toBeUndefined();
+		});
+
+		test('keeps elements that are off-viewport but within document bounds', () => {
+			const belowViewport = makeNode({
+				tagName: 'button',
+				isVisible: true,
+				isInteractive: true,
+				highlightIndex: 0 as ElementRef,
+				cssSelector: 'button.below',
+				rect: { x: 100, y: 2000, width: 100, height: 30 },
+			});
+
+			const root = makeNode({
+				tagName: 'html',
+				children: [belowViewport],
+			});
+
+			const state = serializer.serializeTree(root, defaultScroll, defaultViewport, defaultDocSize);
+
+			// Should be kept in selector map even though off-viewport
+			expect(state.selectorMap[0]).toBeDefined();
+			expect(state.selectorMap[0].cssSelector).toBe('button.below');
+		});
+	});
+
+	describe('hidden element hints formatting', () => {
+		test('formats hints for off-screen elements below viewport', () => {
+			const belowElement = makeNode({
+				tagName: 'button',
+				isVisible: true,
+				isInteractive: true,
+				highlightIndex: 0 as ElementRef,
+				cssSelector: 'button.far',
+				ariaLabel: 'Load more',
+				rect: { x: 100, y: 2400, width: 100, height: 30 },
+			});
+
