@@ -38,3 +38,43 @@ describe('LaunchProfile', () => {
 			const opts = LaunchProfile.create().build();
 			expect(opts.relaxedSecurity).toBe(false);
 		});
+
+		test('includes CHROME_AUTOMATION_FLAGS in extraArgs', () => {
+			const opts = LaunchProfile.create().build();
+			for (const arg of CHROME_AUTOMATION_FLAGS) {
+				expect(opts.extraArgs).toContain(arg);
+			}
+		});
+
+		test('includes disabled components feature flag', () => {
+			const opts = LaunchProfile.create().build();
+			const disableFeatures = opts.extraArgs.find((a) =>
+				a.startsWith('--disable-features='),
+			);
+			expect(disableFeatures).toBeDefined();
+			for (const component of CHROME_STRIPPED_FEATURES) {
+				expect(disableFeatures).toContain(component);
+			}
+		});
+
+		test('includes window-size arg', () => {
+			const opts = LaunchProfile.create().build();
+			expect(opts.extraArgs).toContain('--window-size=1280,1100');
+		});
+
+		test('proxy is undefined by default', () => {
+			const opts = LaunchProfile.create().build();
+			expect(opts.proxy).toBeUndefined();
+		});
+
+		test('userDataDir is undefined by default', () => {
+			const opts = LaunchProfile.create().build();
+			expect(opts.userDataDir).toBeUndefined();
+		});
+
+		test('channelName is undefined by default', () => {
+			const opts = LaunchProfile.create().build();
+			expect(opts.channelName).toBeUndefined();
+		});
+	});
+
