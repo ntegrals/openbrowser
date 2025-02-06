@@ -598,3 +598,43 @@ describe('TreeRenderer', () => {
 				rect: { x: 100, y: 2400, width: 100, height: 30 },
 			});
 
+			const root = makeNode({
+				tagName: 'html',
+				children: [belowElement],
+			});
+
+			const state = serializer.serializeTree(root, defaultScroll, defaultViewport, defaultDocSize);
+
+			expect(state.tree).toContain('Off-screen interactive elements');
+			expect(state.tree).toContain('Load more');
+			expect(state.tree).toContain('pages below');
+		});
+
+		test('formats hints for elements above viewport', () => {
+			const aboveElement = makeNode({
+				tagName: 'a',
+				isVisible: true,
+				isInteractive: true,
+				highlightIndex: 0 as ElementRef,
+				cssSelector: 'a.header',
+				ariaLabel: 'Home link',
+				rect: { x: 100, y: 50, width: 100, height: 30 },
+			});
+
+			const root = makeNode({
+				tagName: 'html',
+				children: [aboveElement],
+			});
+
+			// Scrolled down so element is above
+			const state = serializer.serializeTree(
+				root,
+				{ x: 0, y: 1000 },
+				defaultViewport,
+				defaultDocSize,
+			);
+
+			expect(state.tree).toContain('Home link');
+			expect(state.tree).toContain('pages above');
+		});
+
