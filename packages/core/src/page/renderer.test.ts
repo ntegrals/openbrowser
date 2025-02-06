@@ -278,3 +278,43 @@ describe('TreeRenderer', () => {
 
 	describe('sibling deduplication', () => {
 		test('deduplicates runs of same-tag non-interactive siblings', () => {
+			// Create 8 identical li elements (threshold = 5)
+			const listItems = Array.from({ length: 8 }, (_, i) =>
+				makeNode({
+					tagName: 'li',
+					isVisible: true,
+					text: `Item ${i}`,
+					children: [],
+				}),
+			);
+
+			const root = makeNode({
+				tagName: 'html',
+				children: [
+					makeNode({
+						tagName: 'ul',
+						isVisible: true,
+						children: listItems,
+					}),
+				],
+			});
+
+			const state = serializer.serializeTree(root, defaultScroll, defaultViewport, defaultDocSize);
+
+			// Should show first 3 and then "... and 5 more" summary
+			expect(state.tree).toContain('Item 0');
+			expect(state.tree).toContain('Item 1');
+			expect(state.tree).toContain('Item 2');
+			expect(state.tree).toContain('... and 5 more <li> elements');
+			expect(state.tree).not.toContain('Item 7');
+		});
+
+		test('does not deduplicate when below threshold', () => {
+			const items = Array.from({ length: 3 }, (_, i) =>
+				makeNode({
+					tagName: 'li',
+					isVisible: true,
+					text: `Item ${i}`,
+					children: [],
+				}),
+			);
