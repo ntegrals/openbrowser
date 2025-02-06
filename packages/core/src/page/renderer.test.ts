@@ -758,3 +758,4 @@ describe('TreeRenderer', () => {
 			expect(state.tree).toContain('Some text content');
 		});
 	});
+});
