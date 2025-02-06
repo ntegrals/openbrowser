@@ -198,3 +198,43 @@ describe('TreeRenderer', () => {
 		});
 
 		test('finds title in nested SVG structure', () => {
+			const root = makeNode({
+				tagName: 'html',
+				children: [
+					makeNode({
+						tagName: 'svg',
+						isVisible: true,
+						attributes: {},
+						children: [
+							makeNode({
+								tagName: 'title',
+								isVisible: true,
+								text: 'Close button',
+								nodeType: 'element',
+								attributes: {},
+								children: [],
+							}),
+						],
+					}),
+				],
+			});
+
+			const state = serializer.serializeTree(root, defaultScroll, defaultViewport, defaultDocSize);
+			expect(state.tree).toContain('<svg>Close button</svg>');
+		});
+
+		test('includes highlight index on interactive SVG', () => {
+			const root = makeNode({
+				tagName: 'html',
+				children: [
+					makeNode({
+						tagName: 'svg',
+						isVisible: true,
+						isInteractive: true,
+						highlightIndex: 5 as ElementRef,
+						cssSelector: 'svg.icon',
+						attributes: {},
+						children: [],
+					}),
+				],
+			});
