@@ -318,3 +318,43 @@ describe('TreeRenderer', () => {
 					children: [],
 				}),
 			);
+
+			const root = makeNode({
+				tagName: 'html',
+				children: [
+					makeNode({
+						tagName: 'ul',
+						isVisible: true,
+						children: items,
+					}),
+				],
+			});
+
+			const state = serializer.serializeTree(root, defaultScroll, defaultViewport, defaultDocSize);
+
+			expect(state.tree).toContain('Item 0');
+			expect(state.tree).toContain('Item 1');
+			expect(state.tree).toContain('Item 2');
+			expect(state.tree).not.toContain('... and');
+		});
+
+		test('does not deduplicate siblings with interactive descendants', () => {
+			const items = Array.from({ length: 8 }, (_, i) =>
+				makeNode({
+					tagName: 'li',
+					isVisible: true,
+					children: [
+						makeNode({
+							tagName: 'a',
+							isInteractive: i === 4, // one has interactive child
+							isVisible: true,
+							highlightIndex: i === 4 ? (10 as ElementRef) : undefined,
+							text: `Link ${i}`,
+						}),
+					],
+				}),
+			);
+
+			const root = makeNode({
+				tagName: 'html',
+				children: [
