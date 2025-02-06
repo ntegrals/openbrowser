@@ -518,3 +518,43 @@ describe('TreeRenderer', () => {
 			});
 
 			const state = serializer.serializeTree(root, defaultScroll, defaultViewport, defaultDocSize);
+			expect(state.tree).toContain('<nav');
+		});
+	});
+
+	describe('off-screen element filtering', () => {
+		test('filters out elements with degenerate rects (zero area)', () => {
+			const zeroWidth = makeNode({
+				tagName: 'button',
+				isVisible: true,
+				isInteractive: true,
+				highlightIndex: 0 as ElementRef,
+				cssSelector: 'button.hidden',
+				rect: { x: 0, y: 0, width: 0, height: 30 },
+			});
+
+			const root = makeNode({
+				tagName: 'html',
+				children: [zeroWidth],
+			});
+
+			const state = serializer.serializeTree(root, defaultScroll, defaultViewport, defaultDocSize);
+
+			// Zero-width element should be filtered from the selector map
+			expect(state.selectorMap[0]).toBeUndefined();
+		});
+
+		test('filters out elements with extreme off-canvas positioning', () => {
+			const offCanvas = makeNode({
+				tagName: 'a',
+				isVisible: true,
+				isInteractive: true,
+				highlightIndex: 0 as ElementRef,
+				cssSelector: 'a.sr-only',
+				rect: { x: -10000, y: 0, width: 100, height: 20 },
+			});
+
+			const root = makeNode({
+				tagName: 'html',
+				children: [offCanvas],
+			});
