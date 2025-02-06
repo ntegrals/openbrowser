@@ -358,3 +358,43 @@ describe('TreeRenderer', () => {
 			const root = makeNode({
 				tagName: 'html',
 				children: [
+					makeNode({
+						tagName: 'ul',
+						isVisible: true,
+						children: items,
+					}),
+				],
+			});
+
+			const state = serializer.serializeTree(root, defaultScroll, defaultViewport, defaultDocSize);
+
+			// Because item 4 has an interactive descendant, the run is broken
+			// and items should not all be deduped away
+			expect(state.tree).toContain('Link 4');
+		});
+
+		test('does not deduplicate when deduplicateSiblings is disabled', () => {
+			const noDedup = new TreeRenderer({
+				deduplicateSiblings: false,
+				filterPaintOrder: false,
+			});
+
+			const items = Array.from({ length: 8 }, (_, i) =>
+				makeNode({
+					tagName: 'li',
+					isVisible: true,
+					text: `Item ${i}`,
+					children: [],
+				}),
+			);
+
+			const root = makeNode({
+				tagName: 'html',
+				children: [
+					makeNode({
+						tagName: 'ul',
+						isVisible: true,
+						children: items,
+					}),
+				],
+			});
