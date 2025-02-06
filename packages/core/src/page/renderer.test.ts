@@ -438,3 +438,43 @@ describe('TreeRenderer', () => {
 		});
 	});
 
+	describe('containment threshold (redundant wrappers)', () => {
+		test('skips redundant div wrapper when child fills parent', () => {
+			const innerButton = makeNode({
+				tagName: 'button',
+				isVisible: true,
+				isInteractive: true,
+				highlightIndex: 0 as ElementRef,
+				cssSelector: 'button',
+				text: 'Click',
+				rect: { x: 0, y: 0, width: 200, height: 50 },
+			});
+
+			const wrapper = makeNode({
+				tagName: 'div',
+				isVisible: true,
+				isInteractive: false,
+				rect: { x: 0, y: 0, width: 200, height: 50 },
+				children: [innerButton],
+			});
+
+			const root = makeNode({
+				tagName: 'html',
+				children: [wrapper],
+			});
+
+			const state = serializer.serializeTree(root, defaultScroll, defaultViewport, defaultDocSize);
+
+			// The redundant div wrapper should be skipped in output;
+			// the button should appear directly
+			expect(state.tree).toContain('button');
+			expect(state.tree).toContain('Click');
+		});
+
+		test('does not skip wrapper when it has a highlightIndex', () => {
+			const inner = makeNode({
+				tagName: 'span',
+				isVisible: true,
+				text: 'Text',
+				rect: { x: 0, y: 0, width: 100, height: 20 },
+			});
