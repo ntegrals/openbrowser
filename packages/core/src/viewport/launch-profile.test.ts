@@ -318,3 +318,43 @@ describe('LaunchProfile', () => {
 
 	describe('builder chaining', () => {
 		test('multiple methods can be chained together', () => {
+			const opts = LaunchProfile.create()
+				.headless(false)
+				.stealthMode()
+				.dockerMode()
+				.deterministicRendering()
+				.windowSize(800, 600)
+				.downloadsPath('/downloads')
+				.addExtension('/ext')
+				.persistAfterClose()
+				.build();
+
+			expect(opts.headless).toBe(false);
+			expect(opts.persistAfterClose).toBe(true);
+			expect(opts.windowWidth).toBe(800);
+			expect(opts.windowHeight).toBe(600);
+			expect(opts.extraArgs).toContain('--window-size=800,600');
+
+			for (const arg of ANTI_DETECTION_FLAGS) {
+				expect(opts.extraArgs).toContain(arg);
+			}
+			for (const arg of CONTAINER_FLAGS) {
+				expect(opts.extraArgs).toContain(arg);
+			}
+			for (const arg of REPRODUCIBLE_RENDER_FLAGS) {
+				expect(opts.extraArgs).toContain(arg);
+			}
+		});
+	});
+});
+
+describe('CHROME_AUTOMATION_FLAGS', () => {
+	test('is a non-empty array', () => {
+		expect(Array.isArray(CHROME_AUTOMATION_FLAGS)).toBe(true);
+		expect(CHROME_AUTOMATION_FLAGS.length).toBeGreaterThan(10);
+	});
+
+	test('contains essential flags', () => {
+		expect(CHROME_AUTOMATION_FLAGS).toContain('--no-first-run');
+		expect(CHROME_AUTOMATION_FLAGS).toContain('--disable-popup-blocking');
+		expect(CHROME_AUTOMATION_FLAGS).toContain('--disable-infobars');
