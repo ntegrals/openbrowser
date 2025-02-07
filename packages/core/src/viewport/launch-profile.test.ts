@@ -198,3 +198,43 @@ describe('LaunchProfile', () => {
 		test('adds single extension path to load-extension arg', () => {
 			const opts = LaunchProfile.create()
 				.addExtension('/path/to/ext1')
+				.build();
+			const loadExtArg = opts.extraArgs.find((a) =>
+				a.startsWith('--load-extension='),
+			);
+			expect(loadExtArg).toBe('--load-extension=/path/to/ext1');
+		});
+
+		test('adds multiple extensions as comma-separated list', () => {
+			const opts = LaunchProfile.create()
+				.addExtension('/path/to/ext1')
+				.addExtension('/path/to/ext2')
+				.build();
+			const loadExtArg = opts.extraArgs.find((a) =>
+				a.startsWith('--load-extension='),
+			);
+			expect(loadExtArg).toBe(
+				'--load-extension=/path/to/ext1,/path/to/ext2',
+			);
+		});
+
+		test('no load-extension arg when no extensions added', () => {
+			const opts = LaunchProfile.create().build();
+			const loadExtArg = opts.extraArgs.find((a) =>
+				a.startsWith('--load-extension='),
+			);
+			expect(loadExtArg).toBeUndefined();
+		});
+	});
+
+	describe('.windowSize()', () => {
+		test('sets custom window dimensions', () => {
+			const opts = LaunchProfile.create().windowSize(1920, 1080).build();
+			expect(opts.windowWidth).toBe(1920);
+			expect(opts.windowHeight).toBe(1080);
+			expect(opts.extraArgs).toContain('--window-size=1920,1080');
+		});
+	});
+
+	describe('.proxy()', () => {
+		test('sets proxy server', () => {
