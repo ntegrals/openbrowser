@@ -118,3 +118,43 @@ describe('LaunchProfile', () => {
 			// so check for the features one specifically
 			const stealthOnlyArg = '--disable-features=AutomationControlled';
 			const hasStealthOnlyArg = opts.extraArgs.some(
+				(a) => a === stealthOnlyArg,
+			);
+			expect(hasStealthOnlyArg).toBe(false);
+		});
+
+		test('returns this for chaining', () => {
+			const profile = LaunchProfile.create();
+			const result = profile.stealthMode();
+			expect(result).toBe(profile);
+		});
+	});
+
+	describe('.dockerMode()', () => {
+		test('adds docker args when enabled', () => {
+			const opts = LaunchProfile.create().dockerMode().build();
+			for (const arg of CONTAINER_FLAGS) {
+				expect(opts.extraArgs).toContain(arg);
+			}
+		});
+
+		test('does not add docker args when disabled', () => {
+			const opts = LaunchProfile.create().dockerMode(false).build();
+			// --no-sandbox should not be present when docker mode is off
+			expect(opts.extraArgs).not.toContain('--no-sandbox');
+		});
+	});
+
+	describe('.deterministicRendering()', () => {
+		test('adds deterministic rendering args when enabled', () => {
+			const opts = LaunchProfile.create().deterministicRendering().build();
+			for (const arg of REPRODUCIBLE_RENDER_FLAGS) {
+				expect(opts.extraArgs).toContain(arg);
+			}
+		});
+
+		test('does not add deterministic args when disabled', () => {
+			const opts = LaunchProfile.create().deterministicRendering(false).build();
+			expect(opts.extraArgs).not.toContain('--deterministic-mode');
+		});
+	});
