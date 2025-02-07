@@ -238,3 +238,43 @@ describe('LaunchProfile', () => {
 
 	describe('.proxy()', () => {
 		test('sets proxy server', () => {
+			const opts = LaunchProfile.create()
+				.proxy('http://proxy:8080')
+				.build();
+			expect(opts.proxy).toEqual({
+				server: 'http://proxy:8080',
+				username: undefined,
+				password: undefined,
+			});
+		});
+
+		test('sets proxy with credentials', () => {
+			const opts = LaunchProfile.create()
+				.proxy('http://proxy:8080', 'user', 'pass')
+				.build();
+			expect(opts.proxy).toEqual({
+				server: 'http://proxy:8080',
+				username: 'user',
+				password: 'pass',
+			});
+		});
+	});
+
+	describe('.userDataDir()', () => {
+		test('sets user data directory', () => {
+			const opts = LaunchProfile.create()
+				.userDataDir('/tmp/chrome-data')
+				.build();
+			expect(opts.userDataDir).toBe('/tmp/chrome-data');
+		});
+	});
+
+	describe('.browserBinary()', () => {
+		test('sets browser binary path', () => {
+			const opts = LaunchProfile.create()
+				.browserBinary('/usr/bin/chromium')
+				.build();
+			expect(opts.browserBinaryPath).toBe('/usr/bin/chromium');
+		});
+	});
+
