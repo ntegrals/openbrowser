@@ -278,3 +278,43 @@ describe('LaunchProfile', () => {
 		});
 	});
 
+	describe('.persistAfterClose()', () => {
+		test('sets persistAfterClose to true', () => {
+			const opts = LaunchProfile.create().persistAfterClose().build();
+			expect(opts.persistAfterClose).toBe(true);
+		});
+
+		test('sets persistAfterClose to false', () => {
+			const opts = LaunchProfile.create().persistAfterClose(false).build();
+			expect(opts.persistAfterClose).toBe(false);
+		});
+	});
+
+	describe('.channel()', () => {
+		test('sets channel name', () => {
+			const opts = LaunchProfile.create().channel('chrome').build();
+			expect(opts.channelName).toBe('chrome');
+		});
+	});
+
+	describe('.extraArgs()', () => {
+		test('appends extra args to the end', () => {
+			const opts = LaunchProfile.create()
+				.extraArgs('--custom-flag', '--another-flag')
+				.build();
+			expect(opts.extraArgs).toContain('--custom-flag');
+			expect(opts.extraArgs).toContain('--another-flag');
+		});
+
+		test('user extra args can override earlier args', () => {
+			const opts = LaunchProfile.create()
+				.extraArgs('--override=value')
+				.build();
+			// The user arg should be at the end of the array (after CHROME_AUTOMATION_FLAGS)
+			const lastArgs = opts.extraArgs.slice(-1);
+			expect(lastArgs).toContain('--override=value');
+		});
+	});
+
+	describe('builder chaining', () => {
+		test('multiple methods can be chained together', () => {
