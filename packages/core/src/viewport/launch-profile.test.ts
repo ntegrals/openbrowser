@@ -158,3 +158,43 @@ describe('LaunchProfile', () => {
 			expect(opts.extraArgs).not.toContain('--deterministic-mode');
 		});
 	});
+
+	describe('.relaxedSecurity()', () => {
+		test('adds security-disable args when enabled', () => {
+			const opts = LaunchProfile.create().relaxedSecurity().build();
+			expect(opts.relaxedSecurity).toBe(true);
+			for (const arg of RELAXED_SECURITY_FLAGS) {
+				expect(opts.extraArgs).toContain(arg);
+			}
+		});
+
+		test('does not add security args when disabled', () => {
+			const opts = LaunchProfile.create().relaxedSecurity(false).build();
+			expect(opts.relaxedSecurity).toBe(false);
+			expect(opts.extraArgs).not.toContain('--disable-web-security');
+		});
+	});
+
+	describe('.downloadsPath()', () => {
+		test('adds download-default-directory arg', () => {
+			const opts = LaunchProfile.create()
+				.downloadsPath('/tmp/downloads')
+				.build();
+			expect(opts.extraArgs).toContain(
+				'--download-default-directory=/tmp/downloads',
+			);
+		});
+	});
+
+	describe('.maxIframes()', () => {
+		test('returns this for chaining', () => {
+			const profile = LaunchProfile.create();
+			const result = profile.maxIframes(5);
+			expect(result).toBe(profile);
+		});
+	});
+
+	describe('.addExtension()', () => {
+		test('adds single extension path to load-extension arg', () => {
+			const opts = LaunchProfile.create()
+				.addExtension('/path/to/ext1')
