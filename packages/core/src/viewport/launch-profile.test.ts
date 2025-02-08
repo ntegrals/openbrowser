@@ -358,3 +358,32 @@ describe('CHROME_AUTOMATION_FLAGS', () => {
 		expect(CHROME_AUTOMATION_FLAGS).toContain('--no-first-run');
 		expect(CHROME_AUTOMATION_FLAGS).toContain('--disable-popup-blocking');
 		expect(CHROME_AUTOMATION_FLAGS).toContain('--disable-infobars');
+	});
+
+	test('all entries are strings starting with --', () => {
+		for (const arg of CHROME_AUTOMATION_FLAGS) {
+			expect(typeof arg).toBe('string');
+			expect(arg.startsWith('--')).toBe(true);
+		}
+	});
+});
+
+describe('CHROME_STRIPPED_FEATURES', () => {
+	test('is a non-empty array', () => {
+		expect(Array.isArray(CHROME_STRIPPED_FEATURES)).toBe(true);
+		expect(CHROME_STRIPPED_FEATURES.length).toBeGreaterThan(10);
+	});
+
+	test('contains known components', () => {
+		expect(CHROME_STRIPPED_FEATURES).toContain('Translate');
+		expect(CHROME_STRIPPED_FEATURES).toContain('MediaRouter');
+		expect(CHROME_STRIPPED_FEATURES).toContain('Prerender2');
+	});
+
+	test('all entries are non-empty strings', () => {
+		for (const component of CHROME_STRIPPED_FEATURES) {
+			expect(typeof component).toBe('string');
+			expect(component.length).toBeGreaterThan(0);
+		}
+	});
+});
