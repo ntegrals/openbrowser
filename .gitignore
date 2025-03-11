@@ -4,5 +4,6 @@ dist/
 *.tsbuildinfo
 .DS_Store
 traces/
+coverage/
 recordings/
 tmp/
