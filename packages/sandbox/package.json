@@ -1,6 +1,6 @@
 {
   "name": "@open-browser/sandbox",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "description": "Sandboxed execution environment for Open Browser",
   "type": "module",
   "main": "src/index.ts",

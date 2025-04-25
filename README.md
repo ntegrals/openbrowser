@@ -14,7 +14,7 @@
 
 Give an AI agent a browser. It clicks, types, navigates, and extracts data — autonomously completing tasks on any website. Built on Playwright with first-class support for OpenAI, Anthropic, and Google models.
 
-> This project is under active development. APIs may change. Contributions welcome.
+> **Production-ready since v1.0.** Contributions welcome.
 
 ## Why Open Browser?
 

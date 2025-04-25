@@ -1,6 +1,6 @@
 {
   "name": "open-browser",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "description": "AI-powered autonomous web browsing library for TypeScript",
   "type": "module",
   "main": "src/index.ts",
