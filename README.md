@@ -275,6 +275,10 @@ bun run lint
 bun run format
 ```
 
+## Contributing
+
+Contributions are welcome! Please see [CONTRIBUTING.md](.github/CONTRIBUTING.md) for guidelines.
+
 ## License
 
 [MIT](LICENSE)
