@@ -7,3 +7,4 @@ traces/
 coverage/
 recordings/
 tmp/
+*.log
