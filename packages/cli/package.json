@@ -1,6 +1,6 @@
 {
   "name": "@open-browser/cli",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "CLI for Open Browser - AI-powered autonomous web browsing",
   "type": "module",
   "main": "src/index.ts",
