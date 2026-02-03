@@ -11,7 +11,7 @@
   "devDependencies": {
     "@biomejs/biome": "^1.9.4",
     "@types/bun": "^1.2.0",
-    "typescript": "^5.7.0"
+    "typescript": "^5.8.0"
   },
   "trustedDependencies": [
     "@biomejs/biome"
