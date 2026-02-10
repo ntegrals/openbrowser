@@ -33,6 +33,6 @@
     }
   },
   "files": {
-    "ignore": ["node_modules", "dist", "*.json"]
+    "ignore": ["node_modules", "dist", "*.json", "*.d.ts"]
   }
 }
