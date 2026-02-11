@@ -6,9 +6,10 @@
 
 <p align="center">
   <a href="https://github.com/ntegrals/openbrowser/blob/main/LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="License"></a>
-  <a href="https://www.npmjs.com/package/open-browser"><img src="https://img.shields.io/npm/v/open-browser.svg" alt="npm version"></a>
   <a href="https://github.com/ntegrals/openbrowser"><img src="https://img.shields.io/github/stars/ntegrals/openbrowser?style=social" alt="GitHub stars"></a>
 </p>
+
+<img src="./media/header.png" alt="Header"></a>
 
 ---
 
@@ -46,11 +47,11 @@ bun run open-browser interactive
 
 Open Browser is a monorepo with three packages:
 
-| Package | Description |
-|---|---|
-| **`open-browser`** | Core library — agent logic, browser control, DOM analysis, LLM integration |
-| **`@open-browser/cli`** | Command-line interface for running agents and browser commands |
-| **`@open-browser/sandbox`** | Sandboxed execution with resource limits and monitoring |
+| Package                     | Description                                                                |
+| --------------------------- | -------------------------------------------------------------------------- |
+| **`open-browser`**          | Core library — agent logic, browser control, DOM analysis, LLM integration |
+| **`@open-browser/cli`**     | Command-line interface for running agents and browser commands             |
+| **`@open-browser/sandbox`** | Sandboxed execution with resource limits and monitoring                    |
 
 ## CLI Commands
 
@@ -73,14 +74,14 @@ open-browser run "Sign up for the newsletter on example.com with test@email.com"
 open-browser run "Go to GitHub, find the open-browser repo, and star it"
 ```
 
-| Option | Description |
-|---|---|
-| `-m, --model <model>` | Model to use (default: `gpt-4o`) |
-| `-p, --provider <provider>` | Provider: `openai`, `anthropic`, `google` |
-| `--headless / --no-headless` | Show or hide the browser window |
-| `--max-steps <n>` | Max agent steps (default: `25`) |
-| `-v, --verbose` | Show detailed step info |
-| `--no-cost` | Hide cost tracking |
+| Option                       | Description                               |
+| ---------------------------- | ----------------------------------------- |
+| `-m, --model <model>`        | Model to use (default: `gpt-4o`)          |
+| `-p, --provider <provider>`  | Provider: `openai`, `anthropic`, `google` |
+| `--headless / --no-headless` | Show or hide the browser window           |
+| `--max-steps <n>`            | Max agent steps (default: `25`)           |
+| `-v, --verbose`              | Show detailed step info                   |
+| `--no-cost`                  | Hide cost tracking                        |
 
 ### Browser Commands
 
@@ -114,23 +115,23 @@ browser> help
 ## Using as a Library
 
 ```typescript
-import { Agent, createViewport, createModel } from "open-browser";
+import { Agent, createViewport, createModel } from 'open-browser'
 
-const viewport = await createViewport({ headless: true });
-const model = createModel("openai", "gpt-4o");
+const viewport = await createViewport({ headless: true })
+const model = createModel('openai', 'gpt-4o')
 
 const agent = new Agent({
   viewport,
   model,
-  task: "Go to example.com and extract the main heading",
+  task: 'Go to example.com and extract the main heading',
   settings: {
     stepLimit: 50,
     enableScreenshots: true,
   },
-});
+})
 
-const result = await agent.run();
-console.log(result);
+const result = await agent.run()
+console.log(result)
 ```
 
 ### Sandboxed Execution
@@ -138,22 +139,22 @@ console.log(result);
 Run agents with resource limits and monitoring:
 
 ```typescript
-import { Sandbox } from "@open-browser/sandbox";
+import { Sandbox } from '@open-browser/sandbox'
 
 const sandbox = new Sandbox({
-  timeout: 300_000,        // 5 minute timeout
-  maxMemoryMB: 512,        // Memory limit
-  allowedDomains: ["example.com"],
+  timeout: 300_000, // 5 minute timeout
+  maxMemoryMB: 512, // Memory limit
+  allowedDomains: ['example.com'],
   stepLimit: 100,
   captureOutput: true,
-});
+})
 
 const result = await sandbox.run({
-  task: "Complete the checkout form",
+  task: 'Complete the checkout form',
   model: languageModel,
-});
+})
 
-console.log(result.metrics); // steps, URLs visited, CPU time
+console.log(result.metrics) // steps, URLs visited, CPU time
 ```
 
 ## Configuration
@@ -177,25 +178,25 @@ OPEN_BROWSER_SAVE_RECORDING_PATH=./recordings
 
 ### Agent Configuration
 
-| Setting | Default | Description |
-|---|---|---|
-| `stepLimit` | `100` | Maximum agent iterations |
-| `commandsPerStep` | `10` | Actions per agent step |
-| `failureThreshold` | `5` | Consecutive failures before stopping |
-| `enableScreenshots` | `true` | Include page screenshots in agent context |
-| `contextWindowSize` | `128000` | Token budget for conversation |
-| `allowedUrls` | `[]` | Restrict navigation to specific URLs |
-| `blockedUrls` | `[]` | Block navigation to specific URLs |
+| Setting             | Default  | Description                               |
+| ------------------- | -------- | ----------------------------------------- |
+| `stepLimit`         | `100`    | Maximum agent iterations                  |
+| `commandsPerStep`   | `10`     | Actions per agent step                    |
+| `failureThreshold`  | `5`      | Consecutive failures before stopping      |
+| `enableScreenshots` | `true`   | Include page screenshots in agent context |
+| `contextWindowSize` | `128000` | Token budget for conversation             |
+| `allowedUrls`       | `[]`     | Restrict navigation to specific URLs      |
+| `blockedUrls`       | `[]`     | Block navigation to specific URLs         |
 
 ### Viewport Configuration
 
-| Setting | Default | Description |
-|---|---|---|
-| `headless` | `true` | Run browser without visible window |
-| `width` / `height` | `1280` / `1100` | Browser window dimensions |
-| `relaxedSecurity` | `false` | Disable browser security features |
-| `proxy` | — | Proxy server configuration |
-| `cookieFile` | — | Path to cookie file for persistent sessions |
+| Setting            | Default         | Description                                 |
+| ------------------ | --------------- | ------------------------------------------- |
+| `headless`         | `true`          | Run browser without visible window          |
+| `width` / `height` | `1280` / `1100` | Browser window dimensions                   |
+| `relaxedSecurity`  | `false`         | Disable browser security features           |
+| `proxy`            | —               | Proxy server configuration                  |
+| `cookieFile`       | —               | Path to cookie file for persistent sessions |
 
 ## How It Works
 
@@ -227,11 +228,11 @@ OPEN_BROWSER_SAVE_RECORDING_PATH=./recordings
 
 ## Model Support
 
-| Provider | Example Models | Flag |
-|---|---|---|
-| **OpenAI** | `gpt-4o`, `gpt-4o-mini`, `o1` | `-p openai` |
+| Provider      | Example Models                                  | Flag           |
+| ------------- | ----------------------------------------------- | -------------- |
+| **OpenAI**    | `gpt-4o`, `gpt-4o-mini`, `o1`                   | `-p openai`    |
 | **Anthropic** | `claude-sonnet-4-5-20250929`, `claude-opus-4-6` | `-p anthropic` |
-| **Google** | `gemini-2.0-flash`, `gemini-2.5-pro` | `-p google` |
+| **Google**    | `gemini-2.0-flash`, `gemini-2.5-pro`            | `-p google`    |
 
 ## Project Structure
 
