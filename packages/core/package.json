@@ -20,7 +20,7 @@
     "@ai-sdk/google": "^1.1.0",
     "zod": "^3.24.0",
     "playwright": "^1.51.0",
-    "mitt": "^3.0.2",
+    "mitt": "^3.0.1",
     "nanoid": "^5.1.0",
     "turndown": "^7.2.1",
     "dotenv": "^16.5.0"
