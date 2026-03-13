@@ -23,6 +23,7 @@ interface RunOptions {
 	provider: string;
 	headless: boolean;
 	stepLimit: number;
+	maxSteps: string;
 	verbose: boolean;
 	noCost: boolean;
 }
@@ -76,7 +77,7 @@ export function registerRunCommand(program: Command): void {
 		.option('-v, --verbose', 'Show detailed step information', false)
 		.option('--no-cost', 'Hide cost tracking information')
 		.action(async (task: string, options: RunOptions) => {
-			const stepLimit = Number.parseInt(String(options.stepLimit), 10);
+			const stepLimit = Number.parseInt(String(options.maxSteps ?? options.stepLimit ?? '25'), 10);
 
 			displayHeader(`Agent Task: ${task}`);
 			console.log(
