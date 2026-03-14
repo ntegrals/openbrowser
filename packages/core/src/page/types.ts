@@ -151,16 +151,17 @@ export interface CDPLayoutNode {
 }
 
 export interface CDPSnapshotResult {
+	// In newer Chromium (Playwright 1.58+), `strings` is at the top level
+	strings?: string[];
 	documents: Array<{
 		nodes: {
 			nodeType: number[];
 			nodeName: number[];
 			nodeValue: number[];
 			backendNodeId: number[];
-			childNodeIndexes?: number[][];
-			attributes: Array<number[]>;
 			parentIndex: number[];
-			contentDocumentIndex?: { index: number[] };
+			attributes: Array<number[]>;
+			contentDocumentIndex?: { index: number[]; value: number[] };
 			shadowRootType?: { index: number[]; value: number[] };
 			isClickable?: { index: number[] };
 			inputValue?: { index: number[]; value: number[] };
@@ -178,7 +179,8 @@ export interface CDPSnapshotResult {
 			layoutIndex: number[];
 			bounds: number[][];
 		};
-		strings: string[];
+		// In older Chromium, `strings` was nested inside each document
+		strings?: string[];
 	}>;
 }
 

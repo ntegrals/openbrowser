@@ -23,6 +23,7 @@ interface RunOptions {
 	provider: string;
 	headless: boolean;
 	stepLimit: number;
+	maxSteps: string;
 	verbose: boolean;
 	noCost: boolean;
 }
@@ -53,10 +54,32 @@ async function createModel(provider: string, modelId: string): Promise<LanguageM
 			languageModel = google(modelId);
 			break;
 		}
+		case 'ollama': {
+			// Local Ollama instance - free, no API key needed.
+			// Default base URL: http://localhost:11434/api
+			// Override with OLLAMA_BASE_URL env var.
+			const { createOllama } = await import('ollama-ai-provider');
+			const ollama = createOllama({
+				baseURL: process.env.OLLAMA_BASE_URL ?? 'http://localhost:11434/api',
+			});
+			languageModel = ollama(modelId);
+			break;
+		}
+		case 'openrouter': {
+			// OpenRouter - access many models via one API key (OPENROUTER_API_KEY).
+			// Free tier available. See https://openrouter.ai/models?q=free
+			const { createOpenAI } = await import('@ai-sdk/openai');
+			const openrouter = createOpenAI({
+				baseURL: 'https://openrouter.ai/api/v1',
+				apiKey: process.env.OPENROUTER_API_KEY,
+			});
+			languageModel = openrouter(modelId);
+			break;
+		}
 		default:
 			throw new Error(
 				`Unsupported provider: ${provider}. ` +
-				'Supported: openai, anthropic, google',
+				'Supported: openai, anthropic, google, ollama, openrouter',
 			);
 	}
 
@@ -76,7 +99,7 @@ export function registerRunCommand(program: Command): void {
 		.option('-v, --verbose', 'Show detailed step information', false)
 		.option('--no-cost', 'Hide cost tracking information')
 		.action(async (task: string, options: RunOptions) => {
-			const stepLimit = Number.parseInt(String(options.stepLimit), 10);
+			const stepLimit = Number.parseInt(String(options.maxSteps ?? options.stepLimit ?? '25'), 10);
 
 			displayHeader(`Agent Task: ${task}`);
 			console.log(

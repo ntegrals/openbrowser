@@ -63,20 +63,25 @@ export class SnapshotBuilder {
 			};
 		}
 
-		const { nodes, layout, strings } = doc;
+		const { nodes, layout } = doc;
+		// In newer Chromium, `strings` is at the top level of the snapshot result,
+		// not nested inside each document. Fall back to doc.strings for older versions.
+		const strings: string[] = snapshot.strings ?? doc.strings ?? [];
 
 		// Build backend node ID → AX node map
 		const axNodeMap = new Map<number, AXNode>();
 		this.buildAXMap(axTree, axNodeMap);
 
 		// Build layout index map
+		// In newer Chromium, `paintOrder` was renamed to `paintOrders` (plural).
+		const paintOrders = layout.paintOrder ?? (layout as unknown as { paintOrders?: number[] }).paintOrders;
 		const layoutMap = new Map<number, { bounds: number[]; text?: string; paintOrder?: number }>();
 		for (let i = 0; i < layout.nodeIndex.length; i++) {
 			const nodeIdx = layout.nodeIndex[i];
 			layoutMap.set(nodeIdx, {
 				bounds: layout.bounds[i],
 				text: layout.text[i] !== -1 ? strings[layout.text[i]] : undefined,
-				paintOrder: layout.paintOrder?.[i],
+				paintOrder: paintOrders?.[i],
 			});
 		}
 
@@ -94,7 +99,28 @@ export class SnapshotBuilder {
 			for (let i = 0; i < nodes.inputValue.index.length; i++) {
 				const nodeIdx = nodes.inputValue.index[i];
 				const valueIdx = nodes.inputValue.value[i];
-				inputValueMap.set(nodeIdx, strings[valueIdx]);
+				// Skip -1 values (no string)
+				if (valueIdx >= 0) {
+					inputValueMap.set(nodeIdx, strings[valueIdx]);
+				}
+			}
+		}
+
+		// Build children map from parentIndex.
+		// In newer Chromium, `childNodeIndexes` no longer exists; instead, each node
+		// has a `parentIndex` entry pointing to its parent. We invert that to get children.
+		const childrenMap = new Map<number, number[]>();
+		if (nodes.parentIndex) {
+			for (let i = 0; i < nodes.parentIndex.length; i++) {
+				const parentIdx = nodes.parentIndex[i];
+				if (parentIdx >= 0) {
+					let children = childrenMap.get(parentIdx);
+					if (!children) {
+						children = [];
+						childrenMap.set(parentIdx, children);
+					}
+					children.push(i);
+				}
 			}
 		}
 
@@ -107,6 +133,7 @@ export class SnapshotBuilder {
 			axNodeMap,
 			clickableSet,
 			inputValueMap,
+			childrenMap,
 			viewportSize,
 			capturedAttributes,
 		);
@@ -122,6 +149,7 @@ export class SnapshotBuilder {
 		axNodeMap: Map<number, AXNode>,
 		clickableSet: Set<number>,
 		inputValueMap: Map<number, string>,
+		childrenMap: Map<number, number[]>,
 		viewportSize: { width: number; height: number },
 		capturedAttributes: string[],
 	): PageTreeNode {
@@ -199,8 +227,8 @@ export class SnapshotBuilder {
 			node.highlightIndex = elementIndex(this.indexCounter++);
 		}
 
-		// Build children
-		const childIndexes: number[] = nodes.childNodeIndexes?.[nodeIndex] ?? [];
+		// Build children using the pre-built childrenMap (derived from parentIndex)
+		const childIndexes = childrenMap.get(nodeIndex) ?? [];
 		for (const childIdx of childIndexes) {
 			const child = this.buildNodeTree(
 				childIdx,
@@ -210,6 +238,7 @@ export class SnapshotBuilder {
 				axNodeMap,
 				clickableSet,
 				inputValueMap,
+				childrenMap,
 				viewportSize,
 				capturedAttributes,
 			);

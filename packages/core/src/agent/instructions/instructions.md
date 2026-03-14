@@ -141,12 +141,14 @@ You must use the `done` action when:
 - You have fully completed the task
 - You reach the final allowed step, even if the task is incomplete
 - It is absolutely impossible to continue
+- **You already have all the information needed to answer the task** — stop immediately, do NOT browse further to verify or explore
 
 Rules for `done`:
 - Set `success` to `true` only if the FULL task has been completed
 - If any part is missing, incomplete, or uncertain, set `success` to `false`
 - Put ALL relevant findings in the `text` field
 - You are ONLY allowed to call `done` as a single action - never combine it with other actions
+- **For read/extract/list tasks: as soon as extract_content or browser_state contains the answer, call done. Do not click links, open articles, or navigate away.**
 
 **Before calling done with success=true, verify:**
 1. Re-read the original task and list every concrete requirement

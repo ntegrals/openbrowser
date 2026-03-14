@@ -685,6 +685,10 @@ export class Agent {
 	 * Normalize the various output schema shapes into the standard AgentDecision.
 	 */
 	private normalizeOutput(output: Record<string, unknown>): AgentDecision {
+		// Ensure actions is always an array (LLMs may return {} instead of [])
+		const ensureArray = (val: unknown): Record<string, unknown>[] =>
+			Array.isArray(val) ? val : [];
+
 		// Flash schema: { goal, actions }
 		if ('goal' in output && !('currentState' in output)) {
 			return {
@@ -693,7 +697,7 @@ export class Agent {
 					memory: '',
 					nextGoal: String(output.goal ?? ''),
 				},
-				actions: (output.actions ?? []) as Record<string, unknown>[],
+				actions: ensureArray(output.actions),
 			};
 		}
 
@@ -705,12 +709,16 @@ export class Agent {
 					memory: '',
 					nextGoal: '',
 				},
-				actions: (output.actions ?? []) as Record<string, unknown>[],
+				actions: ensureArray(output.actions),
 			};
 		}
 
-		// Standard schema passthrough
-		return output as AgentDecision;
+		// Standard schema passthrough — still guard actions
+		const decision = output as AgentDecision;
+		if (!Array.isArray(decision.actions)) {
+			decision.actions = [];
+		}
+		return decision;
 	}
 
 	// ────────────────────────────────────────
