@@ -22,7 +22,7 @@ interface RunOptions {
 	model: string;
 	provider: string;
 	headless: boolean;
-	stepLimit: number;
+	maxSteps: number;
 	verbose: boolean;
 	noCost: boolean;
 }
@@ -68,15 +68,15 @@ export function registerRunCommand(program: Command): void {
 		.command('run')
 		.description('Run an AI agent to complete a browser task')
 		.argument('<task>', 'Description of the task for the agent to complete')
-		.option('-m, --model <model>', 'Model ID to use', 'gpt-4o')
-		.option('-p, --provider <provider>', 'LLM provider (openai, anthropic, google)', 'openai')
+		.option('-m, --model <model>', 'Model ID to use', 'claude-haiku-4-5-20251001')
+		.option('-p, --provider <provider>', 'LLM provider (openai, anthropic, google)', 'anthropic')
 		.option('--headless', 'Run browser in headless mode', true)
 		.option('--no-headless', 'Show the browser window')
 		.option('--max-steps <n>', 'Maximum number of agent steps', '25')
 		.option('-v, --verbose', 'Show detailed step information', false)
 		.option('--no-cost', 'Hide cost tracking information')
 		.action(async (task: string, options: RunOptions) => {
-			const stepLimit = Number.parseInt(String(options.stepLimit), 10);
+			const stepLimit = Number.parseInt(String(options.maxSteps), 10);
 
 			displayHeader(`Agent Task: ${task}`);
 			console.log(

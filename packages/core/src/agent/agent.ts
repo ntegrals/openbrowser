@@ -418,16 +418,18 @@ export class Agent {
 		}
 
 		// Build state message
-		const stateText = InstructionBuilder.buildStatePrompt(
-			browserState.url,
-			browserState.title,
-			browserState.tabs,
-			domState.tree,
-			step,
-			stepLimit,
-			domState.pixelsAbove,
-			domState.pixelsBelow,
-		);
+		const stateText =
+			InstructionBuilder.buildTaskPrompt(this.settings.task) + '\n\n' +
+			InstructionBuilder.buildStatePrompt(
+				browserState.url,
+				browserState.title,
+				browserState.tabs,
+				domState.tree,
+				step,
+				stepLimit,
+				domState.pixelsAbove,
+				domState.pixelsBelow,
+			);
 
 		// Check for loop
 		const loopCheck = this.loopDetector.isStuck();

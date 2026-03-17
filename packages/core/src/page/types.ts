@@ -172,14 +172,17 @@ export interface CDPSnapshotResult {
 			text: number[];
 			stackingContexts?: { index: number[] };
 			paintOrder?: number[];
+			paintOrders?: number[];
 			styles: number[][];
 		};
 		textBoxes: {
 			layoutIndex: number[];
 			bounds: number[][];
 		};
-		strings: string[];
+		strings?: string[];
 	}>;
+	/** In newer Chromium versions, strings are at the top level */
+	strings?: string[];
 }
 
 export interface AXNode {
