@@ -63,7 +63,9 @@ export class SnapshotBuilder {
 			};
 		}
 
-		const { nodes, layout, strings } = doc;
+		const { nodes, layout } = doc;
+		// strings may be on the document or at the top-level (newer Chromium)
+		const strings = doc.strings ?? snapshot.strings ?? [];
 
 		// Build backend node ID → AX node map
 		const axNodeMap = new Map<number, AXNode>();
@@ -76,7 +78,7 @@ export class SnapshotBuilder {
 			layoutMap.set(nodeIdx, {
 				bounds: layout.bounds[i],
 				text: layout.text[i] !== -1 ? strings[layout.text[i]] : undefined,
-				paintOrder: layout.paintOrder?.[i],
+				paintOrder: (layout.paintOrders ?? layout.paintOrder)?.[i],
 			});
 		}
 
@@ -199,8 +201,9 @@ export class SnapshotBuilder {
 			node.highlightIndex = elementIndex(this.indexCounter++);
 		}
 
-		// Build children
-		const childIndexes: number[] = nodes.childNodeIndexes?.[nodeIndex] ?? [];
+		// Build children — use childNodeIndexes if available, otherwise derive from parentIndex
+		const childIndexes: number[] = nodes.childNodeIndexes?.[nodeIndex]
+			?? this.getChildIndexes(nodes.parentIndex, nodeIndex);
 		for (const childIdx of childIndexes) {
 			const child = this.buildNodeTree(
 				childIdx,
@@ -218,6 +221,16 @@ export class SnapshotBuilder {
 		}
 
 		return node;
+	}
+
+	private getChildIndexes(parentIndex: number[], nodeIndex: number): number[] {
+		const children: number[] = [];
+		for (let i = 0; i < parentIndex.length; i++) {
+			if (parentIndex[i] === nodeIndex) {
+				children.push(i);
+			}
+		}
+		return children;
 	}
 
 	private buildAXMap(node: AXNode, map: Map<number, AXNode>): void {

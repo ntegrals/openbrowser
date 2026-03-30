@@ -233,9 +233,10 @@ const URL_REGEX = /https?:\/\/[^\s<>"{}|\\^`\[\]]+/g;
 
 /**
  * Extract all URLs from a text string.
+ * Strips trailing punctuation that is likely part of the surrounding sentence.
  */
 export function extractUrls(text: string): string[] {
-	return [...text.matchAll(URL_REGEX)].map((m) => m[0]);
+	return [...text.matchAll(URL_REGEX)].map((m) => m[0].replace(/[.,;:!?)]+$/, ''));
 }
 
 /**
