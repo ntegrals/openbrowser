@@ -214,7 +214,7 @@ export class Viewport {
 				const pageTitle = await this._currentPage.title();
 
 				// Emit initial lifecycle events
-				this.eventBus.emit('content-ready', undefined as any);
+				this.eventBus.emit('content-ready', undefined as void);
 
 				if (!isNewTabPage(pageUrl)) {
 					this.eventBus.emit('page-ready', { url: pageUrl });
@@ -993,7 +993,7 @@ export class Viewport {
 		this.knownTargets.clear();
 		this.cachedViewport = null;
 
-		this.eventBus.emit('shutdown', undefined as any);
+		this.eventBus.emit('shutdown', undefined as void);
 		this.eventBus.removeAllListeners();
 
 		logger.info('Browser session closed');

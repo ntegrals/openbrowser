@@ -61,7 +61,7 @@ export const AgentConfigSchema = z.object({
 	traceOutputPath: z.string().optional(),
 	replayOutputPath: z.string().optional(),
 	strategyInterval: z.number().default(0),
-	plannerModel: z.any().optional(),
+	plannerModel: z.unknown().optional(),
 	enableStrategy: z.boolean().default(false),
 	enableEvaluation: z.boolean().default(false),
 	stepTimeout: z.number().default(60000),

@@ -79,7 +79,7 @@ export function optimizeSchemaForModel<T extends ZodTypeAny>(
 			const kept = variants.slice(0, maxVariants - 1);
 			const catchAll = z.object({}).passthrough().describe('Other action (see documentation)');
 			const unionMembers = [...kept, catchAll] as unknown as [ZodTypeAny, ZodTypeAny, ...ZodTypeAny[]];
-			return z.union(unionMembers) as any;
+			return z.union(unionMembers) as unknown as T;
 		}
 	}
 
@@ -91,7 +91,7 @@ export function optimizeSchemaForModel<T extends ZodTypeAny>(
 			const kept = variants.slice(0, maxVariants - 1);
 			const catchAll = z.object({}).passthrough().describe('Other variant');
 			const unionMembers = [...kept, catchAll] as unknown as [ZodTypeAny, ZodTypeAny, ...ZodTypeAny[]];
-			return z.union(unionMembers) as any;
+			return z.union(unionMembers) as unknown as T;
 		}
 	}
 
@@ -441,11 +441,11 @@ export function zodToJsonSchema(schema: ZodTypeAny): Record<string, unknown> {
 		jsonSchema.type = 'array';
 		jsonSchema.items = zodToJsonSchema(schema.element);
 	} else if (schema instanceof z.ZodOptional) {
-		return zodToJsonSchema(schema.unwrap()) as any;
+		return zodToJsonSchema(schema.unwrap());
 	} else if (schema instanceof z.ZodDefault) {
-		const inner = zodToJsonSchema(schema.removeDefault()) as any;
+		const inner = zodToJsonSchema(schema.removeDefault());
 		inner.default = schema._def.defaultValue();
-		return inner as any;
+		return inner;
 	} else if (schema instanceof z.ZodEnum) {
 		jsonSchema.type = 'string';
 		jsonSchema.enum = schema.options;
@@ -459,7 +459,7 @@ export function zodToJsonSchema(schema: ZodTypeAny): Record<string, unknown> {
 		);
 	} else if (schema instanceof z.ZodNullable) {
 		const inner = zodToJsonSchema(schema.unwrap());
-		return { oneOf: [inner, { type: 'null' }] } as any;
+		return { oneOf: [inner, { type: 'null' }] };
 	} else if (schema instanceof z.ZodRecord) {
 		jsonSchema.type = 'object';
 		jsonSchema.additionalProperties = zodToJsonSchema(schema.element);
@@ -471,5 +471,5 @@ export function zodToJsonSchema(schema: ZodTypeAny): Record<string, unknown> {
 		jsonSchema.description = schema.description;
 	}
 
-	return jsonSchema as any;
+	return jsonSchema;
 }
