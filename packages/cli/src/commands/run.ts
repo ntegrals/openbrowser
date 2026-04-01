@@ -2,20 +2,22 @@ import type { Command } from 'commander';
 import chalk from 'chalk';
 import {
 	Agent,
-	Viewport,
+	LogLevel,
 	VercelModelAdapter,
-	type LanguageModel,
+	Viewport,
+	setGlobalLogLevel,
 	type CommandResult,
+	type LanguageModel,
 	type StepRecord,
 } from 'open-browser';
 import {
 	Spinner,
+	displayError,
+	displayHeader,
+	displayResult,
+	displaySeparator,
 	displayStep,
 	displayTotalCost,
-	displayResult,
-	displayHeader,
-	displaySeparator,
-	displayError,
 } from '../display.js';
 
 interface RunOptions {
@@ -76,6 +78,10 @@ export function registerRunCommand(program: Command): void {
 		.option('-v, --verbose', 'Show detailed step information', false)
 		.option('--no-cost', 'Hide cost tracking information')
 		.action(async (task: string, options: RunOptions) => {
+			if (options.verbose) {
+				setGlobalLogLevel(LogLevel.DEBUG);
+			}
+
 			const stepLimit = Number.parseInt(String(options.maxSteps), 10);
 
 			displayHeader(`Agent Task: ${task}`);

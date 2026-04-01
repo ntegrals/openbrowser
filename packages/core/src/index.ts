@@ -46,6 +46,11 @@ export {
 	getGlobalLogLevel,
 	setLogColors,
 	setLogTimestamps,
+	setGlobalLogSink,
+	getGlobalLogSink,
+	parseLogLevel,
+	type LogSink,
+	type LogEntry,
 } from './logging.js';
 
 // ── Observability ──
