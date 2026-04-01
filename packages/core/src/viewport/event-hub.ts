@@ -1,3 +1,5 @@
+import { ViewportError } from '../errors.js';
+
 type Handler<T = unknown> = (payload: T) => void;
 type RequestHandler<Req = unknown, Res = unknown> = (payload: Req) => Promise<Res>;
 
@@ -68,13 +70,13 @@ export class EventHub<
 	): Promise<RequestMap[K]['response']> {
 		const handler = this.requestHandlers.get(event);
 		if (!handler) {
-			throw new Error(`No handler registered for request "${event}"`);
+			throw new ViewportError(`No handler registered for request "${event}"`);
 		}
 
 		const result = await Promise.race([
 			handler(payload),
 			new Promise<never>((_, reject) =>
-				setTimeout(() => reject(new Error(`Request "${event}" timed out after ${timeoutMs}ms`)), timeoutMs),
+				setTimeout(() => reject(new ViewportError(`Request "${event}" timed out after ${timeoutMs}ms`)), timeoutMs),
 			),
 		]);
 

@@ -1,5 +1,6 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
+import { OpenBrowserError } from '../errors.js';
 import { createLogger } from '../logging.js';
 
 const logger = createLogger('gif-recorder');
@@ -119,7 +120,7 @@ export class ReplayRecorder {
 			const moduleName = 'sharp';
 			sharpModule = await import(/* webpackIgnore: true */ moduleName);
 		} catch {
-			throw new Error(
+			throw new OpenBrowserError(
 				'sharp is not installed. Install it with: npm install sharp',
 			);
 		}
