@@ -65,16 +65,23 @@ export class VercelModelAdapter implements LanguageModel {
 				usage,
 				finishReason: mapFinishReason(result.finishReason),
 			};
-		} catch (error: any) {
-			if (error?.statusCode === 429 || error?.message?.includes('rate limit')) {
-				const retryAfter = error?.headers?.['retry-after'];
+		} catch (error: unknown) {
+			const err = error as Record<string, unknown> | undefined;
+			const message = err && typeof err === 'object' && 'message' in err ? String(err.message) : String(error);
+			const statusCode = err && typeof err === 'object' && 'statusCode' in err ? err.statusCode : undefined;
+			const headers = err && typeof err === 'object' && 'headers' in err
+				? (err.headers as Record<string, string> | undefined)
+				: undefined;
+
+			if (statusCode === 429 || message.includes('rate limit')) {
+				const retryAfter = headers?.['retry-after'];
 				throw new ModelThrottledError(
-					error.message ?? 'Rate limited',
+					message || 'Rate limited',
 					retryAfter ? Number.parseInt(retryAfter) * 1000 : undefined,
 				);
 			}
 			throw new ModelError(
-				`LLM invocation failed: ${error?.message ?? String(error)}`,
+				`LLM invocation failed: ${message}`,
 				{ cause: error },
 			);
 		}

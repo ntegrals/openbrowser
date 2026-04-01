@@ -83,7 +83,7 @@ export class BridgeAdapter {
 		}
 		if (schema instanceof z.ZodDefault) {
 			const inner = this.fieldToJsonSchema(schema.removeDefault());
-			(inner as any).default = schema._def.defaultValue();
+			inner.default = schema._def.defaultValue();
 			return inner;
 		}
 		if (schema instanceof z.ZodLiteral) {

@@ -208,7 +208,7 @@ export interface InterpretedViewportError {
 export interface CustomCommandSpec {
 	name: string;
 	description: string;
-	schema: z.ZodObject<any>;
+	schema: z.ZodObject<z.ZodRawShape>;
 	handler: (params: Record<string, unknown>, context: ExecutionContext) => Promise<CommandResult>;
 	terminatesSequence?: boolean;
 }
