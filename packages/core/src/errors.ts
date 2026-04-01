@@ -150,6 +150,23 @@ export class ProviderError extends ModelError {
 	}
 }
 
+export class SandboxError extends OpenBrowserError {
+	public readonly filePath?: string;
+
+	constructor(message: string, filePath?: string, options?: ErrorOptions) {
+		super(filePath ? `${message}: ${filePath}` : message, options);
+		this.name = 'SandboxError';
+		this.filePath = filePath;
+	}
+}
+
+export class BridgeError extends OpenBrowserError {
+	constructor(message: string, options?: ErrorOptions) {
+		super(message, options);
+		this.name = 'BridgeError';
+	}
+}
+
 export class SchemaViolationError extends OpenBrowserError {
 	public readonly field: string;
 	public readonly issues: string[];

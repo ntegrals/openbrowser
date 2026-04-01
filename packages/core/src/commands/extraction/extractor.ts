@@ -1,5 +1,6 @@
 import type { Page } from 'playwright';
 import type { LanguageModel } from '../../model/interface.js';
+import { PageExtractionError } from '../../errors.js';
 import { z } from 'zod';
 import {
 	extractMarkdown,
@@ -74,7 +75,7 @@ export class ContentExtractor {
 		const markdown = await extractMarkdown(page);
 
 		if (!markdown.trim()) {
-			throw new Error('No content found on the page for structured extraction.');
+			throw new PageExtractionError('No content found on the page for structured extraction.');
 		}
 
 		// Build a JSON schema description for the prompt

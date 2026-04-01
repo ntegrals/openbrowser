@@ -1,6 +1,7 @@
 import { type ChildProcess, spawn } from 'node:child_process';
 import { EventEmitter } from 'node:events';
 import type { CustomCommandSpec } from '../commands/types.js';
+import { BridgeError } from '../errors.js';
 import { createLogger } from '../logging.js';
 
 const logger = createLogger('mcp-client');
@@ -293,7 +294,7 @@ export class BridgeClient extends EventEmitter<BridgeClientEvents> {
 
 		if (result.isError) {
 			const errorText = result.content?.find((c) => c.type === 'text')?.text;
-			throw new Error(errorText ?? 'MCP tool call failed');
+			throw new BridgeError(errorText ?? 'MCP tool call failed');
 		}
 
 		const textContent = result.content?.find((c) => c.type === 'text');

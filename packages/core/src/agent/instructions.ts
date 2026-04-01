@@ -3,6 +3,7 @@ import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import type { AgentConfig } from './types.js';
+import { AgentError } from '../errors.js';
 import type { ViewportSnapshot, TabDescriptor } from '../viewport/types.js';
 import type { CommandCatalog } from '../commands/catalog/catalog.js';
 import type { ContentPart } from '../model/messages.js';
@@ -86,7 +87,7 @@ function loadTemplate(variant: PromptTemplate): string {
 		return content;
 	} catch (error) {
 		const message = error instanceof Error ? error.message : String(error);
-		throw new Error(`Failed to load system prompt template "${filename}": ${message}`);
+		throw new AgentError(`Failed to load system prompt template "${filename}": ${message}`);
 	}
 }
 

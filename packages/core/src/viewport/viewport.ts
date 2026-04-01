@@ -10,7 +10,7 @@ import type { ViewportEventMap, ViewportRequestMap } from './events.js';
 import type { LaunchOptions, ViewportSnapshot, TabDescriptor } from './types.js';
 import { LaunchProfile } from './launch-profile.js';
 import { BaseGuard, type GuardContext } from './guard-base.js';
-import { LaunchFailedError, ViewportCrashedError } from '../errors.js';
+import { LaunchFailedError, ViewportCrashedError, ViewportError } from '../errors.js';
 import { tabId, targetId, type TargetId } from '../types.js';
 import { createLogger } from '../logging.js';
 import { timed } from '../telemetry.js';
@@ -885,7 +885,7 @@ export class Viewport {
 	async switchTab(tabIndex: number): Promise<void> {
 		const pages = this.context!.pages();
 		if (tabIndex < 0 || tabIndex >= pages.length) {
-			throw new Error(`Invalid tab index: ${tabIndex}. Available tabs: ${pages.length}`);
+			throw new ViewportError(`Invalid tab index: ${tabIndex}. Available tabs: ${pages.length}`);
 		}
 
 		this._currentPage = pages[tabIndex];
@@ -908,7 +908,7 @@ export class Viewport {
 		const index = tabIndex ?? pages.indexOf(this.currentPage);
 
 		if (pages.length <= 1) {
-			throw new Error('Cannot close the last tab');
+			throw new ViewportError('Cannot close the last tab');
 		}
 
 		const pageToClose = pages[index];

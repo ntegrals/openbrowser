@@ -4,6 +4,7 @@ import type { PageAnalyzer } from '../page/page-analyzer.js';
 import type { CommandExecutor } from '../commands/executor.js';
 import type { ExecutionContext } from '../commands/types.js';
 import { BridgeAdapter, type MCPToolDefinition } from './adapter.js';
+import { BridgeError } from '../errors.js';
 import { createLogger } from '../logging.js';
 
 const logger = createLogger('mcp-server');
@@ -371,7 +372,7 @@ export class BridgeServer {
 				};
 			}
 			default:
-				throw new Error(`Unknown resource URI: ${uri}`);
+				throw new BridgeError(`Unknown resource URI: ${uri}`);
 		}
 	}
 

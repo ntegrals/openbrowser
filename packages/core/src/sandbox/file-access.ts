@@ -1,6 +1,7 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { createLogger } from '../logging.js';
+import { SandboxError } from '../errors.js';
 
 const logger = createLogger('filesystem');
 
@@ -90,7 +91,7 @@ export class FileAccess {
 		const resolved = path.resolve(this.sandboxDir, relativePath);
 		// Prevent path traversal
 		if (!resolved.startsWith(this.sandboxDir)) {
-			throw new Error(`Path traversal detected: ${relativePath}`);
+			throw new SandboxError('Path traversal detected', relativePath);
 		}
 		return resolved;
 	}
@@ -98,8 +99,9 @@ export class FileAccess {
 	private validateExtension(filePath: string): void {
 		const ext = path.extname(filePath).toLowerCase();
 		if (!this.allowedExtensions.has(ext)) {
-			throw new Error(
+			throw new SandboxError(
 				`File extension "${ext}" is not allowed. Allowed: ${[...this.allowedExtensions].join(', ')}`,
+				filePath,
 			);
 		}
 	}
@@ -121,17 +123,18 @@ export class FileAccess {
 		const fullPath = this.resolvePath(relativePath);
 
 		if (!fs.existsSync(fullPath)) {
-			throw new Error(`File not found: ${relativePath}`);
+			throw new SandboxError('File not found', relativePath);
 		}
 
 		if (this.isBinaryFile(fullPath)) {
-			throw new Error(`Cannot read binary file: ${relativePath}`);
+			throw new SandboxError('Cannot read binary file', relativePath);
 		}
 
 		const stat = fs.statSync(fullPath);
 		if (stat.size > this.maxFileSize) {
-			throw new Error(
+			throw new SandboxError(
 				`File too large: ${(stat.size / 1024 / 1024).toFixed(1)}MB (max: ${(this.maxFileSize / 1024 / 1024).toFixed(1)}MB)`,
+				relativePath,
 			);
 		}
 
@@ -142,7 +145,7 @@ export class FileAccess {
 
 	async write(relativePath: string, content: string): Promise<void> {
 		if (this.readOnly) {
-			throw new Error('File system is read-only');
+			throw new SandboxError('File system is read-only');
 		}
 
 		const fullPath = this.resolvePath(relativePath);
@@ -150,7 +153,7 @@ export class FileAccess {
 
 		const contentSize = Buffer.byteLength(content, 'utf-8');
 		if (contentSize > this.maxFileSize) {
-			throw new Error(`Content too large: ${(contentSize / 1024 / 1024).toFixed(1)}MB`);
+			throw new SandboxError(`Content too large: ${(contentSize / 1024 / 1024).toFixed(1)}MB`, relativePath);
 		}
 
 		// Ensure parent directory exists
@@ -205,13 +208,13 @@ export class FileAccess {
 
 	async delete(relativePath: string): Promise<void> {
 		if (this.readOnly) {
-			throw new Error('File system is read-only');
+			throw new SandboxError('File system is read-only');
 		}
 
 		const fullPath = this.resolvePath(relativePath);
 
 		if (!fs.existsSync(fullPath)) {
-			throw new Error(`File not found: ${relativePath}`);
+			throw new SandboxError('File not found', relativePath);
 		}
 
 		const stat = fs.statSync(fullPath);

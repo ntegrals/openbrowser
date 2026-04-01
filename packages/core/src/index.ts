@@ -36,6 +36,8 @@ export {
 	CommandFailedError,
 	ProviderError,
 	SchemaViolationError,
+	SandboxError,
+	BridgeError,
 } from './errors.js';
 
 // ── Logging ──
