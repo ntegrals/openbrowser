@@ -76,7 +76,7 @@ open-browser run "Go to GitHub, find the open-browser repo, and star it"
 
 | Option                       | Description                               |
 | ---------------------------- | ----------------------------------------- |
-| `-m, --model <model>`        | Model to use (default: `gpt-4o`)          |
+| `-m, --model <model>`        | Model to use (default: `claude-haiku-4-5-20251001`) |
 | `-p, --provider <provider>`  | Provider: `openai`, `anthropic`, `google` |
 | `--headless / --no-headless` | Show or hide the browser window           |
 | `--max-steps <n>`            | Max agent steps (default: `25`)           |
@@ -115,23 +115,31 @@ browser> help
 ## Using as a Library
 
 ```typescript
-import { Agent, createViewport, createModel } from 'open-browser'
+import { createAnthropic } from '@ai-sdk/anthropic';
+import { Agent, Viewport, VercelModelAdapter } from 'open-browser';
 
-const viewport = await createViewport({ headless: true })
-const model = createModel('openai', 'gpt-4o')
+const anthropic = createAnthropic({});
+const model = new VercelModelAdapter({
+  model: anthropic('claude-haiku-4-5-20251001'),
+});
+
+const browser = new Viewport({ headless: true });
+await browser.start();
 
 const agent = new Agent({
-  viewport,
-  model,
   task: 'Go to example.com and extract the main heading',
+  model,
+  browser,
   settings: {
     stepLimit: 50,
     enableScreenshots: true,
   },
-})
+});
 
-const result = await agent.run()
-console.log(result)
+const result = await agent.run();
+console.log(result.success, result.finalResult);
+
+await browser.close();
 ```
 
 ### Sandboxed Execution
@@ -257,24 +265,41 @@ packages/
         └── sandbox.ts       # Resource-limited execution
 ```
 
+## Examples
+
+Runnable examples are in the [`examples/`](./examples) directory:
+
+```bash
+# Basic agent usage
+ANTHROPIC_API_KEY=sk-... bun run examples/basic-agent.ts
+
+# Use different providers
+OPENAI_API_KEY=sk-... bun run examples/multi-provider.ts openai
+
+# Show the browser window
+bun run examples/headless-vs-visible.ts visible
+```
+
+See [`examples/README.md`](./examples/README.md) for the full list.
+
 ## Development
 
 ```bash
 # Install dependencies
 bun install
 
-# Type check
+# Type check all packages
 bun run build
 
 # Run tests
 bun run test
 
-# Lint
+# Lint & format
 bun run lint
-
-# Format
 bun run format
 ```
+
+For a detailed overview of the codebase, see [ARCHITECTURE.md](./ARCHITECTURE.md).
 
 ## Contributing
 
