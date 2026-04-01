@@ -1,0 +1,51 @@
+name: Publish to npm
+
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: oven-sh/setup-bun@v2
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          registry-url: 'https://registry.npmjs.org'
+
+      - run: bun install
+
+      # Type-check
+      - run: bun run build
+
+      # Run tests
+      - run: bun run --filter 'open-browser' test
+
+      # Build JS output for publishing
+      - run: bun run --filter 'open-browser' build:publish
+      - run: bun run --filter '@open-browser/cli' build:publish
+      - run: bun run --filter '@open-browser/sandbox' build:publish
+
+      # Publish packages in dependency order
+      - name: Publish open-browser (core)
+        run: npm publish --workspace=packages/core --provenance --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Publish @open-browser/sandbox
+        run: npm publish --workspace=packages/sandbox --provenance --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Publish @open-browser/cli
+        run: npm publish --workspace=packages/cli --provenance --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
