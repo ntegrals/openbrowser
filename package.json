@@ -4,6 +4,8 @@
   "workspaces": ["packages/*"],
   "scripts": {
     "build": "bun run --filter '*' build",
+    "build:publish": "bun run --filter '*' build:publish",
+    "clean": "bun run --filter '*' clean",
     "test": "bun run --filter '*' test",
     "lint": "biome check .",
     "format": "biome format --write ."
