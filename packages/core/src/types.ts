@@ -57,10 +57,12 @@ export type Rect = z.infer<typeof RectSchema>;
 // ── Common enums ──
 
 export const LogLevel = {
-	DEBUG: 0,
-	INFO: 1,
-	WARN: 2,
-	ERROR: 3,
+	TRACE: 0,
+	DEBUG: 1,
+	INFO: 2,
+	WARN: 3,
+	ERROR: 4,
+	SILENT: 5,
 } as const;
 export type LogLevel = (typeof LogLevel)[keyof typeof LogLevel];
 

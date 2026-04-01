@@ -1,6 +1,23 @@
 import { LogLevel } from './types.js';
 
+// ── Types ──
+
+export interface LogSink {
+	write(entry: LogEntry): void;
+}
+
+export interface LogEntry {
+	level: LogLevel;
+	name: string;
+	message: string;
+	args: unknown[];
+	timestamp: Date;
+}
+
+// ── Constants ──
+
 const LEVEL_NAMES: Record<number, string> = {
+	[LogLevel.TRACE]: 'TRACE',
 	[LogLevel.DEBUG]: 'DEBUG',
 	[LogLevel.INFO]: 'INFO',
 	[LogLevel.WARN]: 'WARN',
@@ -8,6 +25,7 @@ const LEVEL_NAMES: Record<number, string> = {
 };
 
 const LEVEL_COLORS: Record<number, string> = {
+	[LogLevel.TRACE]: '\x1b[90m', // gray
 	[LogLevel.DEBUG]: '\x1b[36m', // cyan
 	[LogLevel.INFO]: '\x1b[32m',  // green
 	[LogLevel.WARN]: '\x1b[33m',  // yellow
@@ -18,9 +36,34 @@ const RESET = '\x1b[0m';
 const DIM = '\x1b[2m';
 const BOLD = '\x1b[1m';
 
-let globalLevel: LogLevel = LogLevel.INFO;
+const LEVEL_PARSE_MAP: Record<string, LogLevel> = {
+	trace: LogLevel.TRACE,
+	debug: LogLevel.DEBUG,
+	info: LogLevel.INFO,
+	warn: LogLevel.WARN,
+	error: LogLevel.ERROR,
+	silent: LogLevel.SILENT,
+};
+
+// ── Global state ──
+
+let globalLevel: LogLevel = resolveInitialLogLevel();
 let useColors = true;
 let logTimestamps = true;
+let globalSink: LogSink | null = null;
+
+function resolveInitialLogLevel(): LogLevel {
+	const env =
+		(typeof process !== 'undefined' && process.env?.OPEN_BROWSER_LOG_LEVEL) ||
+		(typeof process !== 'undefined' && process.env?.LOG_LEVEL);
+	if (env) {
+		const parsed = LEVEL_PARSE_MAP[env.toLowerCase()];
+		if (parsed !== undefined) return parsed;
+	}
+	return LogLevel.INFO;
+}
+
+// ── Global configuration ──
 
 export function setGlobalLogLevel(level: LogLevel): void {
 	globalLevel = level;
@@ -37,6 +80,20 @@ export function setLogColors(enabled: boolean): void {
 export function setLogTimestamps(enabled: boolean): void {
 	logTimestamps = enabled;
 }
+
+export function setGlobalLogSink(sink: LogSink | null): void {
+	globalSink = sink;
+}
+
+export function getGlobalLogSink(): LogSink | null {
+	return globalSink;
+}
+
+export function parseLogLevel(value: string): LogLevel | undefined {
+	return LEVEL_PARSE_MAP[value.toLowerCase()];
+}
+
+// ── Formatting ──
 
 function formatTimestamp(): string {
 	const now = new Date();
@@ -74,9 +131,30 @@ function formatMessage(
 	return parts.join(' ');
 }
 
+// ── Default console sink ──
+
+const consoleSink: LogSink = {
+	write(entry: LogEntry): void {
+		const formatted = formatMessage(entry.level, entry.name, entry.message);
+		switch (entry.level) {
+			case LogLevel.ERROR:
+				console.error(formatted, ...entry.args);
+				break;
+			case LogLevel.WARN:
+				console.warn(formatted, ...entry.args);
+				break;
+			default:
+				console.log(formatted, ...entry.args);
+		}
+	},
+};
+
+// ── Logger ──
+
 export class Logger {
 	readonly name: string;
 	private level: LogLevel | null = null;
+	private sink: LogSink | null = null;
 
 	constructor(name: string) {
 		this.name = name;
@@ -86,12 +164,20 @@ export class Logger {
 		this.level = level;
 	}
 
+	setSink(sink: LogSink | null): void {
+		this.sink = sink;
+	}
+
 	getEffectiveLevel(): LogLevel {
 		return this.level ?? globalLevel;
 	}
 
 	isEnabled(level: LogLevel): boolean {
 		return level >= this.getEffectiveLevel();
+	}
+
+	trace(message: string, ...args: unknown[]): void {
+		this.log(LogLevel.TRACE, message, ...args);
 	}
 
 	debug(message: string, ...args: unknown[]): void {
@@ -110,23 +196,30 @@ export class Logger {
 		this.log(LogLevel.ERROR, message, ...args);
 	}
 
+	child(childName: string): Logger {
+		const child = createLogger(`${this.name}:${childName}`);
+		if (this.level !== null) child.setLevel(this.level);
+		if (this.sink !== null) child.setSink(this.sink);
+		return child;
+	}
+
 	private log(level: LogLevel, message: string, ...args: unknown[]): void {
 		if (!this.isEnabled(level)) return;
 
-		const formatted = formatMessage(level, this.name, message);
+		const entry: LogEntry = {
+			level,
+			name: this.name,
+			message,
+			args,
+			timestamp: new Date(),
+		};
 
-		switch (level) {
-			case LogLevel.ERROR:
-				console.error(formatted, ...args);
-				break;
-			case LogLevel.WARN:
-				console.warn(formatted, ...args);
-				break;
-			default:
-				console.log(formatted, ...args);
-		}
+		const sink = this.sink ?? globalSink ?? consoleSink;
+		sink.write(entry);
 	}
 }
+
+// ── Factory ──
 
 const loggerCache = new Map<string, Logger>();
 

@@ -1,3 +1,7 @@
+import { createLogger } from '../logging.js';
+
+const logger = createLogger('event-hub');
+
 type Handler<T = unknown> = (payload: T) => void;
 type RequestHandler<Req = unknown, Res = unknown> = (payload: Req) => Promise<Res>;
 
@@ -45,7 +49,7 @@ export class EventHub<
 				try {
 					handler(payload);
 				} catch (error) {
-					console.error(`Error in event handler for "${event}":`, error);
+					logger.error(`Error in event handler for "${event}":`, error);
 				}
 			}
 		}
