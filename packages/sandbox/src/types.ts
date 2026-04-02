@@ -52,8 +52,10 @@ export interface CapturedOutput {
 export interface SandboxMetrics {
 	/** Total execution time in milliseconds */
 	durationMs: number;
-	/** Peak memory usage in MB */
+	/** Peak RSS memory usage in MB */
 	peakMemoryMB: number;
+	/** Peak external (native/buffer) memory usage in MB */
+	peakExternalMB: number;
 	/** Number of agent steps executed */
 	stepsExecuted: number;
 	/** Number of unique pages visited */

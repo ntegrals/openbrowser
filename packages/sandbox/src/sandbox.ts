@@ -34,6 +34,7 @@ class ResourceMonitor {
 	private intervalId: ReturnType<typeof setInterval> | null = null;
 	private snapshots: ResourceSnapshot[] = [];
 	private peakMemoryMB = 0;
+	private peakExternalMB = 0;
 	private startCpuUsage: NodeJS.CpuUsage | null = null;
 	private readonly limitMB: number;
 	private onOOM: (() => void) | null = null;
@@ -87,15 +88,24 @@ class ResourceMonitor {
 		if (rssMB > this.peakMemoryMB) {
 			this.peakMemoryMB = rssMB;
 		}
+		if (externalMB > this.peakExternalMB) {
+			this.peakExternalMB = externalMB;
+		}
 
-		// Check OOM condition against RSS (total process memory)
-		if (rssMB > this.limitMB && this.onOOM) {
+		// Check OOM condition against RSS + external memory (native buffers,
+		// graphics allocations, etc. that grow outside the V8 heap)
+		const totalMemoryMB = rssMB + externalMB;
+		if (totalMemoryMB > this.limitMB && this.onOOM) {
 			this.onOOM();
 		}
 	}
 
 	getPeakMemoryMB(): number {
 		return Math.round(this.peakMemoryMB * 100) / 100;
+	}
+
+	getPeakExternalMB(): number {
+		return Math.round(this.peakExternalMB * 100) / 100;
 	}
 
 	getCpuTimeMs(): number {
@@ -451,6 +461,7 @@ export class Sandbox {
 		return {
 			durationMs: Date.now() - startTime,
 			peakMemoryMB: monitor.getPeakMemoryMB(),
+			peakExternalMB: monitor.getPeakExternalMB(),
 			stepsExecuted,
 			pagesVisited: visitedUrls.size,
 			visitedUrls: [...visitedUrls],
