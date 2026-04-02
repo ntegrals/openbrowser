@@ -1,4 +1,5 @@
 import type { Message } from '../../model/messages.js';
+import type { InferenceUsage } from '../../model/types.js';
 import type { CompactionPolicy } from '../types.js';
 import type { LanguageModel } from '../../model/interface.js';
 
@@ -14,6 +15,8 @@ export interface ConversationManagerOptions {
 	compaction?: CompactionPolicy;
 	/** LanguageModel used for LLM-based compaction. Ignored if compaction is not set. */
 	compactionModel?: LanguageModel;
+	/** Called with token usage after each LLM compaction call, for cost tracking. */
+	onCompactionUsage?: (usage: InferenceUsage) => void;
 }
 
 // ── Managed Message ──

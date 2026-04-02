@@ -117,6 +117,9 @@ export class Agent {
 			includeLastScreenshot: this.settings.enableScreenshots,
 			maskedValues: this.settings.maskedValues,
 			compaction: this.settings.conversationCompaction,
+			onCompactionUsage: (usage) => {
+				this.updateCostTracking(usage.inputTokens, usage.outputTokens, this.state.step);
+			},
 		});
 
 		this.loopDetector = new StallDetector();

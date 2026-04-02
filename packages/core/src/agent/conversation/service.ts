@@ -349,6 +349,11 @@ export class ConversationManager {
 				temperature: 0,
 			});
 
+			// Report compaction cost to caller
+			if (this.options.onCompactionUsage && completion.usage) {
+				this.options.onCompactionUsage(completion.usage);
+			}
+
 			const summaryText = `[Conversation summary of steps 1-${toSummarize[toSummarize.length - 1]?.step ?? '?'}]\n${completion.parsed.summary}`;
 
 			// Replace the summarized messages with a single summary
