@@ -978,4 +978,19 @@ export class VisualTracer {
 			{ attr: OVERLAY_ATTR },
 		);
 	}
+
+	/**
+	 * Attaches automatic overlay cleanup on page navigation.
+	 * Call once per page to ensure overlays don't persist across navigations.
+	 * Returns a cleanup function to detach the listener.
+	 */
+	attachAutoCleanup(page: Page): () => void {
+		const handler = () => {
+			this.clearOverlays(page).catch(() => {});
+		};
+		page.on('framenavigated', handler);
+		return () => {
+			page.off('framenavigated', handler);
+		};
+	}
 }
