@@ -243,14 +243,31 @@ export async function extractMarkdown(
 		markdown = markdown.slice(startOffset);
 	}
 
-	// Apply max length
+	// Apply max length, breaking at the nearest semantic boundary
 	let truncated = false;
 	if (options?.maxLength && markdown.length > options.maxLength) {
-		markdown = markdown.slice(0, options.maxLength);
-		// Try to break at a paragraph boundary
-		const lastParagraph = markdown.lastIndexOf('\n\n');
-		if (lastParagraph > markdown.length * 0.8) {
+		const limit = options.maxLength;
+		const minKeep = Math.floor(limit * 0.5);
+		const region = markdown.slice(0, limit);
+
+		// Try paragraph boundary first, then sentence, then word
+		const lastParagraph = region.lastIndexOf('\n\n');
+		const lastSentence = Math.max(
+			region.lastIndexOf('. '),
+			region.lastIndexOf('.\n'),
+			region.lastIndexOf('? '),
+			region.lastIndexOf('! '),
+		);
+		const lastWord = region.lastIndexOf(' ');
+
+		if (lastParagraph > minKeep) {
 			markdown = markdown.slice(0, lastParagraph);
+		} else if (lastSentence > minKeep) {
+			markdown = markdown.slice(0, lastSentence + 1);
+		} else if (lastWord > minKeep) {
+			markdown = markdown.slice(0, lastWord);
+		} else {
+			markdown = region;
 		}
 		truncated = true;
 	}
