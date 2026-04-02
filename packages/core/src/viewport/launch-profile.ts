@@ -31,6 +31,9 @@ export const CHROME_AUTOMATION_FLAGS = [
 	'--disable-infobars',
 	'--disable-session-crashed-bubble',
 	'--force-color-profile=srgb',
+	// Modern Chrome flags (112+)
+	'--disable-search-engine-choice-screen',
+	'--hide-crash-restore-bubble',
 ];
 
 /**
@@ -40,33 +43,34 @@ export const CHROME_AUTOMATION_FLAGS = [
 export const CHROME_STRIPPED_FEATURES = [
 	'InterestFeedContentSuggestions',
 	'Translate',
+	'TranslateUI',
 	'OptimizationHints',
 	'MediaRouter',
 	'DialMediaRouteProvider',
 	'CalculatorTool',
-	'CrashedTabFinder',
 	'AutofillServerCommunication',
 	'BackgroundTracing',
 	'NtpTiles',
-	'OneGoogleBar',
-	'ReadLater',
 	'NTPArticleSuggestions',
+	'NTPSigninPromo',
 	'CrossDeviceSync',
 	'PrivacySandboxSettings4',
+	'PrivacySandboxPromptV2',
 	'SidePanelPinning',
 	'HistoryEmbeddings',
-	'PrivacySandboxPromptV2',
 	'GlobalMediaControls',
 	'ComposeService',
 	'AutofillFeature',
-	'NTPSigninPromo',
 	'Prerender2',
 	'TabGroupsSave',
+	'SearchEngineChoice',
+	'InfoBarDisplay',
 ];
 
 export const ANTI_DETECTION_FLAGS = [
 	'--disable-blink-features=AutomationControlled',
 	'--disable-features=AutomationControlled',
+	'--disable-automation-extension',
 ];
 
 export const CONTAINER_FLAGS = [
