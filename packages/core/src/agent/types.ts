@@ -2,6 +2,7 @@ import { z } from 'zod';
 import type { Command, CommandResult } from '../commands/types.js';
 import type { ViewportSnapshot, ViewportHistory } from '../viewport/types.js';
 import type { InferenceUsage } from '../model/types.js';
+import { DEFAULT_COST_RATES, type CostRates } from '../metering/types.js';
 
 // ── Agent Settings ──
 
@@ -490,41 +491,34 @@ export interface AccumulatedCost {
 	totalCost: number;
 }
 
-/** Per-model pricing in USD per 1M tokens */
-export interface PricingTable {
-	inputPer1M: number;
-	outputPer1M: number;
-}
+/**
+ * @deprecated Use `PricingTable` from `metering/types` instead.
+ * Kept as a re-export for backward compatibility.
+ */
+export type { PricingTable } from '../metering/types.js';
 
-export const PRICING_TABLE: Record<string, PricingTable> = {
-	'gpt-4o': { inputPer1M: 2.5, outputPer1M: 10 },
-	'gpt-4o-mini': { inputPer1M: 0.15, outputPer1M: 0.6 },
-	'gpt-4-turbo': { inputPer1M: 10, outputPer1M: 30 },
-	'claude-3-opus': { inputPer1M: 15, outputPer1M: 75 },
-	'claude-3-5-sonnet': { inputPer1M: 3, outputPer1M: 15 },
-	'claude-3-5-haiku': { inputPer1M: 0.8, outputPer1M: 4 },
-	'claude-3-haiku': { inputPer1M: 0.25, outputPer1M: 1.25 },
-	'gemini-2.0-flash': { inputPer1M: 0.1, outputPer1M: 0.4 },
-	'gemini-1.5-pro': { inputPer1M: 1.25, outputPer1M: 5 },
-	'gemini-1.5-flash': { inputPer1M: 0.075, outputPer1M: 0.3 },
-};
+/**
+ * @deprecated Use `DEFAULT_COST_RATES` from `metering/types` instead.
+ * Kept as a re-export for backward compatibility.
+ */
+export { DEFAULT_COST_RATES as PRICING_TABLE } from '../metering/types.js';
 
 export function calculateStepCost(
 	inputTokens: number,
 	outputTokens: number,
 	modelId: string,
 ): StepCostBreakdown | undefined {
-	let pricing: PricingTable | undefined;
-	for (const [key, value] of Object.entries(PRICING_TABLE)) {
+	let rates: CostRates | undefined;
+	for (const [key, value] of Object.entries(DEFAULT_COST_RATES)) {
 		if (modelId.startsWith(key)) {
-			pricing = value;
+			rates = value;
 			break;
 		}
 	}
-	if (!pricing) return undefined;
+	if (!rates) return undefined;
 
-	const inputCost = (inputTokens / 1_000_000) * pricing.inputPer1M;
-	const outputCost = (outputTokens / 1_000_000) * pricing.outputPer1M;
+	const inputCost = (inputTokens / 1_000_000) * rates.inputCostPerMillion;
+	const outputCost = (outputTokens / 1_000_000) * rates.outputCostPerMillion;
 	return { inputCost, outputCost, totalCost: inputCost + outputCost };
 }
 
